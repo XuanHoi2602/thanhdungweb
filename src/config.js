@@ -305,7 +305,7 @@ const ITEM_CARDS = deepFreeze([
     price: 10000,
     unit: "cái",
     priceText: "10.000 đ / 1 cái",
-    note: "Dùi đục chính hãng TeaMobi dùng đục lỗ trang bị tại Bà Hạt Mít, sẵn số lượng lớn.",
+    note: "Dùi đục dùng đục lỗ trang bị tại Bà Hạt Mít, sẵn số lượng lớn.",
     keywords: "dùi đục 10ka 10.000 có sll số lượng lớn",
     icons: [{ src: "/assets/icons/12139.png", alt: "Dùi đục", width: 80, height: 76 }]
   },
@@ -350,24 +350,64 @@ const ITEM_CARDS = deepFreeze([
     anchorLabel: "Tính ngọc"
   },
   {
-    id: "spl",
+    id: "spl-441",
     category: "spl-manh",
-    badge: "Sao Pha Lê",
-    tag: "Đủ loại",
-    tagClass: "",
-    name: "Bán Sao pha lê (SPL) Các Loại",
-    orderName: "Sao pha lê (SPL) các loại",
+    badge: "Sao Pha Lê · ID 441",
+    tag: "Hút 5% HP",
+    tagClass: "tag-crimson",
+    name: "Sao pha lê đỏ (ID 441)",
+    orderName: "Sao pha lê đỏ (ID 441)",
     price: 1000,
     unit: "viên",
     priceText: "1.000 đ / 1 viên",
-    note: "Đủ màu Sao pha lê đỏ, lam, hồng, tím, cam, vàng, lục ép chỉ số trang bị.",
-    keywords: "spl sao pha lê đỏ lam vàng lục các loại 1k 1v 1.000 1 viên",
-    icons: [
-      { src: "/assets/icons/3887.png", alt: "Sao pha lê đỏ", width: 64, height: 64 },
-      { src: "/assets/icons/3888.png", alt: "Sao pha lê lam", width: 64, height: 64 },
-      { src: "/assets/icons/3892.png", alt: "Sao pha lê vàng", width: 64, height: 64 },
-      { src: "/assets/icons/3893.png", alt: "Sao pha lê lục", width: 64, height: 64 }
-    ]
+    note: "Ép vào đồ sao pha lê giúp biến 5% sát thương tấn công thành HP (Hút HP).",
+    keywords: "spl sao pha lê đỏ 441 hút hp máu 1k 1v 1.000 1 viên",
+    icons: [{ src: "/assets/icons/3887.png", alt: "Sao pha lê đỏ ID 441", width: 64, height: 64 }]
+  },
+  {
+    id: "spl-442",
+    category: "spl-manh",
+    badge: "Sao Pha Lê · ID 442",
+    tag: "Hút 5% KI",
+    tagClass: "planet-earth",
+    name: "Sao pha lê lam (ID 442)",
+    orderName: "Sao pha lê lam (ID 442)",
+    price: 1000,
+    unit: "viên",
+    priceText: "1.000 đ / 1 viên",
+    note: "Ép vào đồ sao pha lê giúp biến 5% sát thương tấn công thành KI (Hút KI).",
+    keywords: "spl sao pha lê lam xanh dương 442 hút ki mp 1k 1v 1.000 1 viên",
+    icons: [{ src: "/assets/icons/3888.png", alt: "Sao pha lê lam ID 442", width: 64, height: 64 }]
+  },
+  {
+    id: "spl-446",
+    category: "spl-manh",
+    badge: "Sao Pha Lê · ID 446",
+    tag: "+5% Vàng rơi",
+    tagClass: "tag-hot",
+    name: "Sao pha lê vàng (ID 446)",
+    orderName: "Sao pha lê vàng (ID 446)",
+    price: 1000,
+    unit: "viên",
+    priceText: "1.000 đ / 1 viên",
+    note: "Ép vào đồ sao pha lê giúp tăng +5% vàng rơi khi đánh quái.",
+    keywords: "spl sao pha lê vàng 446 vàng rơi 1k 1v 1.000 1 viên",
+    icons: [{ src: "/assets/icons/3892.png", alt: "Sao pha lê vàng ID 446", width: 64, height: 64 }]
+  },
+  {
+    id: "spl-447",
+    category: "spl-manh",
+    badge: "Sao Pha Lê · ID 447",
+    tag: "+5% TNSM",
+    tagClass: "tag-jade",
+    name: "Sao pha lê lục (ID 447)",
+    orderName: "Sao pha lê lục (ID 447)",
+    price: 1000,
+    unit: "viên",
+    priceText: "1.000 đ / 1 viên",
+    note: "Ép vào đồ sao pha lê giúp tăng +5% tiềm năng, sức mạnh (TNSM).",
+    keywords: "spl sao pha lê lục xanh lá 447 tnsm tiềm năng sức mạnh 1k 1v 1.000 1 viên",
+    icons: [{ src: "/assets/icons/3893.png", alt: "Sao pha lê lục ID 447", width: 64, height: 64 }]
   },
   {
     id: "nr-3s",
@@ -387,7 +427,7 @@ const ITEM_CARDS = deepFreeze([
   {
     id: "manh-hiem",
     category: "spl-manh",
-    badge: "Sưu Tầm & Mảnh",
+    badge: "Sưu Tầm & Kích Mảnh",
     tag: "Sẵn hàng",
     tagClass: "",
     name: "Mảnh Khỉ · Mảnh Rồng · Mảnh Đội trưởng Vàng",
@@ -395,12 +435,119 @@ const ITEM_CARDS = deepFreeze([
     price: 0,
     unit: "lô",
     priceText: "Liên hệ giá theo lô",
-    note: "Cung cấp Mảnh Khỉ Oozaru, Mảnh Rồng thần Namếc và Mảnh Đội trưởng Vàng (Mảnh DTV) giá tốt.",
-    keywords: "mảnh khỉ oozaru mảnh rồng thần namếc mảnh dtv mảnh đội trưởng vàng 956",
+    note: "Đủ Mảnh Đội trưởng Vàng (10 bóng / 30 LV cuối), Mảnh Rồng thần Namếc (3 bóng / 15 LV cuối) và Mảnh Khỉ Oozaru (10 bóng / 125 LV1 / 125 LV2).",
+    keywords: "mảnh khỉ oozaru mảnh rồng thần namếc mảnh dtv mảnh đội trưởng vàng kích mảnh 956 1204 1771",
     icons: [
-      { src: "/assets/icons/14247.png", alt: "Mảnh Khỉ Oozaru", width: 72, height: 72 },
+      { src: "/assets/icons/8935.png", alt: "Mảnh Đội trưởng Vàng", width: 84, height: 84 },
       { src: "/assets/icons/11048.png", alt: "Mảnh Rồng thần Namếc", width: 96, height: 96 },
-      { src: "/assets/icons/8935.png", alt: "Mảnh Đội trưởng Vàng", width: 84, height: 84 }
+      { src: "/assets/icons/14247.png", alt: "Mảnh Khỉ Oozaru", width: 72, height: 72 }
+    ]
+  }
+]);
+
+const SPL_TYPES = deepFreeze([
+  {
+    id: "spl-441",
+    templateId: 441,
+    name: "Sao pha lê đỏ (ID 441)",
+    shortName: "SPL Đỏ (441)",
+    effect: "Hút 5% HP",
+    description: "Biến 5% sát thương thành HP",
+    price: 1000,
+    icon: "/assets/icons/3887.png",
+    iconAlt: "Sao pha lê đỏ ID 441",
+    width: 64,
+    height: 64
+  },
+  {
+    id: "spl-442",
+    templateId: 442,
+    name: "Sao pha lê lam (ID 442)",
+    shortName: "SPL Lam (442)",
+    effect: "Hút 5% KI",
+    description: "Biến 5% sát thương thành KI",
+    price: 1000,
+    icon: "/assets/icons/3888.png",
+    iconAlt: "Sao pha lê lam ID 442",
+    width: 64,
+    height: 64
+  },
+  {
+    id: "spl-446",
+    templateId: 446,
+    name: "Sao pha lê vàng (ID 446)",
+    shortName: "SPL Vàng (446)",
+    effect: "+5% vàng rơi",
+    description: "Tăng 5% vàng rơi từ quái",
+    price: 1000,
+    icon: "/assets/icons/3892.png",
+    iconAlt: "Sao pha lê vàng ID 446",
+    width: 64,
+    height: 64
+  },
+  {
+    id: "spl-447",
+    templateId: 447,
+    name: "Sao pha lê lục (ID 447)",
+    shortName: "SPL Lục (447)",
+    effect: "+5% TNSM",
+    description: "Tăng 5% tiềm năng, sức mạnh",
+    price: 1000,
+    icon: "/assets/icons/3893.png",
+    iconAlt: "Sao pha lê lục ID 447",
+    width: 64,
+    height: 64
+  }
+]);
+
+const MANH_ACTIVATION_INFOS = deepFreeze([
+  {
+    id: "manh-dtv",
+    templateId: 956,
+    name: "Mảnh Đội trưởng Vàng",
+    orderName: "Mảnh Đội trưởng Vàng",
+    badge: "Mảnh Thú Cưỡi · Sưu Tầm",
+    icon: "/assets/icons/8935.png",
+    iconAlt: "Mảnh Đội trưởng Vàng",
+    width: 84,
+    height: 84,
+    stackCount: "99",
+    tiers: [
+      { label: "Kích hoạt bóng", amount: "10 mảnh", tone: "shadow" },
+      { label: "Kích hoạt LV cuối", amount: "30 mảnh", tone: "level" }
+    ]
+  },
+  {
+    id: "manh-rong-namec",
+    templateId: 1204,
+    name: "Mảnh Rồng thần Namếc",
+    orderName: "Mảnh Rồng thần Namếc",
+    badge: "Mảnh Rồng · Sưu Tầm",
+    icon: "/assets/icons/11048.png",
+    iconAlt: "Mảnh Rồng thần Namếc",
+    width: 96,
+    height: 96,
+    stackCount: "99",
+    tiers: [
+      { label: "Kích hoạt bóng", amount: "3 mảnh", tone: "shadow" },
+      { label: "Kích hoạt LV cuối", amount: "15 mảnh", tone: "level" }
+    ]
+  },
+  {
+    id: "manh-khi-oozaru",
+    templateId: 1771,
+    name: "Mảnh Khỉ Oozaru",
+    orderName: "Mảnh Khỉ Oozaru",
+    badge: "Mảnh Khỉ · Sưu Tầm",
+    icon: "/assets/icons/14247.png",
+    iconAlt: "Mảnh Khỉ Oozaru",
+    width: 72,
+    height: 72,
+    stackCount: "99",
+    tiers: [
+      { label: "Kích hoạt bóng", amount: "10 mảnh", tone: "shadow" },
+      { label: "Kích hoạt LV1", amount: "125 mảnh", tone: "level" },
+      { label: "Kích hoạt LV2", amount: "125 mảnh", tone: "level" }
     ]
   }
 ]);
@@ -416,7 +563,10 @@ const ITEM_PRICE_ROWS = deepFreeze([
   { id: "da-ruby-999", name: "x999 Đá Ruby", group: "Đá NC", price: 20000, unit: "lô 999", unitPriceLabel: "20.000 đ / 999 viên", defaultQty: 1, maxQty: 9999, icon: "/assets/icons/1416.png", iconAlt: "Đá Ruby", width: 48, height: 48 },
   { id: "da-titan-999", name: "x999 Đá Titan", group: "Đá NC", price: 20000, unit: "lô 999", unitPriceLabel: "20.000 đ / 999 viên", defaultQty: 1, maxQty: 9999, icon: "/assets/icons/1417.png", iconAlt: "Đá Titan", width: 48, height: 48 },
   { id: "da-thach-anh-999", name: "x999 Đá thạch anh tím", group: "Đá NC", price: 20000, unit: "lô 999", unitPriceLabel: "20.000 đ / 999 viên", defaultQty: 1, maxQty: 9999, icon: "/assets/icons/1418.png", iconAlt: "Đá thạch anh tím", width: 48, height: 48 },
-  { id: "spl", name: "Sao pha lê (SPL) các loại", group: "Ép đồ", price: 1000, unit: "viên", unitPriceLabel: "1.000 đ / 1 viên", defaultQty: 10, maxQty: 9999, icon: "/assets/icons/3887.png", iconAlt: "Sao pha lê", width: 64, height: 64 },
+  { id: "spl-441", name: "Sao pha lê đỏ (ID 441 · Hút 5% HP)", group: "SPL · Ép đồ", price: 1000, unit: "viên", unitPriceLabel: "1.000 đ / 1 viên", defaultQty: 10, maxQty: 9999, icon: "/assets/icons/3887.png", iconAlt: "Sao pha lê đỏ ID 441", width: 64, height: 64 },
+  { id: "spl-442", name: "Sao pha lê lam (ID 442 · Hút 5% KI)", group: "SPL · Ép đồ", price: 1000, unit: "viên", unitPriceLabel: "1.000 đ / 1 viên", defaultQty: 10, maxQty: 9999, icon: "/assets/icons/3888.png", iconAlt: "Sao pha lê lam ID 442", width: 64, height: 64 },
+  { id: "spl-446", name: "Sao pha lê vàng (ID 446 · +5% vàng rơi)", group: "SPL · Ép đồ", price: 1000, unit: "viên", unitPriceLabel: "1.000 đ / 1 viên", defaultQty: 10, maxQty: 9999, icon: "/assets/icons/3892.png", iconAlt: "Sao pha lê vàng ID 446", width: 64, height: 64 },
+  { id: "spl-447", name: "Sao pha lê lục (ID 447 · +5% TNSM)", group: "SPL · Ép đồ", price: 1000, unit: "viên", unitPriceLabel: "1.000 đ / 1 viên", defaultQty: 10, maxQty: 9999, icon: "/assets/icons/3893.png", iconAlt: "Sao pha lê lục ID 447", width: 64, height: 64 },
   { id: "nr-3s", name: "Ngọc Rồng 3 sao (NR 3s)", group: "Ngọc Rồng", price: 2500, unit: "viên", unitPriceLabel: "2.500 đ / 1 viên", defaultQty: 10, maxQty: 9999, icon: "/assets/icons/421.png", iconAlt: "Ngọc Rồng 3 sao", width: 64, height: 64 }
 ]);
 
@@ -457,8 +607,8 @@ const FULL_AD_POST = [
   "✅ Bán x99 máy dò CSKB 40.000 đ / x99",
   "✅ Cho thuê set thần 3 hành tinh up thức ăn, set SMTN TĐ, XD 5s 10.000 đ / 1 ngày",
   "✅ Bán vàng tươi x15, vàng die x60 - ngọc kí x11, ngọc vé (ID 718) x10",
-  "✅ Bán SPL các loại 1.000 đ / 1 viên",
-  "✅ Bán mảnh khỉ, mảnh rồng, mảnh Đội trưởng Vàng (DTV)",
+  "✅ Bán SPL 4 loại: Đỏ 441 (Hút HP), Lam 442 (Hút KI), Vàng 446 (+5% vàng), Lục 447 (+5% TNSM) — 1.000 đ / 1 viên",
+  "✅ Bán mảnh khỉ (10/125/125), mảnh rồng (3/15), mảnh Đội trưởng Vàng (10/30)",
   "✅ Nhận săn đệ SS - skill 5",
   "✅ Bán acc đậu 5 8.000 đ / 1 acc - acc clone 340k sm 3.000 đ / 1 acc",
   "✅ Bán NR 3s 2.500 đ / 1 viên",
@@ -535,6 +685,8 @@ module.exports = {
   ALLOWED_SERVERS,
   KICH_DIEM_SERVICES,
   ITEM_CARDS,
+  SPL_TYPES,
+  MANH_ACTIVATION_INFOS,
   ITEM_PRICE_ROWS,
   STARTER_ACCS,
   FULL_AD_POST,

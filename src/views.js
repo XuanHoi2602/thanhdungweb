@@ -7,6 +7,8 @@ const {
   ALLOWED_SERVERS,
   KICH_DIEM_SERVICES,
   ITEM_CARDS,
+  SPL_TYPES,
+  MANH_ACTIVATION_INFOS,
   ITEM_PRICE_ROWS,
   STARTER_ACCS,
   CONFIG_SHA256
@@ -27,7 +29,7 @@ const ROUTE_META = {
   "/mua-item": {
     title: "Mua Item NRO · Cuồng Nộ, BH, GX, Đá NC, Vàng, Ngọc, SPL | Thanh Dung NRO",
     description:
-      "Bảng giá chi tiết Item x99 Cuồng nộ, Bổ huyết, Giáp Xên, Máy dò CSKB, 5 loại Đá nâng cấp x999, Dùi đục SLL, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), SPL, NR 3s, Mảnh Đội trưởng Vàng & Máy tính 2 chiều."
+      "Bảng giá chi tiết Item x99 Cuồng nộ, Bổ huyết, Giáp Xên, Máy dò CSKB, 5 loại Đá nâng cấp x999, Dùi đục SLL, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), 4 loại SPL (441, 442, 446, 447), NR 3s, Bảng thông tin Kích mảnh & Máy tính 2 chiều."
   },
   "/mua-tai-khoan": {
     title: "Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server | Thanh Dung NRO",
@@ -486,7 +488,7 @@ function renderHomeView({ latestAccounts, integrity }) {
             </div>
             <span class="eyebrow">Vật phẩm · Vàng · Ngọc</span>
             <h3>Mua Item x99 · Đá NC · Vàng · Ngọc · SPL &amp; Mảnh</h3>
-            <p class="pretty-text">Bảng giá riêng từng loại Item chọn số lượng: Cuồng nộ 15k, BH/GX 10k, MD CSKB 40k, 5 loại Đá NC 20k/999, Dùi đục SLL 10k, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), Máy tính 2 chiều.</p>
+            <p class="pretty-text">Bảng giá riêng từng loại Item chọn số lượng: Cuồng nộ 15k, BH/GX 10k, MD CSKB 40k, 5 loại Đá NC 20k/999, Dùi đục SLL 10k, 4 loại SPL (441 · 442 · 446 · 447), Thông tin Kích mảnh &amp; Máy tính 2 chiều.</p>
             <a href="/mua-item" class="btn btn-primary btn-full">Vào trang Mua Item &amp; Tính Đơn</a>
           </article>
 
@@ -641,22 +643,81 @@ function renderMuaItemView({ integrity }) {
           </div>
         </td>
         <td class="mono-num row-subtotal">${escapeHtml(formatVndServer(row.price * row.defaultQty))}</td>
-        <td><button type="button" class="btn btn-card-add row-add-btn">+ Thêm vào đơn</button></td>
+        <td><button type="button" class="btn btn-card-add row-add-btn">+ Thêm vào đơn<span class="visually-hidden"> ${escapeHtml(row.name)}</span></button></td>
       </tr>
     `
   ).join("");
+
+  const splRateRowsHtml = SPL_TYPES.map(
+    (spl) => `
+      <tr>
+        <td><span class="table-item-cell"><img src="${escapeHtml(spl.icon)}" alt="${escapeHtml(spl.iconAlt)}" width="${Number(spl.width)}" height="${Number(spl.height)}" loading="lazy" class="table-sprite"><span>${escapeHtml(spl.name)}</span></span></td>
+        <td class="mono-num"><strong>1.000 đ / 1 viên</strong></td>
+        <td>${escapeHtml(spl.effect)}</td>
+      </tr>
+    `
+  ).join("");
+
+  const splCalcPillsHtml = SPL_TYPES.map(
+    (spl, index) => `
+      <label class="radio-pill" for="calc-spl-${Number(spl.templateId)}">
+        <input type="radio" id="calc-spl-${Number(spl.templateId)}" name="splVariant" value="${Number(spl.templateId)}"${index === 0 ? " checked" : ""}>
+        <img src="${escapeHtml(spl.icon)}" alt="" width="${Number(spl.width)}" height="${Number(spl.height)}" loading="lazy" class="pill-sprite">
+        <span>${escapeHtml(spl.shortName)} · ${escapeHtml(spl.effect)}</span>
+      </label>
+    `
+  ).join("");
+
+  const manhCardsHtml = MANH_ACTIVATION_INFOS.map((manh) => {
+    const tiersHtml = manh.tiers
+      .map(
+        (t) => `
+          <div class="manh-tier-row">
+            <dt class="manh-tier-pill ${t.tone === "shadow" ? "manh-tier-shadow" : "manh-tier-level"}">${escapeHtml(t.label)}:</dt>
+            <dd class="manh-qty-pill mono-num">${escapeHtml(t.amount)}</dd>
+          </div>
+        `
+      )
+      .join("");
+
+    return `
+      <li class="manh-card">
+        <div class="manh-card-head">
+          <div class="manh-stack-slot" aria-hidden="true">
+            <img src="${escapeHtml(manh.icon)}" alt="" width="${Number(manh.width)}" height="${Number(manh.height)}" loading="lazy" class="game-sprite">
+            <span class="manh-stack-num mono-num">${escapeHtml(manh.stackCount)}</span>
+          </div>
+          <div class="manh-head-copy">
+            <span class="cat-badge">${escapeHtml(manh.badge)}</span>
+            <h3>${escapeHtml(manh.name)}</h3>
+          </div>
+        </div>
+        <dl class="manh-spec-list">
+          ${tiersHtml}
+        </dl>
+        <div class="card-actions">
+          <button type="button" class="btn btn-card-add" data-id="${escapeHtml(manh.id)}" data-name="${escapeHtml(manh.orderName)}" data-price="0" data-unit="mảnh">
+            + Ghi vào đơn<span class="visually-hidden"> ${escapeHtml(manh.name)}</span>
+          </button>
+          <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link">Hỏi giá Zalo<span class="visually-hidden"> về ${escapeHtml(manh.name)}</span></a>
+        </div>
+      </li>
+    `;
+  }).join("");
 
   return `
     <section class="subhero-section">
       <div class="container subhero-inner">
         <div class="hero-pills">
           <span class="pill pill-jade">Kho Item · Vàng · Ngọc · SPL</span>
-          <span class="pill pill-gold">Chuẩn Icon TeaMobi · Chọn SL Từng Loại</span>
+          <span class="pill pill-gold">Chọn số lượng từng loại · Tính đơn nhanh</span>
         </div>
         <h1>Mua Item x99 · Đá Nâng Cấp · Vàng · Ngọc · SPL &amp; Mảnh</h1>
-        <p class="pretty-text">
-          Kho đầy đủ Cuồng nộ (15k), Bổ huyết / Giáp Xên (10k), Máy dò CSKB (40k), 5 loại Đá NC (20k/999), Dùi đục SLL (10k), Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), SPL, NR 3s và Mảnh Khỉ / Rồng / Đội trưởng Vàng.
-        </p>
+        <div class="hero-cta-row">
+          <a href="#bang-gia-item" class="btn btn-primary">Bảng giá Item</a>
+          <a href="#kich-manh" class="btn btn-secondary">Thông tin Kích mảnh</a>
+          <a href="#vang-ngoc" class="btn btn-outline">Tính Vàng · Ngọc · SPL</a>
+        </div>
       </div>
     </section>
 
@@ -676,7 +737,7 @@ function renderMuaItemView({ integrity }) {
         <div class="item-pricing-card">
           <div class="table-scroll">
             <table class="item-pricing-table">
-              <caption>Bảng giá niêm yết chi tiết từng loại item (icon TeaMobi chính gốc)</caption>
+              <caption>Bảng giá niêm yết chi tiết từng loại item</caption>
               <thead>
                 <tr>
                   <th scope="col">Loại Item / Vật Phẩm</th>
@@ -718,7 +779,7 @@ function renderMuaItemView({ integrity }) {
                   type="search"
                   id="catalog-search"
                   name="q"
-                  placeholder="Tìm nhanh: cuồng nộ, bổ huyết, giáp xên, cskb, dùi đục, đá nc, đội trưởng vàng, spl, 3s..."
+                  placeholder="Tìm nhanh: cuồng nộ, bổ huyết, giáp xên, cskb, dùi đục, đá nc, đội trưởng vàng, spl 441 442 446 447..."
                   autocomplete="off"
                 >
                 <button type="button" id="clear-search-btn" class="btn-clear-search" hidden aria-label="Xóa từ khóa tìm kiếm">Xóa</button>
@@ -731,7 +792,7 @@ function renderMuaItemView({ integrity }) {
             <button type="button" class="filter-btn" data-category="item-x99" aria-pressed="false">Item x99</button>
             <button type="button" class="filter-btn" data-category="da-duiduc" aria-pressed="false">Đá NC &amp; Dùi đục</button>
             <button type="button" class="filter-btn" data-category="vang-ngoc" aria-pressed="false">Vàng &amp; Ngọc</button>
-            <button type="button" class="filter-btn" data-category="spl-manh" aria-pressed="false">SPL · NR 3s · Mảnh</button>
+            <button type="button" class="filter-btn" data-category="spl-manh" aria-pressed="false">SPL (441–447) · NR 3s · Mảnh</button>
           </div>
         </div>
 
@@ -739,6 +800,22 @@ function renderMuaItemView({ integrity }) {
 
         <ul id="catalog-grid" class="catalog-grid" role="list">
           ${cardsHtml}
+        </ul>
+      </div>
+    </section>
+
+    <section id="kich-manh" class="manh-section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Thông tin kích mảnh</span>
+            <h2>Bảng Thông Tin Các Loại Mảnh</h2>
+            <p class="pretty-text">Số lượng mảnh cần thiết để kích hoạt bóng và nâng cấp LV cho từng loại mảnh sưu tầm.</p>
+          </div>
+        </div>
+
+        <ul class="manh-grid" role="list">
+          ${manhCardsHtml}
         </ul>
       </div>
     </section>
@@ -791,11 +868,7 @@ function renderMuaItemView({ integrity }) {
                   <td class="mono-num"><strong>10.000 đ / 1 cái</strong></td>
                   <td>Có số lượng lớn (SLL)</td>
                 </tr>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/3887.png" alt="" width="64" height="64" loading="lazy" class="table-sprite"><span>Sao pha lê (SPL)</span></span></td>
-                  <td class="mono-num"><strong>1.000 đ / 1 viên</strong></td>
-                  <td>Đủ các màu chỉ số</td>
-                </tr>
+                ${splRateRowsHtml}
                 <tr>
                   <td><span class="table-item-cell"><img src="/assets/icons/421.png" alt="" width="64" height="64" loading="lazy" class="table-sprite"><span>Ngọc Rồng 3 sao (NR 3s)</span></span></td>
                   <td class="mono-num"><strong>2.500 đ / 1 viên</strong></td>
@@ -852,13 +925,20 @@ function renderMuaItemView({ integrity }) {
                 <label class="radio-pill" for="calc-spl">
                   <input type="radio" id="calc-spl" name="calcType" value="spl">
                   <img src="/assets/icons/3887.png" alt="" width="64" height="64" loading="lazy" class="pill-sprite">
-                  <span>SPL · 1.000 đ / 1v</span>
+                  <span>SPL (4 loại) · 1k/1v</span>
                 </label>
                 <label class="radio-pill" for="calc-nr3s">
                   <input type="radio" id="calc-nr3s" name="calcType" value="nr3s">
                   <img src="/assets/icons/421.png" alt="" width="64" height="64" loading="lazy" class="pill-sprite">
                   <span>NR 3s · 2.500 đ / 1v</span>
                 </label>
+              </div>
+            </fieldset>
+
+            <fieldset id="calc-spl-fieldset" class="calc-fieldset" hidden>
+              <legend>Chọn loại Sao pha lê (ID 441 · 442 · 446 · 447)</legend>
+              <div class="radio-pills">
+                ${splCalcPillsHtml}
               </div>
             </fieldset>
 

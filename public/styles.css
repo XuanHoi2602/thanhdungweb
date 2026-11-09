@@ -997,6 +997,7 @@
 
   /* Sections */
   .catalog-section,
+  .manh-section,
   .item-pricing-section,
   .rates-section,
   .services-section,
@@ -1379,6 +1380,136 @@
     white-space: nowrap;
   }
 
+  /* Bảng Thông Tin Kích Mảnh */
+  .manh-section {
+    background-color: var(--bg-page);
+    border-block-start: 1px solid var(--border-subtle);
+  }
+
+  .manh-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19.5rem), 1fr));
+    gap: 1.15rem;
+    align-items: stretch;
+  }
+
+  .manh-card {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0.9rem;
+    min-inline-size: 0;
+    padding: 1.25rem;
+    border-radius: 1.15rem;
+    background-color: var(--bg-surface);
+    border: 1.5px solid var(--border-subtle);
+    box-shadow: var(--shadow-card);
+    transition: transform 0.18s ease, border-color 0.18s ease;
+  }
+
+  .manh-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+  }
+
+  .manh-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-inline-size: 0;
+  }
+
+  .manh-stack-slot {
+    position: relative;
+    flex-shrink: 0;
+    inline-size: 3.75rem;
+    block-size: 3.75rem;
+    display: inline-grid;
+    place-items: center;
+    padding: 0.35rem;
+    border-radius: 0.85rem;
+    border: 1.5px solid color-mix(in oklab, var(--accent-jade) 50%, var(--border-subtle));
+    background: radial-gradient(circle at 30% 25%, var(--bg-surface), var(--accent-gold-bg));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
+  }
+
+  .manh-stack-num {
+    position: absolute;
+    inset-block-end: 0.12rem;
+    inset-inline-end: 0.18rem;
+    padding: 0.05rem 0.28rem;
+    border-radius: 0.35rem;
+    background-color: rgb(4 17 12 / 0.88);
+    color: #fde68a;
+    border: 1px solid rgb(251 191 36 / 0.55);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .manh-head-copy {
+    display: grid;
+    gap: 0.2rem;
+    min-inline-size: 0;
+  }
+
+  .manh-card-head h3 {
+    font-size: 1.12rem;
+    font-weight: 800;
+    overflow-wrap: break-word;
+  }
+
+  .manh-spec-list {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+
+  .manh-tier-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    min-inline-size: 0;
+  }
+
+  .manh-tier-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.34rem 0.72rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    min-inline-size: 0;
+  }
+
+  .manh-tier-shadow {
+    background-color: var(--accent-jade-bg);
+    color: var(--accent-jade-fg);
+    border-color: color-mix(in oklab, var(--accent-primary) 42%, transparent);
+  }
+
+  .manh-tier-level {
+    background-color: var(--planet-earth-bg);
+    color: var(--planet-earth-fg);
+    border-color: var(--planet-earth-border);
+  }
+
+  .manh-qty-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.34rem 0.78rem;
+    border-radius: 999px;
+    background-color: var(--accent-crimson-bg);
+    color: var(--accent-crimson-fg);
+    border: 1px solid color-mix(in oklab, var(--accent-crimson) 45%, transparent);
+    font-size: 0.84rem;
+    font-weight: 800;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   /* Rates & Calculator */
   .rates-section {
     background-color: var(--bg-surface-alt);
@@ -1465,6 +1596,10 @@
   .calc-output,
   #add-calc-to-order {
     min-inline-size: 0;
+  }
+
+  .calc-fieldset[hidden] {
+    display: none;
   }
 
   .calc-fieldset legend {
@@ -2551,6 +2686,18 @@
       grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
     }
 
+    .manh-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .manh-card {
+      grid-row: span 3;
+      /* Same-cascade fallback: ignored when subgrid is supported. */
+      grid-template-rows: auto 1fr auto;
+      grid-template-rows: subgrid;
+    }
+
     .mobile-dock {
       display: none;
     }
@@ -2603,6 +2750,7 @@
     }
 
     .product-card:hover,
+    .manh-card:hover,
     .starter-acc-card:hover,
     .hub-card:hover,
     .account-card:hover,

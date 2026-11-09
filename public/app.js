@@ -20,8 +20,8 @@
     "✅ Bán x99 máy dò CSKB 40.000 đ / x99",
     "✅ Cho thuê set thần 3 hành tinh up thức ăn, set SMTN TĐ, XD 5s 10.000 đ / 1 ngày",
     "✅ Bán vàng tươi x15, vàng die x60 - ngọc kí x11, ngọc vé (ID 718) x10",
-    "✅ Bán SPL các loại 1.000 đ / 1 viên",
-    "✅ Bán mảnh khỉ, mảnh rồng, mảnh Đội trưởng Vàng (DTV)",
+    "✅ Bán SPL 4 loại: Đỏ 441 (Hút HP), Lam 442 (Hút KI), Vàng 446 (+5% vàng), Lục 447 (+5% TNSM) — 1.000 đ / 1 viên",
+    "✅ Bán mảnh khỉ (10/125/125), mảnh rồng (3/15), mảnh Đội trưởng Vàng (10/30)",
     "✅ Nhận săn đệ SS - skill 5",
     "✅ Bán acc đậu 5 8.000 đ / 1 acc - acc clone 340k SM 3.000 đ / 1 acc",
     "✅ Bán NR 3s 2.500 đ / 1 viên",
@@ -364,7 +364,7 @@
     if (catalogStatus) {
       if (visibleCount === 0) {
         catalogStatus.textContent =
-          "Không tìm thấy mục nào khớp từ khóa. Thử tìm: cuồng nộ, bổ huyết, giáp xên, cskb, dùi đục, đá nc, đội trưởng vàng, spl, 3s...";
+          "Không tìm thấy mục nào khớp từ khóa. Thử tìm: cuồng nộ, bổ huyết, giáp xên, cskb, dùi đục, đá nc, đội trưởng vàng, spl 441 442 446 447, 3s...";
       } else if (activeCategory === "all" && !query) {
         catalogStatus.textContent = `Đang hiển thị tất cả ${visibleCount} nhóm sản phẩm.`;
       } else {
@@ -402,6 +402,7 @@
      7. Bidirectional Calculator (/mua-item)
      ========================================================= */
   const calcForm = document.getElementById("rate-calc-form");
+  const calcSplFieldset = document.getElementById("calc-spl-fieldset");
   const calcAmountInput = document.getElementById("calc-amount");
   const calcInputLabel = document.getElementById("calc-input-label");
   const calcInputHint = document.getElementById("calc-input-hint");
@@ -409,6 +410,20 @@
   const calcResultMain = document.getElementById("calc-result-main");
   const calcResultSub = document.getElementById("calc-result-sub");
   const addCalcBtn = document.getElementById("add-calc-to-order");
+
+  const SPL_VARIANT_MAP = {
+    441: { key: "spl-441", name: "Sao pha lê đỏ (ID 441)", effect: "Hút 5% HP" },
+    442: { key: "spl-442", name: "Sao pha lê lam (ID 442)", effect: "Hút 5% KI" },
+    446: { key: "spl-446", name: "Sao pha lê vàng (ID 446)", effect: "+5% vàng rơi" },
+    447: { key: "spl-447", name: "Sao pha lê lục (ID 447)", effect: "+5% TNSM" }
+  };
+
+  const getSelectedSplVariant = () => {
+    if (!calcForm) return SPL_VARIANT_MAP[441];
+    const checked = calcForm.querySelector('input[name="splVariant"]:checked');
+    const code = checked ? checked.value : "441";
+    return SPL_VARIANT_MAP[code] || SPL_VARIANT_MAP[441];
+  };
 
   const CALC_CONFIG = {
     "gold-fresh": {
@@ -548,6 +563,11 @@
     const mode = getSelectedCalcMode();
     const typeKey = getSelectedCalcType();
     const config = CALC_CONFIG[typeKey] || CALC_CONFIG["gold-fresh"];
+    const splVariant = typeKey === "spl" ? getSelectedSplVariant() : null;
+
+    if (calcSplFieldset) {
+      calcSplFieldset.hidden = typeKey !== "spl";
+    }
 
     if (mode !== previousCalcMode) {
       const currentVal = Number(calcAmountInput.value);
@@ -567,6 +587,10 @@
       calcInputLabel.textContent = "Số tiền dự kiến mua (nghìn VNĐ, ví dụ 100 = 100.000 đ)";
       calcInputHint.textContent = "Nhập số tiền theo đơn vị nghìn đồng (ví dụ 50 = 50.000 đ, 100 = 100.000 đ).";
       calcOutputLabel.textContent = "Ước tính nhận được:";
+    } else if (splVariant) {
+      calcInputLabel.textContent = `Số viên ${splVariant.name} muốn mua`;
+      calcInputHint.textContent = `Nhập số viên cần mua — ${splVariant.effect} (đơn giá 1.000 đ / 1 viên).`;
+      calcOutputLabel.textContent = "Số tiền cần thanh toán:";
     } else {
       calcInputLabel.textContent = config.qtyLabel;
       calcInputHint.textContent = config.qtyHint;
@@ -582,34 +606,48 @@
     const mode = getSelectedCalcMode();
     const typeKey = getSelectedCalcType();
     const config = CALC_CONFIG[typeKey] || CALC_CONFIG["gold-fresh"];
+    const splVariant = typeKey === "spl" ? getSelectedSplVariant() : null;
+    const activeRateText = splVariant
+      ? `${splVariant.name} · ${splVariant.effect} (1.000 đ / 1 viên)`
+      : config.rateText;
     const rawVal = Number(calcAmountInput.value);
 
     if (!Number.isFinite(rawVal) || rawVal < 1) {
       currentCalcSnapshot = null;
       calcResultMain.textContent = mode === "by-money" ? "Nhập số tiền từ 1 trở lên" : "Nhập số lượng từ 1 trở lên";
-      calcResultSub.textContent = `Đang chọn: ${config.rateText}`;
+      calcResultSub.textContent = `Đang chọn: ${activeRateText}`;
       return;
     }
 
     const clamped = Math.min(1000000, Math.floor(rawVal));
 
     if (mode === "by-money") {
-      const resultText = config.computeFromMoneyK(clamped);
+      const resultText = splVariant
+        ? `${formatNumber(clamped)} viên ${splVariant.name}`
+        : config.computeFromMoneyK(clamped);
       calcResultMain.textContent = resultText;
-      calcResultSub.textContent = `Tương ứng ${formatVND(clamped * 1000)} theo tỉ lệ ${config.rateText}`;
+      calcResultSub.textContent = splVariant
+        ? `Tương ứng ${formatVND(clamped * 1000)} (${splVariant.effect} · 1.000 đ / 1 viên)`
+        : `Tương ứng ${formatVND(clamped * 1000)} theo tỉ lệ ${config.rateText}`;
       currentCalcSnapshot = {
-        id: `calc-${typeKey}-${clamped}k`,
-        name: `${config.label}: ${resultText}`,
+        id: `calc-${splVariant ? splVariant.key : typeKey}-${clamped}k`,
+        name: splVariant ? `${splVariant.name}: ${formatNumber(clamped)} viên` : `${config.label}: ${resultText}`,
         price: clamped * 1000,
         unit: "gói"
       };
     } else {
-      const calcQty = config.computeFromQty(clamped);
+      const calcQty = splVariant
+        ? {
+            costVND: clamped * 1000,
+            qtyText: `${formatNumber(clamped)} viên`,
+            subText: `Mua ${formatNumber(clamped)} viên ${splVariant.name} (${splVariant.effect} · 1.000 đ / 1 viên)`
+          }
+        : config.computeFromQty(clamped);
       calcResultMain.textContent = formatVND(calcQty.costVND);
       calcResultSub.textContent = calcQty.subText;
       currentCalcSnapshot = {
-        id: `calc-${typeKey}-q${clamped}`,
-        name: `${config.label}: ${calcQty.qtyText}`,
+        id: `calc-${splVariant ? splVariant.key : typeKey}-q${clamped}`,
+        name: splVariant ? `${splVariant.name}: ${calcQty.qtyText}` : `${config.label}: ${calcQty.qtyText}`,
         price: calcQty.costVND,
         unit: "gói"
       };

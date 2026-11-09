@@ -1,12 +1,12 @@
 # Shop Ngọc Rồng Online Thanh Dung — Web Multi-Path & Bảo Mật Chính Chủ
 
-Website bán hàng game **Ngọc Rồng Online (TeaMobi)** chính chủ với giao diện chốt tông **Namek Xanh Ngọc**, phân khu rõ ràng theo từng URL path, tích hợp quản lý **Mua Bán Tài Khoản** (upload ảnh acc thật, giá, server, hành tinh, ghi chú quảng cáo) và hệ thống **bảo mật Backend + Frontend** chống tiêm mã độc (XSS) làm đổi link hoặc số tài khoản chuyển khoản.
+Website bán hàng game **Ngọc Rồng Online** chính chủ với giao diện chốt tông **Namek Xanh Ngọc**, phân khu rõ ràng theo từng URL path, tích hợp quản lý **Mua Bán Tài Khoản** (upload ảnh acc thật, giá, server, hành tinh, ghi chú quảng cáo) và hệ thống **bảo mật Backend + Frontend** chống tiêm mã độc (XSS) làm đổi link hoặc số tài khoản chuyển khoản.
 
 ## 1. Cấu trúc đường dẫn (Multi-Path)
 
 - `/` — **Trang chủ tổng quan**: Hero Shenron, 3 khu dịch vụ chính, acc nổi bật, **Mã QR & STK MB Bank chính chủ (`0368018920`)**, 4 liên hệ chính thức.
 - `/kich-diem` — **Path Kích điểm & Dịch vụ VIP**: Nhận kích điểm `300.000 đ`, nạp CR `810.000 đ` done 3s, Thuê Set Thần 3 hành tinh / Set SMTN 5s `10.000 đ / ngày`, Săn Đệ SS – Skill 5, GDTG 20/24 (ko nhận mail sống), Thu All Acc (BMTT), Rút VTS – Tín dụng.
-- `/mua-item` — **Path Mua Item & Tính đơn**: Bảng giá chi tiết chọn số lượng x99 Cuồng nộ (`15k`), BH/GX (`10k`), MD CSKB (`40k`), 5 loại Đá NC (`20k/999`), Dùi đục SLL (`10k`), SPL (`1k`), NR 3s (`2k5`), Mảnh Khỉ/Rồng/Đội trưởng Vàng (DTV), Bảng quy đổi Vàng (`x15` / `x60`), Ngọc kí (`x11`) / Ngọc vé (`x10` ID `718`) & Máy tính 2 chiều.
+- `/mua-item` — **Path Mua Item & Tính đơn**: Bảng giá chi tiết chọn số lượng x99 Cuồng nộ (`15k`), BH/GX (`10k`), MD CSKB (`40k`), 5 loại Đá NC (`20k/999`), Dùi đục SLL (`10k`), 4 loại SPL (ID `441, 442, 446, 447` — `1k`), NR 3s (`2k5`), Bảng thông tin Kích mảnh Khỉ / Rồng / Đội trưởng Vàng, Bảng quy đổi Vàng (`x15` / `x60`), Ngọc kí (`x11`) / Ngọc vé (`x10` ID `718`) & Máy tính 2 chiều.
 - `/mua-tai-khoan` — **Path Mua Bán Tài Khoản**: Acc Đậu 5 (`8.000 đ`), Acc Clone 340k SM (`3.000 đ`), Kho Tài Khoản NRO lọc theo **Server · Hành tinh (`Trái Đất` / `Namếc` / `Xayda`) · Trạng thái**, xem ảnh lớn và khung **Quản lý Up Hình Acc** dành cho Chủ Shop.
 - `/admin` — **Quản trị & Bảo mật**: Đăng nhập Chủ Shop, đăng/sửa/xóa acc, kiểm tra toàn vẹn SHA-256 của STK/Link/QR và xem **Audit Logs / CSP Reports**.
 

@@ -114,7 +114,33 @@ async function runTests() {
     const routes = [
       { path: "/", mustInclude: ["THANH DUNG NRO", 'data-palette="namek-jade"', "0368018920", "Tài khoản chính chủ", "/kich-diem", "/mua-item", "/mua-tai-khoan"] },
       { path: "/kich-diem", mustInclude: ["300.000 đ / lượt", "810.000 đ / gói", "Thuê Set Thần", "GDTG 20/24", "Không nhận giao dịch"] },
-      { path: "/mua-item", mustInclude: ["x99 Cuồng nộ", "15.000 đ / x99", "x99 Bổ huyết", "Giáp Xên", "ID 718", "Đội trưởng Vàng"] },
+      {
+        path: "/mua-item",
+        mustInclude: [
+          "x99 Cuồng nộ",
+          "15.000 đ / x99",
+          "x99 Bổ huyết",
+          "Giáp Xên",
+          "ID 718",
+          "Sao pha lê đỏ (ID 441)",
+          "Sao pha lê lam (ID 442)",
+          "Sao pha lê vàng (ID 446)",
+          "Sao pha lê lục (ID 447)",
+          "Hút 5% HP",
+          "Hút 5% KI",
+          "+5% vàng rơi",
+          "+5% TNSM",
+          "Bảng Thông Tin Các Loại Mảnh",
+          "Mảnh Đội trưởng Vàng",
+          "10 mảnh",
+          "30 mảnh",
+          "Mảnh Rồng thần Namếc",
+          "3 mảnh",
+          "15 mảnh",
+          "Mảnh Khỉ Oozaru",
+          "125 mảnh"
+        ]
+      },
       { path: "/mua-tai-khoan", mustInclude: ["Acc Đậu thần cấp 5", "Acc Clone 340k SM", "Kho Tài Khoản NRO", "Trái Đất", "Namếc", "Xayda"] },
       { path: "/admin", mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password"] }
     ];
@@ -128,7 +154,10 @@ async function runTests() {
       "HttpOnly",
       "magic bytes",
       "Backend",
-      "Frontend"
+      "Frontend",
+      "(icon TeaMobi chính gốc)",
+      "Kho đầy đủ Cuồng nộ",
+      "TeaMobi"
     ];
 
     const seenNonces = new Set();
@@ -199,6 +228,9 @@ async function runTests() {
     assert.equal(shopData.contacts.facebookUrl, "https://www.facebook.com/Thanhdungg.Kem");
     assert.equal(shopData.contacts.zaloUrl, "http://zalo.me/84368018920");
     assert.equal(shopData.integrity.ok, true, "QR integrity SHA-256 must verify clean");
+    assert(shopData.fullAdPost.includes("441"), "Full ad post should list SPL 441");
+    assert(shopData.fullAdPost.includes("447"), "Full ad post should list SPL 447");
+    assert(shopData.fullAdPost.includes("10/125/125"), "Full ad post should list Manh Khi tiers");
 
     console.log("4. Testing Fetch Metadata Isolation & Auth Gates...");
     const crossSiteAttempt = await fetch(`${baseUrl}/api/accounts`, {
