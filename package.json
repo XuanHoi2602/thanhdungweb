@@ -1,0 +1,15 @@
+{
+  "name": "thanhdung-nro-shop",
+  "version": "2.0.0",
+  "description": "Website bán hàng game Ngọc Rồng Online Thanh Dung — Multi-path, Quản lý Acc có Upload ảnh, Bảo mật Backend/Frontend & Tone Namek Xanh Ngọc.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/security.test.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,17 @@
+# Environment & secrets
+.env
+.bootstrap-credentials.txt
+
+# Runtime database & uploaded images
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/.hmac-key
+uploads/*.png
+uploads/*.jpg
+uploads/*.webp
+
+# Node & OS clutter
+node_modules/
+.DS_Store
+Thumbs.db
