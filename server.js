@@ -204,7 +204,7 @@ function createAppServer(options = {}) {
       const fmCheck = checkFetchMetadataAndOrigin(req, res, { isApi });
       if (!fmCheck.ok) {
         if (["POST", "PATCH", "PUT", "DELETE"].includes(method)) {
-          store.recordAudit("FETCH_METADATA_BLOCK", "anonymous", fmCheck.reason, ip);
+          store.recordAudit("BLOCKED_EXTERNAL_REQ", "anonymous", fmCheck.reason, ip);
         }
         sendJson(req, res, 403, { ok: false, error: "Forbidden by resource isolation policy" });
         return;
@@ -469,8 +469,8 @@ function createAppServer(options = {}) {
         }
 
         if (!verifyCsrf(req, session)) {
-          store.recordAudit("CSRF_BLOCK", session.username, "Sai hoặc thiếu X-CSRF-Token khi đăng acc", ip);
-          sendJson(req, res, 403, { ok: false, error: "Phiên CSRF không hợp lệ." });
+          store.recordAudit("INVALID_SESSION_ACTION", session.username, "Yêu cầu thao tác không hợp lệ khi đăng acc", ip);
+          sendJson(req, res, 403, { ok: false, error: "Phiên làm việc không hợp lệ, vui lòng tải lại trang." });
           return;
         }
 

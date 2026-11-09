@@ -112,11 +112,23 @@ async function runTests() {
   try {
     console.log("1. Testing Multi-Path HTML Routes & Namek Jade Lock & CSP Nonce...");
     const routes = [
-      { path: "/", mustInclude: ["THANH DUNG NRO", 'data-palette="namek-jade"', "0368018920", "/kich-diem", "/mua-item", "/mua-tai-khoan"] },
+      { path: "/", mustInclude: ["THANH DUNG NRO", 'data-palette="namek-jade"', "0368018920", "Tài khoản chính chủ", "/kich-diem", "/mua-item", "/mua-tai-khoan"] },
       { path: "/kich-diem", mustInclude: ["300.000 đ / lượt", "810.000 đ / gói", "Thuê Set Thần", "GDTG 20/24", "Không nhận giao dịch"] },
       { path: "/mua-item", mustInclude: ["x99 Cuồng nộ", "15.000 đ / x99", "x99 Bổ huyết", "Giáp Xên", "ID 718", "Đội trưởng Vàng"] },
       { path: "/mua-tai-khoan", mustInclude: ["Acc Đậu thần cấp 5", "Acc Clone 340k SM", "Kho Tài Khoản NRO", "Trái Đất", "Namếc", "Xayda"] },
-      { path: "/admin", mustInclude: ["Quản Trị Shop", "Toàn Vẹn Chính Chủ", "login-username", "login-password"] }
+      { path: "/admin", mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password"] }
+    ];
+
+    const forbiddenUiJargon = [
+      "Anti-Tamper",
+      "SHA-256",
+      "Namek Jade",
+      "Uy Tín SP123",
+      "Fetch Metadata",
+      "HttpOnly",
+      "magic bytes",
+      "Backend",
+      "Frontend"
     ];
 
     const seenNonces = new Set();
@@ -137,6 +149,9 @@ async function runTests() {
       const html = await resp.text();
       assert(!html.includes("demo-theme-bar"), `Palette demo bar should be removed on ${r.path}`);
       assert(!html.includes("dragon-gold"), `Old palette should be locked out on ${r.path}`);
+      for (const jargon of forbiddenUiJargon) {
+        assert(!html.toLowerCase().includes(jargon.toLowerCase()), `Forbidden UI jargon "${jargon}" leaked on ${r.path}`);
+      }
       assert(html.includes(`nonce="${nonceMatch[1]}"`), `HTML script tags should stamp matching nonce on ${r.path}`);
       for (const token of r.mustInclude) {
         assert(html.includes(token), `Route ${r.path} missing expected content: ${token}`);
@@ -392,6 +407,17 @@ async function runTests() {
     assert(auditJson.auditLogs.length >= 2, "Audit logs must record login & upload actions");
     assert(auditJson.cspReports.length === 1, "CSP reports must be stored");
     assert(!auditJson.cspReports[0].blocked_uri.includes("secret"), "Query strings must be stripped from CSP report URIs");
+
+    const authedAdminPage = await fetch(`${baseUrl}/admin`, {
+      headers: { Cookie: sessionCookie }
+    });
+    assert.equal(authedAdminPage.status, 200);
+    const authedAdminHtml = await authedAdminPage.text();
+    assert(authedAdminHtml.includes("Lịch Sử Đăng Nhập"));
+    assert(authedAdminHtml.includes("Cảnh Báo Bất Thường"));
+    for (const jargon of [...forbiddenUiJargon, "Audit Logs", "CSP Reports"]) {
+      assert(!authedAdminHtml.toLowerCase().includes(jargon.toLowerCase()), `Forbidden UI jargon "${jargon}" leaked on authenticated /admin`);
+    }
 
     // Delete account + verify PNG deleted on disk
     const delResp = await fetch(`${baseUrl}/api/accounts/${acc.id}`, {

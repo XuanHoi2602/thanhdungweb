@@ -253,7 +253,7 @@ function checkFetchMetadataAndOrigin(req, res, { isApi = false } = {}) {
       !["object", "embed"].includes(dest);
 
     if (!strictlySameOrigin && !allowedNavGet) {
-      return { ok: false, reason: `Blocked by Fetch Metadata (site=${site}, mode=${mode}, dest=${dest})` };
+      return { ok: false, reason: `Chặn yêu cầu từ nguồn bên ngoài (site=${site}, mode=${mode})` };
     }
   }
 

@@ -17,7 +17,7 @@ const ROUTE_META = {
   "/": {
     title: "Shop Ngọc Rồng Online Thanh Dung | Kích Điểm, Mua Item, Mua Bán Acc",
     description:
-      "Shop game Ngọc Rồng Online Thanh Dung chính chủ tone Namek Xanh Ngọc: Kích điểm 300k, Nạp CR 810k done 3s, Kho Item x99 - Đá NC - Vàng Ngọc SPL, Mua bán Tài khoản có ảnh xác thực, GDTG 20/24."
+      "Shop game Ngọc Rồng Online Thanh Dung chính chủ: Kích điểm 300k, Nạp CR 810k done 3s, Kho Item x99 - Đá NC - Vàng Ngọc SPL, Mua bán Tài khoản có ảnh xác thực, GDTG 20/24."
   },
   "/kich-diem": {
     title: "Kích Điểm 300k · Nạp CR 810k · Thuê Set · Săn Đệ · GDTG 20/24 | Thanh Dung NRO",
@@ -30,14 +30,14 @@ const ROUTE_META = {
       "Bảng giá chi tiết Item x99 Cuồng nộ, Bổ huyết, Giáp Xên, Máy dò CSKB, 5 loại Đá nâng cấp x999, Dùi đục SLL, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), SPL, NR 3s, Mảnh Đội trưởng Vàng & Máy tính 2 chiều."
   },
   "/mua-tai-khoan": {
-    title: "Mua Bán Tài Khoản Ngọc Rồng Online · SP123 & All Server | Thanh Dung NRO",
+    title: "Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server | Thanh Dung NRO",
     description:
       "Mua bán tài khoản Ngọc Rồng Online uy tín: Acc Đậu 5 8.000 đ, Acc Clone 340k SM 3.000 đ, Kho Acc NRO đủ server Trái Đất / Namếc / Xayda kèm ảnh chi tiết & giá công khai."
   },
   "/admin": {
-    title: "Quản Trị Đăng Acc & Kiểm Tra Bảo Mật Chính Chủ | Thanh Dung NRO",
+    title: "Quản Trị Shop & Đăng Bán Tài Khoản | Thanh Dung NRO",
     description:
-      "Bảng điều khiển quản trị Shop Ngọc Rồng Online Thanh Dung: Đăng bán tài khoản kèm ảnh, kiểm tra SHA-256 chính chủ & nhật ký bảo mật."
+      "Trang quản trị Shop Ngọc Rồng Online Thanh Dung: Đăng bán tài khoản kèm ảnh, quản lý trạng thái và xác nhận thông tin thanh toán chính chủ."
   }
 };
 
@@ -88,8 +88,8 @@ function renderVerifiedBankSection(integrity) {
         class="qr-img"
       >`
     : `<div class="integrity-alert" role="alert">
-        <strong>Cảnh báo toàn vẹn tệp QR!</strong>
-        <span>Ảnh mã QR trên máy chủ không khớp chữ ký SHA-256 chính chủ. Tạm khóa hiển thị QR — vui lòng đối chiếu trực tiếp STK bên cạnh và nhắn Zalo chính chủ.</span>
+        <strong>Cảnh báo xác thực mã QR!</strong>
+        <span>Ảnh mã QR hiện tại không khớp bản gốc chính chủ. Tạm ẩn QR — vui lòng đối chiếu trực tiếp STK bên cạnh và nhắn Zalo chính chủ.</span>
       </div>`;
 
   return `
@@ -100,12 +100,12 @@ function renderVerifiedBankSection(integrity) {
             <span class="eyebrow">Xác minh chuyển khoản chính chủ</span>
             <h2>Mã QR &amp; Số Tài Khoản Ngân Hàng Duy Nhất</h2>
             <p class="pretty-text">
-              Cảnh giác giả mạo! Shop <strong>chỉ sử dụng duy nhất 1 tài khoản MB Bank</strong> được khóa cứng từ máy chủ dưới đây — luôn đối chiếu đúng tên chủ tài khoản trước khi chuyển tiền.
+              Cảnh giác giả mạo! Shop <strong>chỉ sử dụng duy nhất 1 tài khoản MB Bank</strong> dưới đây — luôn đối chiếu đúng tên chủ tài khoản trước khi chuyển tiền.
             </p>
           </div>
           <span class="pill pill-jade integrity-pill" id="integrity-badge">
             <span class="dot-live" aria-hidden="true"></span>
-            Xác thực máy chủ: ${integrity.ok ? "Toàn vẹn SHA-256" : "Cần kiểm tra QR"}
+            ${integrity.ok ? "Tài khoản chính chủ" : "Vui lòng kiểm tra lại STK"}
           </span>
         </div>
 
@@ -113,7 +113,7 @@ function renderVerifiedBankSection(integrity) {
           <div class="bank-info-card">
             <div class="bank-badge-row">
               <span class="pill pill-gold">${escapeHtml(OFFICIAL_BANK.bankName)}</span>
-              <span class="pill pill-jade">Khóa cứng Anti-Tamper</span>
+              <span class="pill pill-jade">Chuyển khoản 24/7</span>
             </div>
 
             <h3>Thông Tin Chuyển Khoản Chính Thức</h3>
@@ -146,7 +146,7 @@ function renderVerifiedBankSection(integrity) {
             <ul class="bank-verify-list">
               <li><strong>Đối chiếu tên:</strong> App ngân hàng phải hiện đúng tên <code>${escapeHtml(OFFICIAL_BANK.accountOwner)}</code>. Mọi tài khoản tên khác đều là giả mạo.</li>
               <li><strong>Trùng SĐT Zalo:</strong> STK <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code> trùng khớp hoàn toàn với Zalo chính chủ <code>${escapeHtml(OFFICIAL_CONTACTS.zaloDisplay)}</code>.</li>
-              <li><strong>Chống sửa link/STK:</strong> Toàn bộ thông tin thanh toán được khóa bất biến phía Backend và kiểm tra chéo liên tục ở Frontend.</li>
+              <li><strong>An toàn giao dịch:</strong> Không chuyển khoản qua bất kỳ trung gian hay số tài khoản lạ nào ngoài thông tin trên.</li>
             </ul>
 
             <div class="bank-cta-row">
@@ -183,7 +183,7 @@ function renderContactsSection() {
           <div>
             <span class="eyebrow">Xác minh chính chủ</span>
             <h2>Liên Hệ &amp; Cộng Đồng Thanh Dung</h2>
-            <p class="pretty-text">Cảnh giác tài khoản giả mạo! Chỉ giao dịch qua đúng 4 đường dẫn chính thức đã khóa xác thực dưới đây.</p>
+            <p class="pretty-text">Cảnh giác tài khoản giả mạo! Chỉ giao dịch qua đúng 4 kênh liên hệ chính thức dưới đây.</p>
           </div>
         </div>
 
@@ -383,19 +383,19 @@ function renderHomeView({ latestAccounts, integrity }) {
           <div class="hero-pills">
             <span class="pill pill-jade">
               <span class="dot-live" aria-hidden="true"></span>
-              Namek Xanh Ngọc · Done 3s
+              Giao dịch nhanh · Done 3s
             </span>
-            <span class="pill pill-gold">Bảo mật BMTT · Chống giả mạo Link &amp; STK</span>
+            <span class="pill pill-gold">Bảo mật thông tin · Giao dịch chính chủ</span>
           </div>
 
           <h1 class="hero-title">
             Shop Ngọc Rồng Online
-            <span class="hero-accent">Thanh Dung SP123</span>
+            <span class="hero-accent">Thanh Dung NRO</span>
           </h1>
 
           <p class="hero-desc pretty-text">
-            Hệ thống website chính chủ đã phân khu rõ ràng 3 chuyên trang dịch vụ:
-            <strong>Kích Điểm &amp; Nạp CR</strong>, <strong>Kho Item &amp; Đá Vàng Ngọc</strong>, và <strong>Mua Bán Tài Khoản NRO</strong> kèm kiểm tra toàn vẹn đường dẫn &amp; STK MB Bank <code>0368018920</code>.
+            Website chính chủ chia thành 3 khu dịch vụ rõ ràng:
+            <strong>Kích Điểm &amp; Nạp CR</strong>, <strong>Kho Item &amp; Đá Vàng Ngọc</strong>, và <strong>Mua Bán Tài Khoản NRO</strong> — thanh toán duy nhất qua STK MB Bank <code>0368018920</code>.
           </p>
 
           <div class="hero-cta-row">
@@ -446,7 +446,7 @@ function renderHomeView({ latestAccounts, integrity }) {
                 <strong class="mono-num">Kích điểm 300.000 đ · Nạp CR 810.000 đ</strong>
               </div>
               <div class="caption-item">
-                <span class="caption-label">Cộng Đồng SP123 Chính Chủ</span>
+                <span class="caption-label">Cộng Đồng Chính Chủ</span>
                 <strong>Box Zalo SP1 &amp; Group FB Thanh Dung</strong>
               </div>
             </div>
@@ -459,9 +459,9 @@ function renderHomeView({ latestAccounts, integrity }) {
       <div class="container">
         <div class="section-head">
           <div>
-            <span class="eyebrow">Phân khu đường dẫn riêng biệt</span>
+            <span class="eyebrow">Danh mục dịch vụ</span>
             <h2>Chọn Nhanh Chuyên Trang Dịch Vụ NRO</h2>
-            <p class="pretty-text">Mỗi mảng bán hàng có đường dẫn riêng biệt, giữ nguyên giỏ đơn tính nhanh xuyên suốt khi bạn chuyển trang.</p>
+            <p class="pretty-text">Mỗi mảng dịch vụ có trang đặt hàng riêng, giỏ đơn tính nhanh luôn được giữ nguyên khi bạn chuyển qua lại.</p>
           </div>
         </div>
 
@@ -472,7 +472,7 @@ function renderHomeView({ latestAccounts, integrity }) {
               <span class="item-slot"><img src="/assets/icons/5004.png" alt="" width="72" height="72" class="game-sprite"></span>
               <span class="item-slot"><img src="/assets/icons/5007.png" alt="" width="96" height="68" class="game-sprite"></span>
             </div>
-            <span class="eyebrow">Path: <code>/kich-diem</code></span>
+            <span class="eyebrow">Nạp &amp; Dịch vụ</span>
             <h3>Kích Điểm · Nạp CR · Thuê Set · Săn Đệ &amp; GDTG</h3>
             <p class="pretty-text">Nhận kích điểm 300.000 đ, nạp CR 810.000 đ done 3s, thuê Set Thần 3 hành tinh / SMTN 5s 10.000 đ/ngày, săn đệ SS Skill 5, GDTG 20/24 (ko mail sống), thu all acc &amp; rút VTS.</p>
             <a href="/kich-diem" class="btn btn-primary btn-full">Vào trang Kích Điểm &amp; Dịch Vụ</a>
@@ -484,7 +484,7 @@ function renderHomeView({ latestAccounts, integrity }) {
               <span class="item-slot"><img src="/assets/icons/6765.png" alt="" width="72" height="72" class="game-sprite"></span>
               <span class="item-slot"><img src="/assets/icons/8935.png" alt="" width="84" height="84" class="game-sprite"></span>
             </div>
-            <span class="eyebrow">Path: <code>/mua-item</code></span>
+            <span class="eyebrow">Vật phẩm · Vàng · Ngọc</span>
             <h3>Mua Item x99 · Đá NC · Vàng · Ngọc · SPL &amp; Mảnh</h3>
             <p class="pretty-text">Bảng giá riêng từng loại Item chọn số lượng: Cuồng nộ 15k, BH/GX 10k, MD CSKB 40k, 5 loại Đá NC 20k/999, Dùi đục SLL 10k, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), Máy tính 2 chiều.</p>
             <a href="/mua-item" class="btn btn-primary btn-full">Vào trang Mua Item &amp; Tính Đơn</a>
@@ -496,7 +496,7 @@ function renderHomeView({ latestAccounts, integrity }) {
               <span class="item-slot"><img src="/assets/icons/1089.png" alt="" width="48" height="64" class="game-sprite"></span>
               <span class="item-slot"><img src="/assets/icons/15614.png" alt="" width="80" height="80" class="game-sprite"></span>
             </div>
-            <span class="eyebrow">Path: <code>/mua-tai-khoan</code></span>
+            <span class="eyebrow">Tài khoản NRO</span>
             <h3>Mua Bán Tài Khoản NRO (Có Ảnh Acc &amp; Lọc Server)</h3>
             <p class="pretty-text">Acc Đậu 5 (8.000 đ), Acc Clone 340k SM (3.000 đ) và Kho Tài Khoản NRO đăng bán kèm ảnh thật, giá VNĐ, Server, Hành tinh (Trái Đất / Namếc / Xayda) &amp; ghi chú quảng cáo chi tiết.</p>
             <a href="/mua-tai-khoan" class="btn btn-primary btn-full">Vào Kho Mua Bán Tài Khoản</a>
@@ -511,7 +511,7 @@ function renderHomeView({ latestAccounts, integrity }) {
           <div>
             <span class="eyebrow">Cập nhật mới nhất</span>
             <h2>Tài Khoản NRO Đang Giao Dịch</h2>
-            <p class="pretty-text">Các acc nổi bật mới đăng từ khu vực quản trị chính chủ — kiểm tra Server, Hành tinh và thêm thẳng vào đơn gửi Zalo / Facebook.</p>
+            <p class="pretty-text">Các acc nổi bật mới đăng từ shop — kiểm tra Server, Hành tinh và thêm thẳng vào đơn gửi Zalo / Facebook.</p>
           </div>
           <a href="/mua-tai-khoan" class="btn btn-outline">Xem toàn bộ Kho Acc &rarr;</a>
         </div>
@@ -533,7 +533,7 @@ function renderKichDiemView({ integrity }) {
     <section class="subhero-section">
       <div class="container subhero-inner">
         <div class="hero-pills">
-          <span class="pill pill-jade">Path: <code>/kich-diem</code></span>
+          <span class="pill pill-jade">Kích điểm · Nạp CR · Thuê Set</span>
           <span class="pill pill-gold">Xử lý Done 3s · GDTG 20/24</span>
         </div>
         <h1>Dịch Vụ Kích Điểm · Nạp CR · Thuê Set · Săn Đệ &amp; GDTG</h1>
@@ -650,7 +650,7 @@ function renderMuaItemView({ integrity }) {
     <section class="subhero-section">
       <div class="container subhero-inner">
         <div class="hero-pills">
-          <span class="pill pill-jade">Path: <code>/mua-item</code></span>
+          <span class="pill pill-jade">Kho Item · Vàng · Ngọc · SPL</span>
           <span class="pill pill-gold">Chuẩn Icon TeaMobi · Chọn SL Từng Loại</span>
         </div>
         <h1>Mua Item x99 · Đá Nâng Cấp · Vàng · Ngọc · SPL &amp; Mảnh</h1>
@@ -903,7 +903,7 @@ function renderAdminAuthAndUploadSection({ session, showToggleNote = true }) {
         <div>
           <span class="eyebrow">Xác thực chủ shop</span>
           <h2>Đăng Nhập Quản Trị Để Up Hình &amp; Đăng Bán Acc</h2>
-          <p class="pretty-text">Chỉ chủ shop có phiên đăng nhập hợp lệ (<code>HttpOnly</code> + CSRF + <code>Fetch Metadata</code>) mới được phép tải ảnh và đăng bán tài khoản mới.</p>
+          <p class="pretty-text">Chỉ tài khoản quản trị của chủ shop mới được phép tải ảnh và đăng bán tài khoản mới lên hệ thống.</p>
         </div>
       </div>
 
@@ -954,7 +954,7 @@ function renderAdminAuthAndUploadSection({ session, showToggleNote = true }) {
           <span class="eyebrow">Đăng Acc NRO Chính Chủ</span>
           <h2>Up Hình Acc · Giá · Server · Hành Tinh · Ghi Chú Quảng Cáo</h2>
           <p class="pretty-text">
-            Ảnh upload được kiểm tra chữ ký nhị phân (<code>PNG / JPG / WebP</code> tối đa 5MB), đổi tên UUID ngẫu nhiên và tự loại bỏ nguy cơ chèn mã độc SVG/HTML.
+            Hỗ trợ ảnh <code>PNG / JPG / WebP</code> tối đa 5MB để hiển thị rõ nét trong kho tài khoản.
           </p>
         </div>
         <div class="admin-session-bar">
@@ -975,7 +975,7 @@ function renderAdminAuthAndUploadSection({ session, showToggleNote = true }) {
               required
               aria-describedby="acc-image-hint"
             >
-            <span id="acc-image-hint" class="field-hint">Chọn ảnh hành trang, đệ tử, chỉ số acc (hệ thống tự đọc magic bytes chống giả mạo file).</span>
+            <span id="acc-image-hint" class="field-hint">Chọn ảnh hành trang, đệ tử, chỉ số acc từ máy tính hoặc điện thoại.</span>
 
             <div id="acc-preview-frame" class="acc-preview-frame" hidden>
               <img id="acc-preview-img" src="/assets/favicon.svg" alt="Xem trước ảnh acc chuẩn bị đăng" width="320" height="200">
@@ -1080,10 +1080,10 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
     <section class="subhero-section">
       <div class="container subhero-inner">
         <div class="hero-pills">
-          <span class="pill pill-jade">Path: <code>/mua-tai-khoan</code></span>
+          <span class="pill pill-jade">Kho Mua Bán Tài Khoản</span>
           <span class="pill pill-gold">Up Hình · Giá · Server · Hành Tinh · Ghi Chú</span>
         </div>
-        <h1>Mua Bán Tài Khoản Ngọc Rồng Online · SP123 &amp; All Server</h1>
+        <h1>Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server</h1>
         <p class="pretty-text">
           Cung cấp Acc Đậu thần cấp 5 (<code>8.000 đ</code>), Acc Clone 340k SM (<code>3.000 đ</code>) và Kho Tài Khoản NRO đủ server Trái Đất · Namếc · Xayda kèm ảnh thật, giá niêm yết và ghi chú quảng cáo minh bạch.
         </p>
@@ -1244,8 +1244,8 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
 
           <div class="security-audit-grid">
             <div class="rates-table-card">
-              <span class="eyebrow">Nhật ký bảo mật Backend</span>
-              <h3>Lịch Sử Đăng Nhập &amp; Thao Tác (Audit Logs)</h3>
+              <span class="eyebrow">Nhật ký hoạt động</span>
+              <h3>Lịch Sử Đăng Nhập &amp; Thao Tác</h3>
               <div class="table-scroll">
                 <table>
                   <thead>
@@ -1279,22 +1279,22 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
             </div>
 
             <div class="rates-table-card">
-              <span class="eyebrow">Giám sát CSP &amp; Anti-XSS</span>
-              <h3>Báo Cáo Vi Phạm Mã Độc (CSP Reports)</h3>
+              <span class="eyebrow">Theo dõi an toàn trang web</span>
+              <h3>Cảnh Báo Bất Thường</h3>
               <div class="table-scroll">
                 <table>
                   <thead>
                     <tr>
                       <th scope="col">Thời gian</th>
-                      <th scope="col">Directive</th>
-                      <th scope="col">Blocked URI</th>
-                      <th scope="col">Sample</th>
+                      <th scope="col">Loại cảnh báo</th>
+                      <th scope="col">Nguồn lạ</th>
+                      <th scope="col">Chi tiết</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${
                       cspReports.length === 0
-                        ? '<tr><td colspan="4">Không phát hiện tập lệnh/nguồn lạ vi phạm CSP.</td></tr>'
+                        ? '<tr><td colspan="4">Không ghi nhận dấu hiệu bất thường nào.</td></tr>'
                         : cspReports
                             .map(
                               (rep) => `
@@ -1322,12 +1322,12 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
     <section class="subhero-section">
       <div class="container subhero-inner">
         <div class="hero-pills">
-          <span class="pill pill-jade">Path: <code>/admin</code></span>
-          <span class="pill pill-gold">CSP Nonce · Fetch Metadata · Magic Bytes Upload</span>
+          <span class="pill pill-jade">Khu vực quản trị</span>
+          <span class="pill pill-gold">Đăng bán Acc &amp; Theo dõi hệ thống</span>
         </div>
-        <h1>Quản Trị Shop &amp; Trung Tâm Bảo Mật Chính Chủ</h1>
+        <h1>Quản Trị Shop Thanh Dung</h1>
         <p class="pretty-text">
-          Khu vực dành riêng cho chủ shop để đăng bán tài khoản (kèm upload ảnh acc), quản lý trạng thái đơn và theo dõi toàn vẹn đường dẫn Facebook / Zalo / STK MB Bank <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code>.
+          Khu vực dành riêng cho chủ shop để đăng bán tài khoản kèm hình ảnh, cập nhật trạng thái đơn và kiểm tra thông tin thanh toán chính chủ MB Bank <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code>.
         </p>
       </div>
     </section>
@@ -1336,13 +1336,12 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
       <div class="container">
         <div class="shield-card">
           <div>
-            <span class="eyebrow">Anti-Tamper Checksum</span>
-            <h2>Kiểm Tra Toàn Vẹn Chính Chủ Hệ Thống</h2>
+            <span class="eyebrow">Thông tin chính chủ đang áp dụng</span>
+            <h2>Trạng Thái Thanh Toán &amp; Liên Hệ Chính Thức</h2>
             <ul class="bank-verify-list">
-              <li><strong>Trạng thái tổng thể:</strong> <code>${integrity.ok ? "HỢP LỆ (100% CHÍNH CHỦ)" : "CẢNH BÁO TỆP QR BỊ SỬA ĐỔI"}</code></li>
-              <li><strong>Config SHA-256 (Links + STK):</strong> <code>${escapeHtml(CONFIG_SHA256)}</code></li>
-              <li><strong>QR MB Bank SHA-256:</strong> <code>${escapeHtml(integrity.qrActualSha256 || "MISSING")}</code></li>
-              <li><strong>STK Bất Biến:</strong> <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code> — <strong>${escapeHtml(OFFICIAL_BANK.accountOwner)}</strong></li>
+              <li><strong>Trạng thái mã QR:</strong> <code>${integrity.ok ? "Đang dùng đúng ảnh QR chính chủ" : "Cảnh báo: Ảnh mã QR không khớp bản gốc"}</code></li>
+              <li><strong>Ngân hàng &amp; STK:</strong> <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code> — <strong>${escapeHtml(OFFICIAL_BANK.accountOwner)}</strong> (${escapeHtml(OFFICIAL_BANK.bankShort)})</li>
+              <li><strong>Facebook &amp; Zalo:</strong> <code>${escapeHtml(OFFICIAL_CONTACTS.facebookHandle)}</code> · Zalo <code>${escapeHtml(OFFICIAL_CONTACTS.zaloDisplay)}</code></li>
             </ul>
           </div>
         </div>
@@ -1448,7 +1447,6 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
           </svg>
           <span class="brand-text">
             <strong class="brand-name">${escapeHtml(OFFICIAL_CONTACTS.shortName)}</strong>
-            <span class="brand-sub">Namek Jade · Uy Tín SP123</span>
           </span>
         </a>
 
@@ -1487,8 +1485,8 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
 
   <main id="main-content" tabindex="-1">
     <div id="tamper-warning-banner" class="container tamper-warning-banner" role="alert" hidden>
-      <strong>Cảnh báo bảo mật trình duyệt!</strong>
-      <span>Phát hiện dấu hiệu can thiệp thay đổi đường dẫn chính chủ hoặc số tài khoản trong trang. Dữ liệu đã được khôi phục về cấu hình máy chủ gốc (${escapeHtml(OFFICIAL_BANK.accountNumber)} - ${escapeHtml(OFFICIAL_BANK.accountOwner)}).</span>
+      <strong>Cảnh báo an toàn giao dịch!</strong>
+      <span>Phát hiện dấu hiệu thay đổi bất thường về đường dẫn liên hệ hoặc số tài khoản trên trình duyệt. Hệ thống đã tự khôi phục về thông tin chính chủ (${escapeHtml(OFFICIAL_BANK.accountNumber)} - ${escapeHtml(OFFICIAL_BANK.accountOwner)}).</span>
     </div>
 
     ${mainHtml}
@@ -1498,7 +1496,7 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
     <div class="container footer-inner">
       <div>
         <strong class="footer-brand">${escapeHtml(OFFICIAL_CONTACTS.shopName)}</strong>
-        <p class="footer-note">Phân khu: <a href="/kich-diem">/kich-diem</a> · <a href="/mua-item">/mua-item</a> · <a href="/mua-tai-khoan">/mua-tai-khoan</a> · <a href="/admin">/admin</a> — STK MB Bank duy nhất: <code class="mono-num">${escapeHtml(OFFICIAL_BANK.accountNumber)}</code></p>
+        <p class="footer-note">Danh mục: <a href="/kich-diem">Kích điểm &amp; Dịch vụ</a> · <a href="/mua-item">Mua Item</a> · <a href="/mua-tai-khoan">Mua Tài khoản</a> · <a href="/admin">Quản trị</a> — STK MB Bank duy nhất: <code class="mono-num">${escapeHtml(OFFICIAL_BANK.accountNumber)}</code></p>
       </div>
       <div class="footer-links">
         <a href="${escapeHtml(OFFICIAL_CONTACTS.facebookUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="fb-link">Facebook</a>
