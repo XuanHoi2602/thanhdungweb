@@ -117,10 +117,19 @@ async function runTests() {
       {
         path: "/mua-item",
         mustInclude: [
+          'id="item-table-body"',
+          'id="bang-gia-item"',
+          'id="vang-ngoc"',
+          'id="kich-manh"',
+          'id="inline-order-summary"',
           "x99 Cuồng nộ",
           "15.000 đ / x99",
           "x99 Bổ huyết",
           "Giáp Xên",
+          "Vàng tươi (x15)",
+          "Vàng die (x60)",
+          "Ngọc kí (x11)",
+          "Ngọc vé ID 718 (x10)",
           "ID 718",
           "Sao pha lê đỏ (ID 441)",
           "Sao pha lê lam (ID 442)",
@@ -139,10 +148,11 @@ async function runTests() {
           "15 mảnh",
           "Mảnh Khỉ Oozaru",
           "125 mảnh"
-        ]
+        ],
+        mustNotInclude: ['id="catalog-grid"', 'id="calc-spl-fieldset"']
       },
       { path: "/mua-tai-khoan", mustInclude: ["Acc Đậu thần cấp 5", "Acc Clone 340k SM", "Kho Tài Khoản NRO", "Trái Đất", "Namếc", "Xayda"] },
-      { path: "/admin", mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password"] }
+      { path: "/admin", mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password", '<meta name="robots" content="noindex, nofollow">'], isAdminRoute: true }
     ];
 
     const forbiddenUiJargon = [
@@ -160,6 +170,15 @@ async function runTests() {
       "TeaMobi"
     ];
 
+    const publicHiddenAdminTokens = [
+      'href="/admin"',
+      "Quản trị",
+      "Đăng Nhập Quản Trị",
+      "Đăng Nhập Up Acc",
+      "toggle-admin-acc-panel",
+      'id="quan-ly-acc"'
+    ];
+
     const seenNonces = new Set();
     for (const r of routes) {
       const resp = await fetch(`${baseUrl}${r.path}`);
@@ -171,6 +190,9 @@ async function runTests() {
       assert.equal(resp.headers.get("x-content-type-options"), "nosniff");
       assert.equal(resp.headers.get("x-frame-options"), "DENY");
       assert.equal(resp.headers.get("cross-origin-opener-policy"), "same-origin-allow-popups");
+      if (r.isAdminRoute) {
+        assert.equal(resp.headers.get("x-robots-tag"), "noindex, nofollow", "/admin must send X-Robots-Tag noindex");
+      }
 
       const nonceMatch = csp.match(/script-src 'nonce-([^']+)'/);
       seenNonces.add(nonceMatch[1]);
@@ -180,6 +202,16 @@ async function runTests() {
       assert(!html.includes("dragon-gold"), `Old palette should be locked out on ${r.path}`);
       for (const jargon of forbiddenUiJargon) {
         assert(!html.toLowerCase().includes(jargon.toLowerCase()), `Forbidden UI jargon "${jargon}" leaked on ${r.path}`);
+      }
+      if (!r.isAdminRoute) {
+        for (const adminToken of publicHiddenAdminTokens) {
+          assert(!html.includes(adminToken), `Hidden admin UI/link "${adminToken}" leaked on public route ${r.path}`);
+        }
+      }
+      if (r.mustNotInclude) {
+        for (const banned of r.mustNotInclude) {
+          assert(!html.includes(banned), `Route ${r.path} should not include deprecated markup: ${banned}`);
+        }
       }
       assert(html.includes(`nonce="${nonceMatch[1]}"`), `HTML script tags should stamp matching nonce on ${r.path}`);
       for (const token of r.mustInclude) {

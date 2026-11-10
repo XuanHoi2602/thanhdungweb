@@ -6,8 +6,6 @@ const {
   ALLOWED_PLANETS,
   ALLOWED_SERVERS,
   KICH_DIEM_SERVICES,
-  ITEM_CARDS,
-  SPL_TYPES,
   MANH_ACTIVATION_INFOS,
   ITEM_PRICE_ROWS,
   STARTER_ACCS,
@@ -29,7 +27,7 @@ const ROUTE_META = {
   "/mua-item": {
     title: "Mua Item NRO · Cuồng Nộ, BH, GX, Đá NC, Vàng, Ngọc, SPL | Thanh Dung NRO",
     description:
-      "Bảng giá chi tiết Item x99 Cuồng nộ, Bổ huyết, Giáp Xên, Máy dò CSKB, 5 loại Đá nâng cấp x999, Dùi đục SLL, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718), 4 loại SPL (441, 442, 446, 447), NR 3s, Bảng thông tin Kích mảnh & Máy tính 2 chiều."
+      "Bảng chọn số lượng & tính giá 1 chạm cho tất cả Item x99, 5 loại Đá nâng cấp x999, Dùi đục SLL, 4 loại SPL (441, 442, 446, 447), NR 3s, Mảnh Khỉ/Rồng/Đội trưởng Vàng, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718)."
   },
   "/mua-tai-khoan": {
     title: "Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server | Thanh Dung NRO",
@@ -64,8 +62,7 @@ function renderNavLinks(activePath, extraClass = "") {
     { href: "/", label: "Trang chủ" },
     { href: "/kich-diem", label: "Kích điểm & Dịch vụ" },
     { href: "/mua-item", label: "Mua Item & Tính đơn" },
-    { href: "/mua-tai-khoan", label: "Mua Tài khoản" },
-    { href: "/admin", label: "Quản trị" }
+    { href: "/mua-tai-khoan", label: "Mua Tài khoản" }
   ];
 
   return `<ul class="nav-list ${escapeHtml(extraClass)}">
@@ -261,7 +258,7 @@ function renderProductCard(item, { showDayPicker = false } = {}) {
   const extraDayPicker = showDayPicker
     ? `<div class="inline-qty-bar">
         <label for="qty-${escapeHtml(item.id)}">Số ngày thuê:</label>
-        <div class="item-qty-picker item-qty-row" data-item-id="${escapeHtml(item.id)}" data-item-name="${escapeHtml(item.orderName)}" data-item-price="${Number(item.price)}" data-item-unit="${escapeHtml(item.unit)}">
+        <div class="item-qty-picker item-qty-row" data-item-id="${escapeHtml(item.id)}" data-item-name="${escapeHtml(item.orderName)}" data-item-kind="fixed" data-item-price="${Number(item.price)}" data-item-unit="${escapeHtml(item.unit)}" data-item-step="1">
           <button type="button" class="qty-btn row-dec" aria-label="Giảm số ngày">&minus;</button>
           <input id="qty-${escapeHtml(item.id)}" type="number" class="item-qty-input mono-num" value="1" min="1" max="365" inputmode="numeric">
           <button type="button" class="qty-btn row-inc" aria-label="Tăng số ngày">+</button>
@@ -374,7 +371,7 @@ function renderHomeView({ latestAccounts, integrity }) {
           ${latestAccounts.slice(0, 3).map((acc) => renderAccountCardMarkup(acc)).join("")}
         </div>`
       : `<div class="empty-state-box">
-          <p>Kho Acc Đậu 5 (<code>8.000 đ</code>) &amp; Acc Clone 340k SM (<code>3.000 đ</code>) luôn sẵn số lượng lớn. Xem chi tiết kho Acc hoặc đăng Acc mới tại mục <strong>Mua Tài Khoản</strong>.</p>
+          <p>Kho Acc Đậu 5 (<code>8.000 đ</code>) &amp; Acc Clone 340k SM (<code>3.000 đ</code>) luôn sẵn số lượng lớn. Xem toàn bộ danh sách tài khoản theo Server tại mục <strong>Mua Tài Khoản</strong>.</p>
           <a href="/mua-tai-khoan" class="btn btn-primary">Mở Kho Tài Khoản NRO</a>
         </div>`;
 
@@ -488,7 +485,7 @@ function renderHomeView({ latestAccounts, integrity }) {
             </div>
             <span class="eyebrow">Vật phẩm · Vàng · Ngọc</span>
             <h3>Mua Item x99 · Đá NC · Vàng · Ngọc · SPL &amp; Mảnh</h3>
-            <p class="pretty-text">Bảng giá riêng từng loại Item chọn số lượng: Cuồng nộ 15k, BH/GX 10k, MD CSKB 40k, 5 loại Đá NC 20k/999, Dùi đục SLL 10k, 4 loại SPL (441 · 442 · 446 · 447), Thông tin Kích mảnh &amp; Máy tính 2 chiều.</p>
+            <p class="pretty-text">Gộp chung tất cả vào 1 bảng chọn số lượng &amp; tính giá: Item x99, 5 loại Đá NC, Dùi đục, 4 loại SPL (441 · 442 · 446 · 447), NR 3s, Mảnh Khỉ/Rồng/Đội trưởng Vàng, Vàng &amp; Ngọc.</p>
             <a href="/mua-item" class="btn btn-primary btn-full">Vào trang Mua Item &amp; Tính Đơn</a>
           </article>
 
@@ -622,51 +619,91 @@ function renderKichDiemView({ integrity }) {
   `;
 }
 
+function formatRowInitialSubtotal(row) {
+  if (row.kind === "quote") {
+    return { main: "Báo giá theo lô", hint: "Liên hệ Zalo / FB" };
+  }
+  if (row.kind === "rate" && row.ratePerK > 0) {
+    const cost = Math.max(1, Math.round((row.defaultQty / row.ratePerK) * 1000));
+    let hint = "";
+    if (row.id === "gem-ve") {
+      const tickets = row.defaultQty / 10;
+      hint = Number.isInteger(tickets)
+        ? `= ${new Intl.NumberFormat("vi-VN").format(tickets)} vé ID 718`
+        : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé ID 718`;
+    } else if ((row.id === "gold-fresh" || row.id === "gold-die") && row.defaultQty >= 1000) {
+      hint = `~${(row.defaultQty / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ vàng`;
+    }
+    return { main: formatVndServer(cost), hint };
+  }
+  return { main: formatVndServer(row.price * row.defaultQty), hint: "" };
+}
+
 function renderMuaItemView({ integrity }) {
-  const cardsHtml = ITEM_CARDS.map((item) => renderProductCard(item)).join("");
-  const tableRowsHtml = ITEM_PRICE_ROWS.map(
-    (row) => `
-      <tr class="item-qty-row" data-item-id="${escapeHtml(row.id)}" data-item-name="${escapeHtml(row.name)}" data-item-price="${Number(row.price)}" data-item-unit="${escapeHtml(row.unit)}">
-        <td>
-          <span class="table-item-cell">
+  const categoryCounts = {
+    all: ITEM_PRICE_ROWS.length,
+    "item-x99": ITEM_PRICE_ROWS.filter((r) => r.category === "item-x99").length,
+    "da-duiduc": ITEM_PRICE_ROWS.filter((r) => r.category === "da-duiduc").length,
+    spl: ITEM_PRICE_ROWS.filter((r) => r.category === "spl").length,
+    "nr-manh": ITEM_PRICE_ROWS.filter((r) => r.category === "nr-manh").length,
+    "vang-ngoc": ITEM_PRICE_ROWS.filter((r) => r.category === "vang-ngoc").length
+  };
+
+  const tableRowsHtml = ITEM_PRICE_ROWS.map((row) => {
+    const initial = formatRowInitialSubtotal(row);
+    const tagBadge = row.tag
+      ? `<span class="tag-pill ${escapeHtml(row.tagClass)}">${escapeHtml(row.tag)}</span>`
+      : "";
+    const hintHtml = initial.hint
+      ? `<span class="row-sub-hint">${escapeHtml(initial.hint)}</span>`
+      : `<span class="row-sub-hint" hidden></span>`;
+
+    return `
+      <tr
+        class="item-qty-row"
+        data-category="${escapeHtml(row.category)}"
+        data-keywords="${escapeHtml(row.keywords)}"
+        data-item-id="${escapeHtml(row.id)}"
+        data-item-name="${escapeHtml(row.orderName)}"
+        data-item-kind="${escapeHtml(row.kind)}"
+        data-item-price="${Number(row.price)}"
+        data-item-rate-per-k="${Number(row.ratePerK || 0)}"
+        data-item-unit="${escapeHtml(row.unit)}"
+        data-item-step="${Number(row.step || 1)}"
+      >
+        <th scope="row" class="th-item">
+          <div class="table-item-cell">
             <img src="${escapeHtml(row.icon)}" alt="${escapeHtml(row.iconAlt)}" width="${Number(row.width)}" height="${Number(row.height)}" loading="lazy" class="table-sprite">
-            <span>${escapeHtml(row.name)}</span>
-          </span>
-        </td>
-        <td><span class="row-cat-tag">${escapeHtml(row.group)}</span></td>
-        <td class="mono-num"><strong>${escapeHtml(row.unitPriceLabel)}</strong></td>
-        <td>
+            <div class="table-item-copy">
+              <div class="table-item-title-row">
+                <strong>${escapeHtml(row.name)}</strong>
+                ${tagBadge}
+              </div>
+              <span class="table-item-desc">${escapeHtml(row.desc)}</span>
+            </div>
+          </div>
+        </th>
+        <td class="td-price mono-num"><strong>${escapeHtml(row.unitPriceLabel)}</strong></td>
+        <td class="td-qty">
           <div class="item-qty-picker">
             <button type="button" class="qty-btn row-dec" aria-label="Giảm số lượng ${escapeHtml(row.name)}">&minus;</button>
-            <input type="number" class="item-qty-input mono-num" value="${Number(row.defaultQty)}" min="1" max="${Number(row.maxQty)}" inputmode="numeric" aria-label="Số lượng ${escapeHtml(row.name)}">
+            <input type="number" class="item-qty-input mono-num" value="${Number(row.defaultQty)}" min="1" max="${Number(row.maxQty)}" step="1" inputmode="numeric" aria-label="Số lượng ${escapeHtml(row.name)}">
             <button type="button" class="qty-btn row-inc" aria-label="Tăng số lượng ${escapeHtml(row.name)}">+</button>
+            <span class="qty-unit-hint">${escapeHtml(row.unit)}</span>
           </div>
         </td>
-        <td class="mono-num row-subtotal">${escapeHtml(formatVndServer(row.price * row.defaultQty))}</td>
-        <td><button type="button" class="btn btn-card-add row-add-btn">+ Thêm vào đơn<span class="visually-hidden"> ${escapeHtml(row.name)}</span></button></td>
+        <td class="td-subtotal mono-num">
+          <strong class="row-subtotal">${escapeHtml(initial.main)}</strong>
+          ${hintHtml}
+        </td>
+        <td class="td-action">
+          <button type="button" class="btn btn-card-add btn-sm row-add-btn">
+            ${row.kind === "quote" ? "+ Ghi đơn" : "+ Thêm"}<span class="visually-hidden"> ${escapeHtml(row.name)} vào đơn</span>
+          </button>
+        </td>
       </tr>
-    `
-  ).join("");
-
-  const splRateRowsHtml = SPL_TYPES.map(
-    (spl) => `
-      <tr>
-        <td><span class="table-item-cell"><img src="${escapeHtml(spl.icon)}" alt="${escapeHtml(spl.iconAlt)}" width="${Number(spl.width)}" height="${Number(spl.height)}" loading="lazy" class="table-sprite"><span>${escapeHtml(spl.name)}</span></span></td>
-        <td class="mono-num"><strong>1.000 đ / 1 viên</strong></td>
-        <td>${escapeHtml(spl.effect)}</td>
-      </tr>
-    `
-  ).join("");
-
-  const splCalcPillsHtml = SPL_TYPES.map(
-    (spl, index) => `
-      <label class="radio-pill" for="calc-spl-${Number(spl.templateId)}">
-        <input type="radio" id="calc-spl-${Number(spl.templateId)}" name="splVariant" value="${Number(spl.templateId)}"${index === 0 ? " checked" : ""}>
-        <img src="${escapeHtml(spl.icon)}" alt="" width="${Number(spl.width)}" height="${Number(spl.height)}" loading="lazy" class="pill-sprite">
-        <span>${escapeHtml(spl.shortName)} · ${escapeHtml(spl.effect)}</span>
-      </label>
-    `
-  ).join("");
+    `;
+  }).join("");
 
   const manhCardsHtml = MANH_ACTIVATION_INFOS.map((manh) => {
     const tiersHtml = manh.tiers
@@ -681,7 +718,7 @@ function renderMuaItemView({ integrity }) {
       .join("");
 
     return `
-      <li class="manh-card">
+      <li class="manh-card manh-card-compact">
         <div class="manh-card-head">
           <div class="manh-stack-slot" aria-hidden="true">
             <img src="${escapeHtml(manh.icon)}" alt="" width="${Number(manh.width)}" height="${Number(manh.height)}" loading="lazy" class="game-sprite">
@@ -696,27 +733,27 @@ function renderMuaItemView({ integrity }) {
           ${tiersHtml}
         </dl>
         <div class="card-actions">
-          <button type="button" class="btn btn-card-add" data-id="${escapeHtml(manh.id)}" data-name="${escapeHtml(manh.orderName)}" data-price="0" data-unit="mảnh">
+          <button type="button" class="btn btn-card-add btn-sm" data-id="${escapeHtml(manh.id)}" data-name="${escapeHtml(manh.orderName)}" data-price="0" data-unit="mảnh">
             + Ghi vào đơn<span class="visually-hidden"> ${escapeHtml(manh.name)}</span>
           </button>
-          <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link">Hỏi giá Zalo<span class="visually-hidden"> về ${escapeHtml(manh.name)}</span></a>
+          <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link btn-sm">Hỏi giá Zalo<span class="visually-hidden"> về ${escapeHtml(manh.name)}</span></a>
         </div>
       </li>
     `;
   }).join("");
 
   return `
-    <section class="subhero-section">
+    <section class="subhero-section compact-subhero">
       <div class="container subhero-inner">
         <div class="hero-pills">
-          <span class="pill pill-jade">Kho Item · Vàng · Ngọc · SPL</span>
-          <span class="pill pill-gold">Chọn số lượng từng loại · Tính đơn nhanh</span>
+          <span class="pill pill-jade">Item x99 · Đá NC · SPL (441–447) · NR 3s · Mảnh · Vàng · Ngọc</span>
         </div>
-        <h1>Mua Item x99 · Đá Nâng Cấp · Vàng · Ngọc · SPL &amp; Mảnh</h1>
+        <h1>Mua Item &amp; Tính Giá Nhanh</h1>
+        <p class="pretty-text">Gộp chung toàn bộ mặt hàng vào một bảng tính gọn nhẹ — chọn số lượng để xem thành tiền và thêm vào đơn gửi Facebook / Zalo.</p>
         <div class="hero-cta-row">
-          <a href="#bang-gia-item" class="btn btn-primary">Bảng giá Item</a>
-          <a href="#kich-manh" class="btn btn-secondary">Thông tin Kích mảnh</a>
-          <a href="#vang-ngoc" class="btn btn-outline">Tính Vàng · Ngọc · SPL</a>
+          <a href="#bang-gia-item" class="btn btn-primary">Bảng tính Item &amp; Giá</a>
+          <a href="#vang-ngoc" class="btn btn-secondary">Quy đổi Vàng · Ngọc 2 chiều</a>
+          <a href="#kich-manh" class="btn btn-outline">Thông tin Kích mảnh</a>
         </div>
       </div>
     </section>
@@ -725,9 +762,9 @@ function renderMuaItemView({ integrity }) {
       <div class="container">
         <div class="section-head">
           <div>
-            <span class="eyebrow">Chọn nhanh theo số lượng</span>
-            <h2>Bảng Giá Riêng Các Loại Item &amp; Vật Phẩm</h2>
-            <p class="pretty-text">Chọn đúng số lượng từng loại item bạn cần mua rồi bấm <strong>+ Thêm vào đơn</strong> để tự động tính tổng tiền.</p>
+            <span class="eyebrow">Chọn số lượng &amp; tự động tính tiền</span>
+            <h2>Bảng Mua Bán Item · SPL · NR 3s · Vàng · Ngọc &amp; Mảnh</h2>
+            <p class="pretty-text">Chỉnh số lượng ở dòng cần mua rồi bấm <strong>+ Thêm</strong>, sau đó mở đơn để kiểm tra và gửi sang shop.</p>
           </div>
           <button type="button" id="open-order-from-items-btn" class="btn btn-primary">
             Xem đơn &amp; Gửi FB / Zalo
@@ -735,154 +772,81 @@ function renderMuaItemView({ integrity }) {
         </div>
 
         <div class="item-pricing-card">
-          <div class="table-scroll">
-            <table class="item-pricing-table">
-              <caption>Bảng giá niêm yết chi tiết từng loại item</caption>
+          <div class="table-toolbar">
+            <search>
+              <form id="item-search-form" class="search-form" role="search">
+                <label for="item-search" class="visually-hidden">Tìm mặt hàng trong bảng</label>
+                <div class="search-input-wrap">
+                  <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input
+                    type="search"
+                    id="item-search"
+                    name="q"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                    enterkeyhint="search"
+                    placeholder="Tìm nhanh: cuồng nộ, đá nc, dùi đục, spl 447, nr 3s, mảnh khỉ, vàng tươi, ngọc vé 718..."
+                    autocomplete="off"
+                  >
+                  <button type="button" id="clear-search-btn" class="btn-clear-search" hidden aria-label="Xóa từ khóa tìm kiếm">Xóa</button>
+                </div>
+              </form>
+            </search>
+
+            <div class="filter-tabs" role="group" aria-label="Lọc nhóm mặt hàng">
+              <button type="button" class="filter-btn is-active" data-category="all" aria-pressed="true">Tất cả (${categoryCounts.all})</button>
+              <button type="button" class="filter-btn" data-category="item-x99" aria-pressed="false">Item x99 (${categoryCounts["item-x99"]})</button>
+              <button type="button" class="filter-btn" data-category="da-duiduc" aria-pressed="false">Đá NC &amp; Dùi đục (${categoryCounts["da-duiduc"]})</button>
+              <button type="button" class="filter-btn" data-category="spl" aria-pressed="false">SPL 441–447 (${categoryCounts.spl})</button>
+              <button type="button" class="filter-btn" data-category="nr-manh" aria-pressed="false">NR 3s &amp; Mảnh (${categoryCounts["nr-manh"]})</button>
+              <button type="button" class="filter-btn" data-category="vang-ngoc" aria-pressed="false">Vàng &amp; Ngọc (${categoryCounts["vang-ngoc"]})</button>
+            </div>
+          </div>
+
+          <p id="item-table-status" class="catalog-status" aria-live="polite">Đang hiển thị tất cả ${categoryCounts.all} mặt hàng.</p>
+
+          <div tabindex="0" role="region" aria-labelledby="item-table-caption" class="table-wrapper">
+            <table class="item-pricing-table item-catalog-table">
+              <caption id="item-table-caption" class="visually-hidden">Bảng chọn số lượng và tính giá Item, Đá NC, Dùi đục, SPL, NR 3s, Mảnh, Vàng và Ngọc</caption>
               <thead>
                 <tr>
-                  <th scope="col">Loại Item / Vật Phẩm</th>
-                  <th scope="col">Nhóm</th>
-                  <th scope="col">Đơn Giá</th>
-                  <th scope="col">Số Lượng Chọn</th>
+                  <th scope="col">Mặt Hàng</th>
+                  <th scope="col">Đơn Giá / Tỉ Lệ</th>
+                  <th scope="col">Số Lượng</th>
                   <th scope="col">Thành Tiền</th>
                   <th scope="col">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="item-table-body">
                 ${tableRowsHtml}
+                <tr id="item-empty-row" hidden>
+                  <td colspan="5" class="item-empty-cell">
+                    Không tìm thấy mặt hàng phù hợp với từ khóa hiện tại.
+                    <button type="button" id="reset-item-filter-btn" class="btn btn-outline btn-sm">Hiện tất cả</button>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
+
+          <div class="table-order-footer">
+            <span id="inline-order-summary" class="mono-num" aria-live="polite">Đơn tính nhanh: chưa có mặt hàng nào.</span>
+            <button type="button" id="open-order-inline-btn" class="btn btn-primary btn-sm">Mở đơn &amp; Gửi FB / Zalo</button>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="catalog-section">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="eyebrow">Lọc &amp; tìm vật phẩm</span>
-            <h2>Danh Mục Chi Tiết Từng Nhóm Item</h2>
-          </div>
-        </div>
-
-        <div class="catalog-controls">
-          <search>
-            <form id="catalog-search-form" class="search-form" role="search">
-              <label for="catalog-search" class="visually-hidden">Tìm item hoặc vật phẩm</label>
-              <div class="search-input-wrap">
-                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input
-                  type="search"
-                  id="catalog-search"
-                  name="q"
-                  placeholder="Tìm nhanh: cuồng nộ, bổ huyết, giáp xên, cskb, dùi đục, đá nc, đội trưởng vàng, spl 441 442 446 447..."
-                  autocomplete="off"
-                >
-                <button type="button" id="clear-search-btn" class="btn-clear-search" hidden aria-label="Xóa từ khóa tìm kiếm">Xóa</button>
-              </div>
-            </form>
-          </search>
-
-          <div class="filter-tabs" role="group" aria-label="Lọc nhóm item">
-            <button type="button" class="filter-btn is-active" data-category="all" aria-pressed="true">Tất cả (${ITEM_CARDS.length})</button>
-            <button type="button" class="filter-btn" data-category="item-x99" aria-pressed="false">Item x99</button>
-            <button type="button" class="filter-btn" data-category="da-duiduc" aria-pressed="false">Đá NC &amp; Dùi đục</button>
-            <button type="button" class="filter-btn" data-category="vang-ngoc" aria-pressed="false">Vàng &amp; Ngọc</button>
-            <button type="button" class="filter-btn" data-category="spl-manh" aria-pressed="false">SPL (441–447) · NR 3s · Mảnh</button>
-          </div>
-        </div>
-
-        <p id="catalog-status" class="catalog-status" aria-live="polite">Đang hiển thị tất cả ${ITEM_CARDS.length} nhóm item &amp; vật phẩm.</p>
-
-        <ul id="catalog-grid" class="catalog-grid" role="list">
-          ${cardsHtml}
-        </ul>
-      </div>
-    </section>
-
-    <section id="kich-manh" class="manh-section">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="eyebrow">Thông tin kích mảnh</span>
-            <h2>Bảng Thông Tin Các Loại Mảnh</h2>
-            <p class="pretty-text">Số lượng mảnh cần thiết để kích hoạt bóng và nâng cấp LV cho từng loại mảnh sưu tầm.</p>
-          </div>
-        </div>
-
-        <ul class="manh-grid" role="list">
-          ${manhCardsHtml}
-        </ul>
-      </div>
-    </section>
-
-    <section id="vang-ngoc" class="rates-section">
+    <section class="rates-section">
       <div class="container rates-grid">
-        <div class="rates-table-card">
-          <span class="eyebrow">Tỉ giá cập nhật</span>
-          <h2>Bảng Quy Đổi Vàng · Ngọc · SPL · NR 3s</h2>
-          <p class="pretty-text">Tất cả tỉ lệ giao dịch được niêm yết công khai, rõ ràng để anh em dễ tính toán trước khi nhắn tin.</p>
-
-          <div class="table-scroll">
-            <table>
-              <caption>Bảng tỉ lệ quy đổi và đơn giá tại Shop Thanh Dung</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Mặt hàng</th>
-                  <th scope="col">Tỉ lệ / Đơn giá</th>
-                  <th scope="col">Ghi chú</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/4028.png" alt="" width="84" height="36" loading="lazy" class="table-sprite"><span>Thỏi vàng / Vàng Tươi</span></span></td>
-                  <td class="mono-num"><strong>x15</strong></td>
-                  <td>15 triệu vàng / 1.000 đ</td>
-                </tr>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/930.png" alt="" width="64" height="56" loading="lazy" class="table-sprite"><span>Vàng Die</span></span></td>
-                  <td class="mono-num"><strong>x60</strong></td>
-                  <td>60 triệu vàng / 1.000 đ</td>
-                </tr>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/932.png" alt="" width="56" height="56" loading="lazy" class="table-sprite"><span>Ngọc Kí</span></span></td>
-                  <td class="mono-num"><strong>x11</strong></td>
-                  <td>11 ngọc / 1.000 đ (giao ngọc kí)</td>
-                </tr>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/6765.png" alt="Vé tặng ngọc ID 718" width="72" height="72" loading="lazy" class="table-sprite"><span>Ngọc Vé</span></span></td>
-                  <td class="mono-num"><strong>x10</strong></td>
-                  <td>10 ngọc / 1.000 đ (Vé tặng ngọc ID 718)</td>
-                </tr>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/1420.png" alt="" width="64" height="64" loading="lazy" class="table-sprite"><span>x999 Đá Nâng Cấp</span></span></td>
-                  <td class="mono-num"><strong>20.000 đ / 999</strong></td>
-                  <td>Lục bảo, Saphia, Ruby, Titan, Thạch anh tím</td>
-                </tr>
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/12139.png" alt="" width="80" height="76" loading="lazy" class="table-sprite"><span>Dùi đục</span></span></td>
-                  <td class="mono-num"><strong>10.000 đ / 1 cái</strong></td>
-                  <td>Có số lượng lớn (SLL)</td>
-                </tr>
-                ${splRateRowsHtml}
-                <tr>
-                  <td><span class="table-item-cell"><img src="/assets/icons/421.png" alt="" width="64" height="64" loading="lazy" class="table-sprite"><span>Ngọc Rồng 3 sao (NR 3s)</span></span></td>
-                  <td class="mono-num"><strong>2.500 đ / 1 viên</strong></td>
-                  <td>Sẵn hàng giao nhanh</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="calculator-card">
-          <span class="eyebrow">Công cụ tính nhẩm 2 chiều</span>
-          <h2>Máy Tính Nhanh Vàng, Ngọc &amp; Vật Phẩm</h2>
-          <p class="pretty-text">Chọn <strong>tính theo số tiền</strong> hoặc <strong>tính theo số lượng</strong> muốn mua để xem chi tiết nhận được &amp; thành tiền VNĐ.</p>
+        <div id="vang-ngoc" class="calculator-card">
+          <span class="eyebrow">Quy đổi nhanh 2 chiều</span>
+          <h2>Máy Tính Nhanh Vàng &amp; Ngọc</h2>
+          <p class="pretty-text">Tính nhẩm nhanh theo <strong>số tiền (nghìn đ)</strong> hoặc theo <strong>số vàng / ngọc</strong> muốn mua rồi thêm thẳng vào đơn.</p>
 
           <form id="rate-calc-form" class="calc-form">
             <fieldset class="calc-fieldset">
@@ -894,13 +858,13 @@ function renderMuaItemView({ integrity }) {
                 </label>
                 <label class="radio-pill" for="mode-by-qty">
                   <input type="radio" id="mode-by-qty" name="calcMode" value="by-qty">
-                  <span>Theo số lượng cần mua</span>
+                  <span>Theo số vàng / ngọc</span>
                 </label>
               </div>
             </fieldset>
 
             <fieldset class="calc-fieldset">
-              <legend>Chọn loại cần tính</legend>
+              <legend>Chọn loại Vàng / Ngọc</legend>
               <div class="radio-pills">
                 <label class="radio-pill" for="calc-gold-fresh">
                   <input type="radio" id="calc-gold-fresh" name="calcType" value="gold-fresh" checked>
@@ -920,25 +884,8 @@ function renderMuaItemView({ integrity }) {
                 <label class="radio-pill" for="calc-gem-ve">
                   <input type="radio" id="calc-gem-ve" name="calcType" value="gem-ve">
                   <img src="/assets/icons/6765.png" alt="Vé tặng ngọc ID 718" width="72" height="72" loading="lazy" class="pill-sprite">
-                  <span>Ngọc vé (x10)</span>
+                  <span>Ngọc vé ID 718 (x10)</span>
                 </label>
-                <label class="radio-pill" for="calc-spl">
-                  <input type="radio" id="calc-spl" name="calcType" value="spl">
-                  <img src="/assets/icons/3887.png" alt="" width="64" height="64" loading="lazy" class="pill-sprite">
-                  <span>SPL (4 loại) · 1k/1v</span>
-                </label>
-                <label class="radio-pill" for="calc-nr3s">
-                  <input type="radio" id="calc-nr3s" name="calcType" value="nr3s">
-                  <img src="/assets/icons/421.png" alt="" width="64" height="64" loading="lazy" class="pill-sprite">
-                  <span>NR 3s · 2.500 đ / 1v</span>
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset id="calc-spl-fieldset" class="calc-fieldset" hidden>
-              <legend>Chọn loại Sao pha lê (ID 441 · 442 · 446 · 447)</legend>
-              <div class="radio-pills">
-                ${splCalcPillsHtml}
               </div>
             </fieldset>
 
@@ -965,9 +912,19 @@ function renderMuaItemView({ integrity }) {
             </div>
 
             <button type="button" id="add-calc-to-order" class="btn btn-primary btn-full">
-              + Thêm mục này vào đơn tính nhanh
+              + Thêm vào đơn tính nhanh
             </button>
           </form>
+        </div>
+
+        <div id="kich-manh" class="manh-summary-card">
+          <span class="eyebrow">Thông tin kích mảnh</span>
+          <h2>Bảng Thông Tin Các Loại Mảnh</h2>
+          <p class="pretty-text">Số lượng mảnh cần để kích hoạt bóng và nâng cấp LV cho từng loại mảnh sưu tầm.</p>
+
+          <ul class="manh-compact-list" role="list">
+            ${manhCardsHtml}
+          </ul>
         </div>
       </div>
     </section>
@@ -1132,7 +1089,7 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
           <span class="price-main mono-num">${escapeHtml(acc.priceText)}</span>
         </div>
         <div class="inline-qty-bar">
-          <div class="item-qty-picker item-qty-row" data-item-id="${escapeHtml(acc.id)}" data-item-name="${escapeHtml(acc.name)}" data-item-price="${Number(acc.price)}" data-item-unit="${escapeHtml(acc.unit)}">
+          <div class="item-qty-picker item-qty-row" data-item-id="${escapeHtml(acc.id)}" data-item-name="${escapeHtml(acc.name)}" data-item-kind="fixed" data-item-price="${Number(acc.price)}" data-item-unit="${escapeHtml(acc.unit)}" data-item-step="1">
             <button type="button" class="qty-btn row-dec" aria-label="Giảm số lượng ${escapeHtml(acc.name)}">&minus;</button>
             <input type="number" class="item-qty-input mono-num" value="1" min="1" max="999" inputmode="numeric" aria-label="Số lượng ${escapeHtml(acc.name)}">
             <button type="button" class="qty-btn row-inc" aria-label="Tăng số lượng ${escapeHtml(acc.name)}">+</button>
@@ -1152,8 +1109,8 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
     accounts.length > 0
       ? accounts.map((acc) => renderAccountCardMarkup(acc, { isAdmin: Boolean(session) })).join("")
       : `<div class="empty-state-box">
-          <h3>Chưa có tài khoản VIP nào trong kho</h3>
-          <p class="pretty-text">Chủ shop có thể đăng nhập ở khung <strong>Quản lý đăng Acc</strong> bên dưới để up ảnh acc, giá bán, server, hành tinh và ghi chú quảng cáo lên ngay.</p>
+          <h3>Kho tài khoản VIP đang được cập nhật thêm</h3>
+          <p class="pretty-text">Bạn có thể chọn nhanh Acc Đậu 5 / Acc Clone ở trên hoặc nhắn Zalo <code>${escapeHtml(OFFICIAL_CONTACTS.zaloDisplay)}</code> để shop gửi ảnh acc theo Server yêu cầu.</p>
         </div>`;
 
   return `
@@ -1161,17 +1118,15 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
       <div class="container subhero-inner">
         <div class="hero-pills">
           <span class="pill pill-jade">Kho Mua Bán Tài Khoản</span>
-          <span class="pill pill-gold">Up Hình · Giá · Server · Hành Tinh · Ghi Chú</span>
+          <span class="pill pill-gold">Ảnh Thật · Giá Niêm Yết · Đủ Server</span>
         </div>
         <h1>Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server</h1>
         <p class="pretty-text">
-          Cung cấp Acc Đậu thần cấp 5 (<code>8.000 đ</code>), Acc Clone 340k SM (<code>3.000 đ</code>) và Kho Tài Khoản NRO đủ server Trái Đất · Namếc · Xayda kèm ảnh thật, giá niêm yết và ghi chú quảng cáo minh bạch.
+          Cung cấp Acc Đậu thần cấp 5 (<code>8.000 đ</code>), Acc Clone 340k SM (<code>3.000 đ</code>) và Kho Tài Khoản NRO đủ server Trái Đất · Namếc · Xayda kèm ảnh thật, giá niêm yết và ghi chú minh bạch.
         </p>
         <div class="hero-cta-row">
           <a href="#kho-tai-khoan" class="btn btn-primary">Xem Kho Acc (${accounts.length})</a>
-          <button type="button" id="toggle-admin-acc-panel" class="btn btn-secondary">
-            ${session ? "Mở Form Đăng Acc Mới (Admin)" : "Đăng Nhập Up Acc (Chủ Shop)"}
-          </button>
+          <a href="#thanh-toan" class="btn btn-outline">Xem STK &amp; Mã QR chính chủ</a>
         </div>
       </div>
     </section>
@@ -1187,12 +1142,6 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
         <div class="starter-acc-grid">
           ${starterMarkup}
         </div>
-      </div>
-    </section>
-
-    <section id="quan-ly-acc" class="admin-inline-section"${session ? "" : " hidden"}>
-      <div class="container">
-        ${renderAdminAuthAndUploadSection({ session })}
       </div>
     </section>
 
@@ -1470,6 +1419,8 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
   const csrfMetaTag = csrfToken
     ? `<meta name="csrf-token" content="${escapeHtml(csrfToken)}">`
     : "";
+  const robotsMetaTag =
+    route === "/admin" ? `<meta name="robots" content="noindex, nofollow">` : "";
 
   return `<!DOCTYPE html>
 <html lang="vi" data-palette="namek-jade">
@@ -1477,6 +1428,7 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
+  ${robotsMetaTag}
   ${csrfMetaTag}
   <script nonce="${escapeHtml(nonce)}">
     {
@@ -1576,7 +1528,7 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
     <div class="container footer-inner">
       <div>
         <strong class="footer-brand">${escapeHtml(OFFICIAL_CONTACTS.shopName)}</strong>
-        <p class="footer-note">Danh mục: <a href="/kich-diem">Kích điểm &amp; Dịch vụ</a> · <a href="/mua-item">Mua Item</a> · <a href="/mua-tai-khoan">Mua Tài khoản</a> · <a href="/admin">Quản trị</a> — STK MB Bank duy nhất: <code class="mono-num">${escapeHtml(OFFICIAL_BANK.accountNumber)}</code></p>
+        <p class="footer-note">Danh mục: <a href="/kich-diem">Kích điểm &amp; Dịch vụ</a> · <a href="/mua-item">Mua Item</a> · <a href="/mua-tai-khoan">Mua Tài khoản</a> — STK MB Bank duy nhất: <code class="mono-num">${escapeHtml(OFFICIAL_BANK.accountNumber)}</code></p>
       </div>
       <div class="footer-links">
         <a href="${escapeHtml(OFFICIAL_CONTACTS.facebookUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="fb-link">Facebook</a>

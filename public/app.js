@@ -334,56 +334,79 @@
   }
 
   /* =========================================================
-     6. Catalog Search & Category Filter (/mua-item)
+     6. Unified Item Table Search & Category Filter (/mua-item)
      ========================================================= */
-  const searchForm = document.getElementById("catalog-search-form");
-  const searchInput = document.getElementById("catalog-search");
+  const itemSearchForm = document.getElementById("item-search-form");
+  const itemSearchInput = document.getElementById("item-search");
   const clearSearchBtn = document.getElementById("clear-search-btn");
   const filterBtns = Array.from(document.querySelectorAll(".filter-btn"));
-  const productCards = Array.from(document.querySelectorAll("#catalog-grid .product-card"));
-  const catalogStatus = document.getElementById("catalog-status");
+  const itemTableRows = Array.from(document.querySelectorAll("#item-table-body tr.item-qty-row"));
+  const itemEmptyRow = document.getElementById("item-empty-row");
+  const itemTableStatus = document.getElementById("item-table-status");
+  const resetItemFilterBtn = document.getElementById("reset-item-filter-btn");
   let activeCategory = "all";
 
-  const applyCatalogFilter = () => {
-    const query = normalizeText(searchInput ? searchInput.value.trim() : "");
+  const applyItemTableFilter = () => {
+    const query = normalizeText(itemSearchInput ? itemSearchInput.value.trim() : "");
     if (clearSearchBtn) {
       clearSearchBtn.hidden = query.length === 0;
     }
 
     let visibleCount = 0;
-    productCards.forEach((card) => {
-      const cat = card.dataset.category || "";
-      const haystack = normalizeText(`${card.textContent} ${card.dataset.keywords || ""}`);
+    itemTableRows.forEach((row) => {
+      const cat = row.dataset.category || "";
+      const haystack = normalizeText(`${row.textContent} ${row.dataset.keywords || ""}`);
       const matchCategory = activeCategory === "all" || cat === activeCategory;
       const matchQuery = !query || haystack.includes(query);
       const isVisible = matchCategory && matchQuery;
-      card.hidden = !isVisible;
+      row.hidden = !isVisible;
       if (isVisible) visibleCount += 1;
     });
 
-    if (catalogStatus) {
+    if (itemEmptyRow) {
+      itemEmptyRow.hidden = visibleCount > 0;
+    }
+
+    if (itemTableStatus) {
       if (visibleCount === 0) {
-        catalogStatus.textContent =
-          "Không tìm thấy mục nào khớp từ khóa. Thử tìm: cuồng nộ, bổ huyết, giáp xên, cskb, dùi đục, đá nc, đội trưởng vàng, spl 441 442 446 447, 3s...";
+        itemTableStatus.textContent =
+          "Không tìm thấy mặt hàng khớp từ khóa. Thử tìm: cuồng nộ, đá nc, dùi đục, spl 441 447, nr 3s, mảnh khỉ, vàng tươi, ngọc vé 718...";
       } else if (activeCategory === "all" && !query) {
-        catalogStatus.textContent = `Đang hiển thị tất cả ${visibleCount} nhóm sản phẩm.`;
+        itemTableStatus.textContent = `Đang hiển thị tất cả ${visibleCount} mặt hàng.`;
       } else {
-        catalogStatus.textContent = `Tìm thấy ${visibleCount} nhóm item phù hợp.`;
+        itemTableStatus.textContent = `Đang hiển thị ${visibleCount} mặt hàng phù hợp.`;
       }
     }
   };
 
-  if (searchForm) {
-    searchForm.addEventListener("submit", (e) => e.preventDefault());
+  const resetItemFilters = () => {
+    activeCategory = "all";
+    if (itemSearchInput) itemSearchInput.value = "";
+    filterBtns.forEach((btn) => {
+      const selected = (btn.dataset.category || "all") === "all";
+      btn.classList.toggle("is-active", selected);
+      btn.setAttribute("aria-pressed", String(selected));
+    });
+    applyItemTableFilter();
+  };
+
+  if (itemSearchForm) {
+    itemSearchForm.addEventListener("submit", (e) => e.preventDefault());
   }
-  if (searchInput) {
-    searchInput.addEventListener("input", applyCatalogFilter);
+  if (itemSearchInput) {
+    itemSearchInput.addEventListener("input", applyItemTableFilter);
   }
-  if (clearSearchBtn && searchInput) {
+  if (clearSearchBtn && itemSearchInput) {
     clearSearchBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      applyCatalogFilter();
-      searchInput.focus();
+      itemSearchInput.value = "";
+      applyItemTableFilter();
+      itemSearchInput.focus();
+    });
+  }
+  if (resetItemFilterBtn) {
+    resetItemFilterBtn.addEventListener("click", () => {
+      resetItemFilters();
+      if (itemSearchInput) itemSearchInput.focus();
     });
   }
   filterBtns.forEach((btn) => {
@@ -394,15 +417,14 @@
         item.classList.toggle("is-active", selected);
         item.setAttribute("aria-pressed", String(selected));
       });
-      applyCatalogFilter();
+      applyItemTableFilter();
     });
   });
 
   /* =========================================================
-     7. Bidirectional Calculator (/mua-item)
+     7. Bidirectional Gold & Gem Calculator (/mua-item)
      ========================================================= */
   const calcForm = document.getElementById("rate-calc-form");
-  const calcSplFieldset = document.getElementById("calc-spl-fieldset");
   const calcAmountInput = document.getElementById("calc-amount");
   const calcInputLabel = document.getElementById("calc-input-label");
   const calcInputHint = document.getElementById("calc-input-hint");
@@ -411,23 +433,26 @@
   const calcResultSub = document.getElementById("calc-result-sub");
   const addCalcBtn = document.getElementById("add-calc-to-order");
 
-  const SPL_VARIANT_MAP = {
-    441: { key: "spl-441", name: "Sao pha lê đỏ (ID 441)", effect: "Hút 5% HP" },
-    442: { key: "spl-442", name: "Sao pha lê lam (ID 442)", effect: "Hút 5% KI" },
-    446: { key: "spl-446", name: "Sao pha lê vàng (ID 446)", effect: "+5% vàng rơi" },
-    447: { key: "spl-447", name: "Sao pha lê lục (ID 447)", effect: "+5% TNSM" }
-  };
+  const computeRateCost = (qty, ratePerK) => Math.max(1, Math.round((qty / ratePerK) * 1000));
 
-  const getSelectedSplVariant = () => {
-    if (!calcForm) return SPL_VARIANT_MAP[441];
-    const checked = calcForm.querySelector('input[name="splVariant"]:checked');
-    const code = checked ? checked.value : "441";
-    return SPL_VARIANT_MAP[code] || SPL_VARIANT_MAP[441];
+  const formatRateBonusNote = (id, qty) => {
+    if (id === "gem-ve") {
+      const tickets = qty / 10;
+      return Number.isInteger(tickets)
+        ? `${formatNumber(tickets)} vé ID 718`
+        : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé ID 718`;
+    }
+    if ((id === "gold-fresh" || id === "gold-die") && qty >= 1000) {
+      return `~${(qty / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ vàng`;
+    }
+    return "";
   };
 
   const CALC_CONFIG = {
     "gold-fresh": {
-      label: "Vàng tươi",
+      id: "gold-fresh",
+      orderName: "Vàng tươi (x15)",
+      unit: "triệu vàng",
       rateText: "Vàng tươi x15",
       qtyLabel: "Số triệu vàng tươi muốn mua",
       qtyHint: "Nhập số triệu vàng tươi cần mua (ví dụ 1500 = 1,5 tỷ vàng = 100.000 đ).",
@@ -438,17 +463,18 @@
         return `${formatNumber(millions)} triệu vàng${billions}`;
       },
       computeFromQty: (qty) => {
-        const costVND = Math.max(1, Math.round((qty / 15) * 1000));
+        const costVND = computeRateCost(qty, 15);
         const billions = qty >= 1000 ? ` (~${(qty / 1000).toLocaleString("vi-VN")} tỷ)` : "";
         return {
           costVND,
-          qtyText: `${formatNumber(qty)} triệu vàng${billions}`,
-          subText: `Mua ${formatNumber(qty)} triệu vàng theo tỉ lệ Vàng tươi x15`
+          subText: `Mua ${formatNumber(qty)} triệu vàng${billions} theo tỉ lệ Vàng tươi x15`
         };
       }
     },
     "gold-die": {
-      label: "Vàng die",
+      id: "gold-die",
+      orderName: "Vàng die (x60)",
+      unit: "triệu vàng",
       rateText: "Vàng die x60",
       qtyLabel: "Số triệu vàng die muốn mua",
       qtyHint: "Nhập số triệu vàng die cần mua (ví dụ 6000 = 6 tỷ vàng = 100.000 đ).",
@@ -459,91 +485,60 @@
         return `${formatNumber(millions)} triệu vàng${billions}`;
       },
       computeFromQty: (qty) => {
-        const costVND = Math.max(1, Math.round((qty / 60) * 1000));
+        const costVND = computeRateCost(qty, 60);
         const billions = qty >= 1000 ? ` (~${(qty / 1000).toLocaleString("vi-VN")} tỷ)` : "";
         return {
           costVND,
-          qtyText: `${formatNumber(qty)} triệu vàng${billions}`,
-          subText: `Mua ${formatNumber(qty)} triệu vàng theo tỉ lệ Vàng die x60`
+          subText: `Mua ${formatNumber(qty)} triệu vàng${billions} theo tỉ lệ Vàng die x60`
         };
       }
     },
     "gem-ki": {
-      label: "Ngọc kí",
+      id: "gem-ki",
+      orderName: "Ngọc kí (x11)",
+      unit: "ngọc",
       rateText: "Ngọc kí x11",
       qtyLabel: "Số ngọc kí muốn mua",
       qtyHint: "Nhập số lượng ngọc kí cần mua (ví dụ 1100 ngọc = 100.000 đ theo tỉ lệ x11).",
       unitsPerK: 11,
       computeFromMoneyK: (k) => `${formatNumber(k * 11)} ngọc kí`,
-      computeFromQty: (qty) => {
-        const costVND = Math.max(1, Math.round((qty / 11) * 1000));
-        return {
-          costVND,
-          qtyText: `${formatNumber(qty)} ngọc kí`,
-          subText: `Mua ${formatNumber(qty)} ngọc theo tỉ lệ Ngọc kí x11`
-        };
-      }
+      computeFromQty: (qty) => ({
+        costVND: computeRateCost(qty, 11),
+        subText: `Mua ${formatNumber(qty)} ngọc theo tỉ lệ Ngọc kí x11`
+      })
     },
     "gem-ve": {
-      label: "Ngọc vé",
+      id: "gem-ve",
+      orderName: "Ngọc vé ID 718 (x10)",
+      unit: "ngọc",
       rateText: "Ngọc vé x10 (ID 718)",
       qtyLabel: "Số ngọc vé muốn mua (mỗi vé ID 718 = 10 ngọc)",
       qtyHint: "Nhập số lượng ngọc vé cần mua (ví dụ 1000 ngọc = 100 vé ID 718 = 100.000 đ).",
       unitsPerK: 10,
       computeFromMoneyK: (k) => `${formatNumber(k * 10)} ngọc (${formatNumber(k)} vé ID 718)`,
       computeFromQty: (qty) => {
-        const costVND = Math.max(1, Math.round((qty / 10) * 1000));
-        const tickets = qty / 10;
-        const ticketNote = Number.isInteger(tickets)
-          ? `${formatNumber(tickets)} vé ID 718`
-          : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé ID 718`;
+        const costVND = computeRateCost(qty, 10);
+        const ticketNote = formatRateBonusNote("gem-ve", qty);
         return {
           costVND,
-          qtyText: `${formatNumber(qty)} ngọc vé (${ticketNote})`,
           subText: `Mua ${formatNumber(qty)} ngọc theo tỉ lệ Ngọc vé x10 (${ticketNote})`
         };
       }
-    },
-    spl: {
-      label: "Sao pha lê (SPL)",
-      rateText: "SPL các loại 1.000 đ / 1 viên",
-      qtyLabel: "Số viên Sao pha lê (SPL) muốn mua",
-      qtyHint: "Nhập số viên SPL cần mua (đơn giá 1.000 đ / 1 viên).",
-      unitsPerK: 1,
-      computeFromMoneyK: (k) => `${formatNumber(k)} viên SPL`,
-      computeFromQty: (qty) => ({
-        costVND: qty * 1000,
-        qtyText: `${formatNumber(qty)} viên SPL`,
-        subText: `Mua ${formatNumber(qty)} viên theo đơn giá 1.000 đ / 1 viên`
-      })
-    },
-    nr3s: {
-      label: "Ngọc Rồng 3 sao (NR 3s)",
-      rateText: "NR 3s 2.500 đ / 1 viên",
-      qtyLabel: "Số viên Ngọc Rồng 3 sao (NR 3s) muốn mua",
-      qtyHint: "Nhập số viên NR 3 sao cần mua (đơn giá 2.500 đ / 1 viên).",
-      unitsPerK: 0.4,
-      computeFromMoneyK: (k) => {
-        const count = Math.floor(k / 2.5);
-        const remainder = k - count * 2.5;
-        return remainder > 0
-          ? `${formatNumber(count)} viên NR 3s (dư ${formatVND(remainder * 1000)})`
-          : `${formatNumber(count)} viên NR 3s`;
-      },
-      computeFromQty: (qty) => ({
-        costVND: qty * 2500,
-        qtyText: `${formatNumber(qty)} viên NR 3s`,
-        subText: `Mua ${formatNumber(qty)} viên theo đơn giá 2.500 đ / 1 viên`
-      })
     }
   };
 
   let previousCalcMode = "by-money";
   let currentCalcSnapshot = {
-    id: "calc-gold-fresh-100k",
-    name: "Vàng tươi: 1.500 triệu vàng",
-    price: 100000,
-    unit: "gói"
+    item: {
+      id: "gold-fresh",
+      name: "Vàng tươi (x15)",
+      kind: "rate",
+      price: 0,
+      ratePerK: 15,
+      unit: "triệu vàng",
+      step: 15
+    },
+    qty: 1500
   };
 
   const getSelectedCalcMode = () => {
@@ -563,11 +558,6 @@
     const mode = getSelectedCalcMode();
     const typeKey = getSelectedCalcType();
     const config = CALC_CONFIG[typeKey] || CALC_CONFIG["gold-fresh"];
-    const splVariant = typeKey === "spl" ? getSelectedSplVariant() : null;
-
-    if (calcSplFieldset) {
-      calcSplFieldset.hidden = typeKey !== "spl";
-    }
 
     if (mode !== previousCalcMode) {
       const currentVal = Number(calcAmountInput.value);
@@ -587,10 +577,6 @@
       calcInputLabel.textContent = "Số tiền dự kiến mua (nghìn VNĐ, ví dụ 100 = 100.000 đ)";
       calcInputHint.textContent = "Nhập số tiền theo đơn vị nghìn đồng (ví dụ 50 = 50.000 đ, 100 = 100.000 đ).";
       calcOutputLabel.textContent = "Ước tính nhận được:";
-    } else if (splVariant) {
-      calcInputLabel.textContent = `Số viên ${splVariant.name} muốn mua`;
-      calcInputHint.textContent = `Nhập số viên cần mua — ${splVariant.effect} (đơn giá 1.000 đ / 1 viên).`;
-      calcOutputLabel.textContent = "Số tiền cần thanh toán:";
     } else {
       calcInputLabel.textContent = config.qtyLabel;
       calcInputHint.textContent = config.qtyHint;
@@ -606,50 +592,41 @@
     const mode = getSelectedCalcMode();
     const typeKey = getSelectedCalcType();
     const config = CALC_CONFIG[typeKey] || CALC_CONFIG["gold-fresh"];
-    const splVariant = typeKey === "spl" ? getSelectedSplVariant() : null;
-    const activeRateText = splVariant
-      ? `${splVariant.name} · ${splVariant.effect} (1.000 đ / 1 viên)`
-      : config.rateText;
     const rawVal = Number(calcAmountInput.value);
 
     if (!Number.isFinite(rawVal) || rawVal < 1) {
       currentCalcSnapshot = null;
       calcResultMain.textContent = mode === "by-money" ? "Nhập số tiền từ 1 trở lên" : "Nhập số lượng từ 1 trở lên";
-      calcResultSub.textContent = `Đang chọn: ${activeRateText}`;
+      calcResultSub.textContent = `Đang chọn: ${config.rateText}`;
       return;
     }
 
     const clamped = Math.min(1000000, Math.floor(rawVal));
+    const itemDescriptor = {
+      id: config.id,
+      name: config.orderName,
+      kind: "rate",
+      price: 0,
+      ratePerK: config.unitsPerK,
+      unit: config.unit,
+      step: config.unitsPerK
+    };
 
     if (mode === "by-money") {
-      const resultText = splVariant
-        ? `${formatNumber(clamped)} viên ${splVariant.name}`
-        : config.computeFromMoneyK(clamped);
+      const resultText = config.computeFromMoneyK(clamped);
       calcResultMain.textContent = resultText;
-      calcResultSub.textContent = splVariant
-        ? `Tương ứng ${formatVND(clamped * 1000)} (${splVariant.effect} · 1.000 đ / 1 viên)`
-        : `Tương ứng ${formatVND(clamped * 1000)} theo tỉ lệ ${config.rateText}`;
+      calcResultSub.textContent = `Tương ứng ${formatVND(clamped * 1000)} theo tỉ lệ ${config.rateText}`;
       currentCalcSnapshot = {
-        id: `calc-${splVariant ? splVariant.key : typeKey}-${clamped}k`,
-        name: splVariant ? `${splVariant.name}: ${formatNumber(clamped)} viên` : `${config.label}: ${resultText}`,
-        price: clamped * 1000,
-        unit: "gói"
+        item: itemDescriptor,
+        qty: clamped * config.unitsPerK
       };
     } else {
-      const calcQty = splVariant
-        ? {
-            costVND: clamped * 1000,
-            qtyText: `${formatNumber(clamped)} viên`,
-            subText: `Mua ${formatNumber(clamped)} viên ${splVariant.name} (${splVariant.effect} · 1.000 đ / 1 viên)`
-          }
-        : config.computeFromQty(clamped);
+      const calcQty = config.computeFromQty(clamped);
       calcResultMain.textContent = formatVND(calcQty.costVND);
       calcResultSub.textContent = calcQty.subText;
       currentCalcSnapshot = {
-        id: `calc-${splVariant ? splVariant.key : typeKey}-q${clamped}`,
-        name: splVariant ? `${splVariant.name}: ${calcQty.qtyText}` : `${config.label}: ${calcQty.qtyText}`,
-        price: calcQty.costVND,
-        unit: "gói"
+        item: itemDescriptor,
+        qty: clamped
       };
     }
   };
@@ -664,12 +641,14 @@
   /* =========================================================
      8. Shared Cross-Path Quick Order Builder
      ========================================================= */
-  const STORAGE_KEY = "thanhdung_nro_order_v2";
+  const STORAGE_KEY = "thanhdung_nro_order_v3";
   const openOrderBtn = document.getElementById("open-order-btn");
   const openOrderFromItemsBtn = document.getElementById("open-order-from-items-btn");
+  const openOrderInlineBtn = document.getElementById("open-order-inline-btn");
   const mobileOpenOrderBtn = document.getElementById("mobile-open-order");
   const orderCountEl = document.getElementById("order-count");
   const mobileOrderCountEl = document.getElementById("mobile-order-count");
+  const inlineOrderSummaryEl = document.getElementById("inline-order-summary");
   const orderEmptyMsg = document.getElementById("order-empty-msg");
   const orderListEl = document.getElementById("order-items-list");
   const orderNoteEl = document.getElementById("order-note");
@@ -680,11 +659,129 @@
   const copyOrderBtn = document.getElementById("copy-order-btn");
   const clearOrderBtn = document.getElementById("clear-order-btn");
 
+  const LEGACY_SPL_BY_KEY = {
+    "spl-441": "Sao pha lê đỏ (ID 441)",
+    "spl-442": "Sao pha lê lam (ID 442)",
+    "spl-446": "Sao pha lê vàng (ID 446)",
+    "spl-447": "Sao pha lê lục (ID 447)"
+  };
+
+  const normalizeOrderItem = (raw) => {
+    if (!raw || typeof raw !== "object") return null;
+    const rawId = typeof raw.id === "string" ? raw.id : "";
+    const rawName = typeof raw.name === "string" ? raw.name : "Vật phẩm";
+    const oldQty = Math.max(1, Math.floor(Number(raw.qty) || 1));
+
+    // Migrate legacy "pack / gói" entries from v1/v2 calculators cleanly
+    if (rawId.startsWith("calc-")) {
+      const splMatch = rawId.match(/^calc-(spl-(?:441|442|446|447))-/);
+      if (splMatch) {
+        const splId = splMatch[1];
+        const countMatch = rawName.match(/(\d+)\s*viên/i);
+        const perUnit = countMatch ? Math.max(1, Number(countMatch[1])) : Math.max(1, Math.round(Number(raw.price || 1000) / 1000));
+        return {
+          id: splId,
+          name: LEGACY_SPL_BY_KEY[splId] || splId,
+          kind: "fixed",
+          price: 1000,
+          ratePerK: 0,
+          unit: "viên",
+          step: 1,
+          qty: Math.min(99999, perUnit * oldQty)
+        };
+      }
+      if (rawId.startsWith("calc-nr3s-")) {
+        const countMatch = rawName.match(/(\d+)\s*viên/i);
+        const perUnit = countMatch ? Math.max(1, Number(countMatch[1])) : Math.max(1, Math.floor(Number(raw.price || 2500) / 2500));
+        return {
+          id: "nr-3s",
+          name: "Ngọc Rồng 3 sao (NR 3s)",
+          kind: "fixed",
+          price: 2500,
+          ratePerK: 0,
+          unit: "viên",
+          step: 1,
+          qty: Math.min(99999, perUnit * oldQty)
+        };
+      }
+      const rateMatch = rawId.match(/^calc-(gold-fresh|gold-die|gem-ki|gem-ve)-/);
+      if (rateMatch && CALC_CONFIG[rateMatch[1]]) {
+        const cfg = CALC_CONFIG[rateMatch[1]];
+        const perUnits = Math.max(1, Math.round((Number(raw.price || 1000) / 1000) * cfg.unitsPerK));
+        return {
+          id: cfg.id,
+          name: cfg.orderName,
+          kind: "rate",
+          price: 0,
+          ratePerK: cfg.unitsPerK,
+          unit: cfg.unit,
+          step: cfg.unitsPerK,
+          qty: Math.min(10000000, perUnits * oldQty)
+        };
+      }
+    }
+
+    if (!rawId) return null;
+
+    if (CALC_CONFIG[rawId]) {
+      const cfg = CALC_CONFIG[rawId];
+      return {
+        id: cfg.id,
+        name: cfg.orderName,
+        kind: "rate",
+        price: 0,
+        ratePerK: cfg.unitsPerK,
+        unit: cfg.unit,
+        step: cfg.unitsPerK,
+        qty: Math.min(10000000, oldQty)
+      };
+    }
+
+    const price = Math.max(0, Number(raw.price) || 0);
+    const ratePerK = Math.max(0, Number(raw.ratePerK) || 0);
+    const kind =
+      raw.kind === "rate" && ratePerK > 0
+        ? "rate"
+        : raw.kind === "fixed" || price > 0
+          ? "fixed"
+          : "quote";
+    const step = Math.max(1, Math.floor(Number(raw.step) || (kind === "rate" && ratePerK > 0 ? ratePerK : 1)));
+    const maxQty = kind === "rate" ? 10000000 : 99999;
+
+    return {
+      id: rawId,
+      name: rawName,
+      kind,
+      price,
+      ratePerK,
+      unit: typeof raw.unit === "string" && raw.unit ? raw.unit : "mục",
+      step,
+      qty: Math.min(maxQty, oldQty)
+    };
+  };
+
   const loadOrder = () => {
     try {
-      const raw = readStorage(STORAGE_KEY) || readStorage("thanhdung_nro_order_v1");
+      const raw =
+        readStorage(STORAGE_KEY) ||
+        readStorage("thanhdung_nro_order_v2") ||
+        readStorage("thanhdung_nro_order_v1");
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+
+      const merged = [];
+      parsed.forEach((entry) => {
+        const normalized = normalizeOrderItem(entry);
+        if (!normalized) return;
+        const existing = merged.find((x) => x.id === normalized.id);
+        if (existing) {
+          const cap = existing.kind === "rate" ? 10000000 : 99999;
+          existing.qty = Math.min(cap, existing.qty + normalized.qty);
+        } else {
+          merged.push(normalized);
+        }
+      });
+      return merged;
     } catch {
       return [];
     }
@@ -703,23 +800,73 @@
     }
   };
 
+  const getOrderItemSubtotal = (item) => {
+    if (item.kind === "rate" && item.ratePerK > 0) {
+      return computeRateCost(item.qty, item.ratePerK);
+    }
+    if (item.price > 0) {
+      return item.price * item.qty;
+    }
+    return 0;
+  };
+
+  const formatOrderItemDetail = (item) => {
+    if (item.kind === "rate" && item.ratePerK > 0) {
+      const total = getOrderItemSubtotal(item);
+      const bonus = formatRateBonusNote(item.id, item.qty);
+      const qtySummary = bonus
+        ? `${formatNumber(item.qty)} ${item.unit} (${bonus})`
+        : `${formatNumber(item.qty)} ${item.unit}`;
+      return `Tỉ lệ ${formatNumber(item.ratePerK)} ${item.unit} / 1.000 đ · ${qtySummary} = ${formatVND(total)}`;
+    }
+    if (item.price > 0) {
+      return `${formatVND(item.price)} / ${item.unit} × ${formatNumber(item.qty)} = ${formatVND(item.price * item.qty)}`;
+    }
+    return `${formatNumber(item.qty)} ${item.unit} · Báo giá trực tiếp qua Zalo / FB`;
+  };
+
+  const updateOrderSummaryUi = () => {
+    const lineCount = orderItems.length;
+    let totalVND = 0;
+    let hasQuoteItems = false;
+
+    orderItems.forEach((item) => {
+      const sub = getOrderItemSubtotal(item);
+      if (sub <= 0) hasQuoteItems = true;
+      totalVND += sub;
+    });
+
+    if (orderCountEl) orderCountEl.textContent = String(lineCount);
+    if (mobileOrderCountEl) mobileOrderCountEl.textContent = String(lineCount);
+
+    let priceSummaryText = "0 đ";
+    if (lineCount > 0 && totalVND === 0 && hasQuoteItems) {
+      priceSummaryText = "Chờ báo giá";
+    } else if (lineCount > 0 && hasQuoteItems) {
+      priceSummaryText = `${formatVND(totalVND)} + mục báo giá`;
+    } else if (lineCount > 0) {
+      priceSummaryText = formatVND(totalVND);
+    }
+
+    if (orderTotalPriceEl) {
+      orderTotalPriceEl.textContent = priceSummaryText;
+    }
+    if (inlineOrderSummaryEl) {
+      inlineOrderSummaryEl.textContent =
+        lineCount === 0
+          ? "Đơn tính nhanh: chưa có mặt hàng nào."
+          : `Đơn tính nhanh (${lineCount} mặt hàng) — Tạm tính: ${priceSummaryText}`;
+    }
+  };
+
   const renderOrder = () => {
-    const totalCount = orderItems.reduce((sum, item) => sum + item.qty, 0);
-    const totalVND = orderItems.reduce((sum, item) => sum + item.price * item.qty, 0);
-
-    if (orderCountEl) orderCountEl.textContent = String(totalCount);
-    if (mobileOrderCountEl) mobileOrderCountEl.textContent = String(totalCount);
-
-    if (!orderListEl || !orderEmptyMsg || !orderTotalPriceEl) return;
+    updateOrderSummaryUi();
+    if (!orderListEl || !orderEmptyMsg) return;
 
     orderListEl.textContent = "";
     orderEmptyMsg.hidden = orderItems.length > 0;
 
-    let hasQuoteItems = false;
-
     orderItems.forEach((item) => {
-      if (item.price <= 0) hasQuoteItems = true;
-
       const li = document.createElement("li");
       li.className = "order-row";
 
@@ -730,88 +877,148 @@
       title.textContent = item.name;
 
       const sub = document.createElement("span");
-      sub.textContent =
-        item.price > 0
-          ? `${formatVND(item.price)} / ${item.unit} · Thành tiền: ${formatVND(item.price * item.qty)}`
-          : `Báo giá trực tiếp (${item.unit})`;
+      sub.className = "order-row-detail";
+      sub.textContent = formatOrderItemDetail(item);
 
       info.append(title, sub);
 
       const ctrl = document.createElement("div");
       ctrl.className = "order-row-ctrl";
 
+      const step = Math.max(1, item.step || 1);
+      const maxQty = item.kind === "rate" ? 10000000 : 99999;
+
       const decBtn = document.createElement("button");
       decBtn.type = "button";
       decBtn.className = "qty-btn";
       decBtn.textContent = "−";
       decBtn.setAttribute("aria-label", `Giảm số lượng ${item.name}`);
-      decBtn.addEventListener("click", () => {
-        if (item.qty > 1) {
-          item.qty -= 1;
-        } else {
-          orderItems = orderItems.filter((x) => x.id !== item.id);
-        }
-        clearSendStatus();
-        saveOrder();
-        renderOrder();
-      });
 
-      const qtyVal = document.createElement("span");
-      qtyVal.className = "qty-val";
-      qtyVal.textContent = String(item.qty);
+      const qtyInput = document.createElement("input");
+      qtyInput.type = "number";
+      qtyInput.className = "order-qty-input mono-num";
+      qtyInput.min = "1";
+      qtyInput.max = String(maxQty);
+      qtyInput.step = "1";
+      qtyInput.inputMode = "numeric";
+      qtyInput.value = String(item.qty);
+      qtyInput.setAttribute("aria-label", `Số lượng ${item.name} (${item.unit})`);
 
       const incBtn = document.createElement("button");
       incBtn.type = "button";
       incBtn.className = "qty-btn";
       incBtn.textContent = "+";
       incBtn.setAttribute("aria-label", `Tăng số lượng ${item.name}`);
+
+      const unitTag = document.createElement("span");
+      unitTag.className = "order-unit-tag";
+      unitTag.textContent = item.unit;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn btn-danger-outline btn-sm order-row-remove";
+      removeBtn.textContent = "Xóa";
+      removeBtn.setAttribute("aria-label", `Xóa ${item.name} khỏi đơn`);
+
+      decBtn.addEventListener("click", () => {
+        if (item.qty <= 1) {
+          orderItems = orderItems.filter((x) => x.id !== item.id);
+          clearSendStatus();
+          saveOrder();
+          renderOrder();
+          return;
+        }
+        item.qty = Math.max(1, item.qty - step);
+        qtyInput.value = String(item.qty);
+        sub.textContent = formatOrderItemDetail(item);
+        clearSendStatus();
+        saveOrder();
+        updateOrderSummaryUi();
+      });
+
       incBtn.addEventListener("click", () => {
-        item.qty += 1;
+        item.qty = Math.min(maxQty, item.qty + step);
+        qtyInput.value = String(item.qty);
+        sub.textContent = formatOrderItemDetail(item);
+        clearSendStatus();
+        saveOrder();
+        updateOrderSummaryUi();
+      });
+
+      qtyInput.addEventListener("input", () => {
+        const raw = Math.floor(Number(qtyInput.value));
+        if (!Number.isFinite(raw) || raw < 1) {
+          sub.textContent = `Nhập số lượng từ 1 ${item.unit} trở lên`;
+          return;
+        }
+        item.qty = Math.min(maxQty, raw);
+        sub.textContent = formatOrderItemDetail(item);
+        clearSendStatus();
+        saveOrder();
+        updateOrderSummaryUi();
+      });
+
+      qtyInput.addEventListener("change", () => {
+        const raw = Math.floor(Number(qtyInput.value));
+        item.qty = Number.isFinite(raw) && raw >= 1 ? Math.min(maxQty, raw) : 1;
+        qtyInput.value = String(item.qty);
+        sub.textContent = formatOrderItemDetail(item);
+        clearSendStatus();
+        saveOrder();
+        updateOrderSummaryUi();
+      });
+
+      removeBtn.addEventListener("click", () => {
+        orderItems = orderItems.filter((x) => x.id !== item.id);
         clearSendStatus();
         saveOrder();
         renderOrder();
       });
 
-      ctrl.append(decBtn, qtyVal, incBtn);
+      ctrl.append(decBtn, qtyInput, incBtn, unitTag, removeBtn);
       li.append(info, ctrl);
       orderListEl.appendChild(li);
     });
-
-    if (orderItems.length === 0) {
-      orderTotalPriceEl.textContent = "0 đ";
-    } else if (totalVND === 0 && hasQuoteItems) {
-      orderTotalPriceEl.textContent = "Chờ báo giá";
-    } else if (hasQuoteItems) {
-      orderTotalPriceEl.textContent = `${formatVND(totalVND)} + mục báo giá`;
-    } else {
-      orderTotalPriceEl.textContent = formatVND(totalVND);
-    }
   };
 
   const addItemToOrder = (newItem, qtyToAdd = 1) => {
-    const qty = Math.max(1, Math.min(9999, Math.floor(Number(qtyToAdd) || 1)));
-    const existing = orderItems.find((item) => item.id === newItem.id);
+    const normalized = normalizeOrderItem({ ...newItem, qty: qtyToAdd });
+    if (!normalized) return;
+
+    const existing = orderItems.find((item) => item.id === normalized.id);
     if (existing) {
-      existing.qty += qty;
-    } else {
-      orderItems.push({ ...newItem, qty });
+      const cap = existing.kind === "rate" ? 10000000 : 99999;
+      existing.qty = Math.min(cap, existing.qty + normalized.qty);
+      clearSendStatus();
+      saveOrder();
+      renderOrder();
+      showToast(
+        `Đã cộng thêm ${formatNumber(normalized.qty)} ${normalized.unit} "${normalized.name}" (tổng trong đơn: ${formatNumber(existing.qty)} ${normalized.unit}).`
+      );
+      return;
     }
+
+    orderItems.push(normalized);
     clearSendStatus();
     saveOrder();
     renderOrder();
-    showToast(`Đã thêm ${qty} x "${newItem.name}" vào đơn tính nhanh.`);
+    showToast(`Đã thêm ${formatNumber(normalized.qty)} ${normalized.unit} "${normalized.name}" vào đơn tính nhanh.`);
   };
 
   // Event delegation for dynamic + static order quick-add buttons
   document.addEventListener("click", (event) => {
     const addBtn = event.target.closest("button[data-id][data-name]");
     if (addBtn) {
+      const price = Number(addBtn.dataset.price || 0);
       addItemToOrder(
         {
           id: addBtn.dataset.id,
           name: addBtn.dataset.name,
-          price: Number(addBtn.dataset.price || 0),
-          unit: addBtn.dataset.unit || "mục"
+          kind: price > 0 ? "fixed" : "quote",
+          price,
+          ratePerK: 0,
+          unit: addBtn.dataset.unit || "mục",
+          step: 1
         },
         1
       );
@@ -834,60 +1041,116 @@
     }
   });
 
-  // Quantity steppers (Item rows, Set Hire rows, Starter Acc rows)
+  // Quantity steppers (Unified Item table rows, Set Hire rows, Starter Acc rows)
   document.querySelectorAll(".item-qty-row").forEach((row) => {
     const decBtn = row.querySelector(".row-dec");
     const incBtn = row.querySelector(".row-inc");
     const qtyInput = row.querySelector(".item-qty-input");
     const subtotalEl = row.querySelector(".row-subtotal");
+    const hintEl = row.querySelector(".row-sub-hint");
     const addRowBtn = row.querySelector(".row-add-btn");
 
+    const itemId = row.dataset.itemId || "item";
+    const itemName = row.dataset.itemName || "Vật phẩm";
+    const itemKind = row.dataset.itemKind || "fixed";
     const unitPrice = Number(row.dataset.itemPrice || 0);
-    const maxQty = Number(qtyInput ? qtyInput.max : 9999) || 9999;
+    const ratePerK = Number(row.dataset.itemRatePerK || 0);
+    const itemUnit = row.dataset.itemUnit || "mục";
+    const step = Math.max(1, Number(row.dataset.itemStep || 1) || 1);
+    const maxQty = Number(qtyInput ? qtyInput.max : 1000000) || 1000000;
 
-    const syncRowSubtotal = () => {
-      if (!qtyInput || !subtotalEl) return 1;
-      let val = Math.floor(Number(qtyInput.value));
-      if (!Number.isFinite(val) || val < 1) val = 1;
-      if (val > maxQty) val = maxQty;
+    const getNormalizedQty = () => {
+      const raw = Math.floor(Number(qtyInput ? qtyInput.value : 1));
+      if (!Number.isFinite(raw) || raw < 1) return 1;
+      return Math.min(maxQty, raw);
+    };
+
+    const renderRowSubtotal = (val, isValid = true) => {
+      if (!subtotalEl) return;
+      if (!isValid) {
+        subtotalEl.textContent = "Nhập >= 1";
+        if (hintEl) {
+          hintEl.hidden = true;
+          hintEl.textContent = "";
+        }
+        return;
+      }
+
+      if (itemKind === "quote" || (unitPrice <= 0 && ratePerK <= 0)) {
+        subtotalEl.textContent = "Báo giá theo lô";
+        if (hintEl) {
+          hintEl.textContent = "Liên hệ Zalo / FB";
+          hintEl.hidden = false;
+        }
+        return;
+      }
+
+      if (itemKind === "rate" && ratePerK > 0) {
+        subtotalEl.textContent = formatVND(computeRateCost(val, ratePerK));
+        if (hintEl) {
+          const bonus = formatRateBonusNote(itemId, val);
+          hintEl.textContent = bonus ? (itemId === "gem-ve" ? `= ${bonus}` : bonus) : "";
+          hintEl.hidden = !bonus;
+        }
+        return;
+      }
+
       subtotalEl.textContent = formatVND(unitPrice * val);
-      return val;
+      if (hintEl) {
+        hintEl.hidden = true;
+        hintEl.textContent = "";
+      }
     };
 
     if (decBtn && qtyInput) {
       decBtn.addEventListener("click", () => {
-        const cur = Math.floor(Number(qtyInput.value)) || 1;
-        qtyInput.value = String(Math.max(1, cur - 1));
-        syncRowSubtotal();
+        const cur = getNormalizedQty();
+        const next = Math.max(1, cur - step);
+        qtyInput.value = String(next);
+        renderRowSubtotal(next, true);
       });
     }
 
     if (incBtn && qtyInput) {
       incBtn.addEventListener("click", () => {
-        const cur = Math.floor(Number(qtyInput.value)) || 1;
-        qtyInput.value = String(Math.min(maxQty, cur + 1));
-        syncRowSubtotal();
+        const cur = getNormalizedQty();
+        const next = Math.min(maxQty, cur + step);
+        qtyInput.value = String(next);
+        renderRowSubtotal(next, true);
       });
     }
 
     if (qtyInput) {
-      qtyInput.addEventListener("input", syncRowSubtotal);
-      qtyInput.addEventListener("change", () => {
-        qtyInput.value = String(syncRowSubtotal());
+      qtyInput.addEventListener("input", () => {
+        const raw = Math.floor(Number(qtyInput.value));
+        if (!Number.isFinite(raw) || raw < 1) {
+          renderRowSubtotal(1, false);
+        } else {
+          renderRowSubtotal(Math.min(maxQty, raw), true);
+        }
       });
-      syncRowSubtotal();
+      qtyInput.addEventListener("change", () => {
+        const val = getNormalizedQty();
+        qtyInput.value = String(val);
+        renderRowSubtotal(val, true);
+      });
+      renderRowSubtotal(getNormalizedQty(), true);
     }
 
     if (addRowBtn) {
       addRowBtn.addEventListener("click", () => {
-        const chosenQty = syncRowSubtotal();
+        const chosenQty = getNormalizedQty();
         if (qtyInput) qtyInput.value = String(chosenQty);
+        renderRowSubtotal(chosenQty, true);
         addItemToOrder(
           {
-            id: row.dataset.itemId || "item",
-            name: row.dataset.itemName || "Vật phẩm",
+            id: itemId,
+            name: itemName,
+            kind: itemKind === "rate" && ratePerK > 0 ? "rate" : unitPrice > 0 ? "fixed" : "quote",
             price: unitPrice,
-            unit: row.dataset.itemUnit || "mục"
+            ratePerK,
+            unit: itemUnit,
+            step
           },
           chosenQty
         );
@@ -902,7 +1165,7 @@
         showToast("Vui lòng nhập số lượng hoặc số tiền hợp lệ trước khi thêm.");
         return;
       }
-      addItemToOrder(currentCalcSnapshot, 1);
+      addItemToOrder(currentCalcSnapshot.item, currentCalcSnapshot.qty);
     });
   }
 
@@ -916,6 +1179,7 @@
 
   if (openOrderBtn) openOrderBtn.addEventListener("click", openOrderModal);
   if (openOrderFromItemsBtn) openOrderFromItemsBtn.addEventListener("click", openOrderModal);
+  if (openOrderInlineBtn) openOrderInlineBtn.addEventListener("click", openOrderModal);
   if (mobileOpenOrderBtn) mobileOpenOrderBtn.addEventListener("click", openOrderModal);
 
   const wireDialogBackdropFallback = (dlg) => {
@@ -940,10 +1204,24 @@
     let hasQuote = false;
 
     orderItems.forEach((item, index) => {
-      if (item.price <= 0) hasQuote = true;
-      const linePrice = item.price > 0 ? formatVND(item.price * item.qty) : "Báo giá trực tiếp";
-      totalVND += item.price * item.qty;
-      lines.push(`${index + 1}. ${item.name} x${item.qty} (${item.unit}) — ${linePrice}`);
+      const subTotal = getOrderItemSubtotal(item);
+      if (subTotal <= 0) {
+        hasQuote = true;
+        lines.push(`${index + 1}. ${item.name} — ${formatNumber(item.qty)} ${item.unit} (Báo giá trực tiếp)`);
+        return;
+      }
+      totalVND += subTotal;
+      if (item.kind === "rate" && item.ratePerK > 0) {
+        const bonus = formatRateBonusNote(item.id, item.qty);
+        const qtyDesc = bonus
+          ? `${formatNumber(item.qty)} ${item.unit} (${bonus})`
+          : `${formatNumber(item.qty)} ${item.unit}`;
+        lines.push(`${index + 1}. ${item.name} — ${qtyDesc} — ${formatVND(subTotal)}`);
+      } else {
+        lines.push(
+          `${index + 1}. ${item.name} — ${formatNumber(item.qty)} ${item.unit} × ${formatVND(item.price)} = ${formatVND(subTotal)}`
+        );
+      }
     });
 
     const note = orderNoteEl ? orderNoteEl.value.trim() : "";
@@ -1030,8 +1308,6 @@
   const accFilterServer = document.getElementById("acc-filter-server");
   const accFilterPlanet = document.getElementById("acc-filter-planet");
   const accFilterStatus = document.getElementById("acc-filter-status");
-  const toggleAdminAccPanelBtn = document.getElementById("toggle-admin-acc-panel");
-  const adminInlineSection = document.getElementById("quan-ly-acc");
 
   const accLightboxDialog = document.getElementById("acc-lightbox-dialog");
   const accLightboxTitle = document.getElementById("acc-lightbox-title");
@@ -1297,7 +1573,7 @@
           h3.textContent = "Không có tài khoản nào khớp bộ lọc";
           const p = document.createElement("p");
           p.className = "pretty-text";
-          p.textContent = "Thử chọn 'Tất cả Server / Hành tinh' hoặc đăng Acc mới ở khung Quản lý.";
+          p.textContent = "Thử chọn 'Tất cả Server / Hành tinh' hoặc nhắn Zalo shop để hỏi acc theo yêu cầu.";
           empty.append(h3, p);
           accGalleryGrid.appendChild(empty);
         } else {
@@ -1366,15 +1642,6 @@
     if (accFilterServer) accFilterServer.addEventListener("change", fetchAndRenderAccounts);
     if (accFilterPlanet) accFilterPlanet.addEventListener("change", fetchAndRenderAccounts);
     if (accFilterStatus) accFilterStatus.addEventListener("change", fetchAndRenderAccounts);
-  }
-
-  if (toggleAdminAccPanelBtn && adminInlineSection) {
-    toggleAdminAccPanelBtn.addEventListener("click", () => {
-      adminInlineSection.hidden = !adminInlineSection.hidden;
-      if (!adminInlineSection.hidden) {
-        adminInlineSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
   }
 
   // Lightbox opening via event delegation
@@ -1555,7 +1822,6 @@
         if (adminUploadBox) adminUploadBox.hidden = false;
         if (adminSessionUserEl) adminSessionUserEl.textContent = data.username;
         if (accGalleryGrid) accGalleryGrid.dataset.isAdmin = "1";
-        if (toggleAdminAccPanelBtn) toggleAdminAccPanelBtn.textContent = "Mở Form Đăng Acc Mới (Admin)";
         showToast("Đăng nhập quản trị thành công!");
         await fetchAndRenderAccounts();
       } catch {

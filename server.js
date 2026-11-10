@@ -255,6 +255,9 @@ function createAppServer(options = {}) {
         });
 
         const cacheControl = session || pathname === "/admin" ? "no-store" : "no-cache";
+        if (pathname === "/admin") {
+          res.setHeader("X-Robots-Tag", "noindex, nofollow");
+        }
         sendHtml(req, res, 200, html, nonce, { cacheControl });
         return;
       }
