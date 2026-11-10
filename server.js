@@ -12,6 +12,9 @@ const {
   ALLOWED_PLANETS,
   ALLOWED_STATUSES,
   ALLOWED_SERVERS,
+  ALLOWED_ITEM_CATEGORIES,
+  ALLOWED_ITEM_TAG_CLASSES,
+  BUNDLED_ITEM_ICONS,
   FULL_AD_POST,
   CONFIG_SHA256,
   getOrCreateAppSecret,
@@ -230,16 +233,30 @@ function createAppServer(options = {}) {
 
         const data = {};
         if (pathname === "/") {
+          const svcData = store.listServices();
           data.accounts = store.listAccounts({ status: "available", limit: 3 });
+          data.services = svcData.kichDiemServices;
+          data.starterAccs = svcData.starterAccs;
+        } else if (pathname === "/kich-diem") {
+          const svcData = store.listServices();
+          data.services = svcData.kichDiemServices;
+        } else if (pathname === "/mua-item") {
+          data.items = store.listShopItems({ includeHidden: false });
         } else if (pathname === "/mua-tai-khoan") {
           const sv = sanitizePlainText(parsedUrl.searchParams.get("server") || "", 24);
           const pl = sanitizePlainText(parsedUrl.searchParams.get("planet") || "", 20);
           const st = sanitizePlainText(parsedUrl.searchParams.get("status") || "", 12);
           const q = sanitizeSearchQuery(parsedUrl.searchParams.get("q") || "");
+          const svcData = store.listServices();
           data.accounts = store.listAccounts({ server: sv, planet: pl, status: st, q, limit: 120 });
+          data.starterAccs = svcData.starterAccs;
         } else if (pathname === "/admin") {
           if (session) {
+            const svcData = store.listServices();
             data.accounts = store.listAccounts({ limit: 150 });
+            data.items = store.listShopItems({ includeHidden: true });
+            data.services = svcData.kichDiemServices;
+            data.starterAccs = svcData.starterAccs;
             data.auditLogs = store.getRecentAuditLogs(30);
             data.cspReports = store.getRecentCspReports(20);
           }
@@ -665,12 +682,370 @@ function createAppServer(options = {}) {
 
         const relImg = deleted.image_path.replace(/^\/uploads\//, "");
         const imgDisk = resolveSafeSubpath(uploadsDir, relImg);
-        if (imgDisk && fs.existsSync(imgDisk)) {
+        if (imgDisk && fs.existsSync(imgDisk) && !store.isUploadPathReferenced(deleted.image_path)) {
           fs.unlinkSync(imgDisk);
         }
 
         store.recordAudit("ACCOUNT_DELETED", session.username, `Xóa acc #${deleted.code}`, ip);
         sendJson(req, res, 200, { ok: true });
+        return;
+      }
+
+      // 5b. Shop Items & Pricing Management APIs
+      const validItemCats = new Set(ALLOWED_ITEM_CATEGORIES.map((c) => c.id));
+      const bundledIconMap = new Map(BUNDLED_ITEM_ICONS.map((ic) => [ic.path, ic]));
+
+      async function parseItemInput(existingItem = null) {
+        const ct = String(req.headers["content-type"] || "").toLowerCase();
+        let rawFields = {};
+        let uploadedIconFile = null;
+
+        if (ct.includes("multipart/form-data")) {
+          const rawBody = await readRequestBody(req, Math.floor(5.5 * 1024 * 1024));
+          const parsed = parseMultipartFormData(rawBody, req.headers["content-type"]);
+          rawFields = parsed.fields;
+          if (parsed.files && parsed.files.iconFile && parsed.files.iconFile.data && parsed.files.iconFile.data.length > 0) {
+            uploadedIconFile = parsed.files.iconFile;
+          }
+        } else if (ct.includes("application/json")) {
+          const rawBody = await readRequestBody(req, 16384);
+          try {
+            rawFields = JSON.parse(rawBody.toString("utf8")) || {};
+          } catch {
+            return { error: "Dữ liệu JSON không hợp lệ.", statusCode: 400 };
+          }
+        } else {
+          return { error: "Content-Type không hợp lệ.", statusCode: 415 };
+        }
+
+        const isCreate = !existingItem;
+        const patch = {};
+
+        if (isCreate || rawFields.name !== undefined) {
+          const cleanName = sanitizePlainText(rawFields.name, 90);
+          if (!cleanName || cleanName.length < 2) {
+            return { error: "Tên mặt hàng cần tối thiểu 2 ký tự.", statusCode: 400 };
+          }
+          patch.name = cleanName;
+        }
+        if (rawFields.orderName !== undefined) {
+          const cleanOrder = sanitizePlainText(rawFields.orderName, 90);
+          if (cleanOrder.length >= 2) patch.orderName = cleanOrder;
+        }
+        if (isCreate || rawFields.category !== undefined) {
+          const cleanCat = sanitizePlainText(rawFields.category, 24);
+          if (!validItemCats.has(cleanCat)) {
+            return { error: "Nhóm danh mục không hợp lệ.", statusCode: 400 };
+          }
+          patch.category = cleanCat;
+        }
+        if (isCreate || rawFields.desc !== undefined) {
+          const cleanDesc = sanitizePlainText(rawFields.desc, 240);
+          if (isCreate && (!cleanDesc || cleanDesc.length < 2)) {
+            return { error: "Mô tả nội dung item cần tối thiểu 2 ký tự.", statusCode: 400 };
+          }
+          if (cleanDesc.length >= 2 || !isCreate) {
+            patch.desc = cleanDesc;
+          }
+        }
+        if (rawFields.kind !== undefined) {
+          const cleanKind = sanitizePlainText(rawFields.kind, 12);
+          if (!["fixed", "quote"].includes(cleanKind)) {
+            return { error: "Cách tính giá phải là fixed hoặc quote.", statusCode: 400 };
+          }
+          patch.kind = cleanKind;
+        } else if (isCreate) {
+          patch.kind = "fixed";
+        }
+
+        const effectiveKind = patch.kind !== undefined ? patch.kind : existingItem.kind;
+        if (isCreate || rawFields.price !== undefined || patch.kind !== undefined) {
+          if (effectiveKind === "quote") {
+            patch.price = 0;
+          } else {
+            const rawPriceVal = rawFields.price !== undefined ? Number(rawFields.price) : existingItem.price;
+            if (!Number.isInteger(rawPriceVal) || rawPriceVal < 100 || rawPriceVal > 500_000_000) {
+              return { error: "Đơn giá (VNĐ) phải là số nguyên từ 100 đến 500.000.000.", statusCode: 400 };
+            }
+            patch.price = rawPriceVal;
+          }
+        }
+
+        if (isCreate || rawFields.unit !== undefined) {
+          const cleanUnit = sanitizePlainText(rawFields.unit, 24);
+          if (!cleanUnit) {
+            return { error: "Vui lòng nhập đơn vị tính (VD: x99, viên, cái).", statusCode: 400 };
+          }
+          patch.unit = cleanUnit;
+        }
+
+        if (rawFields.defaultQty !== undefined || rawFields.default_qty !== undefined) {
+          const dq = Number(rawFields.defaultQty !== undefined ? rawFields.defaultQty : rawFields.default_qty);
+          if (!Number.isInteger(dq) || dq < 1 || dq > 9999) {
+            return { error: "Số lượng mặc định phải từ 1 đến 9.999.", statusCode: 400 };
+          }
+          patch.defaultQty = dq;
+        }
+
+        if (rawFields.tag !== undefined) {
+          patch.tag = sanitizePlainText(rawFields.tag, 32);
+        }
+        if (rawFields.tagClass !== undefined || rawFields.tag_class !== undefined) {
+          const tc = sanitizePlainText(
+            rawFields.tagClass !== undefined ? rawFields.tagClass : rawFields.tag_class,
+            24
+          );
+          if (!ALLOWED_ITEM_TAG_CLASSES.includes(tc)) {
+            return { error: "Kiểu màu nhãn không hợp lệ.", statusCode: 400 };
+          }
+          patch.tagClass = tc;
+        }
+        if (rawFields.keywords !== undefined) {
+          patch.keywords = sanitizePlainText(rawFields.keywords, 180);
+        }
+        if (rawFields.sortOrder !== undefined || rawFields.sort_order !== undefined) {
+          const so = Number(rawFields.sortOrder !== undefined ? rawFields.sortOrder : rawFields.sort_order);
+          if (!Number.isInteger(so) || so < 0 || so > 9999) {
+            return { error: "Thứ tự hiển thị phải từ 0 đến 9.999.", statusCode: 400 };
+          }
+          patch.sortOrder = so;
+        }
+        if (rawFields.isActive !== undefined || rawFields.is_active !== undefined) {
+          const rawAct = rawFields.isActive !== undefined ? rawFields.isActive : rawFields.is_active;
+          patch.isActive = !(rawAct === false || rawAct === 0 || rawAct === "0" || rawAct === "false");
+        }
+
+        if (uploadedIconFile) {
+          const imgMeta = inspectImageMagicBytes(uploadedIconFile.data);
+          if (!imgMeta) {
+            return { error: "File icon phải là ảnh PNG, JPG hoặc WebP thật tối đa 5MB.", statusCode: 400 };
+          }
+          const safeFilename = `${crypto.randomUUID()}${imgMeta.ext}`;
+          const diskPath = resolveSafeSubpath(uploadsDir, safeFilename);
+          if (!diskPath) {
+            return { error: "Internal path resolution error", statusCode: 500 };
+          }
+          fs.writeFileSync(diskPath, uploadedIconFile.data, { flag: "wx" });
+          patch.icon = `/uploads/${safeFilename}`;
+          patch.iconWidth = imgMeta.width;
+          patch.iconHeight = imgMeta.height;
+        } else if (rawFields.icon !== undefined) {
+          const iconCandidate = sanitizePlainText(rawFields.icon, 120);
+          if (bundledIconMap.has(iconCandidate)) {
+            const meta = bundledIconMap.get(iconCandidate);
+            patch.icon = meta.path;
+            patch.iconWidth = meta.width;
+            patch.iconHeight = meta.height;
+          } else if (/^\/uploads\/[0-9a-f-]{36}\.(png|jpg|webp)$/.test(iconCandidate)) {
+            const relUpload = iconCandidate.slice("/uploads/".length);
+            const diskUpload = resolveSafeSubpath(uploadsDir, relUpload);
+            if (!diskUpload || !fs.existsSync(diskUpload)) {
+              return { error: "Đường dẫn icon không tồn tại.", statusCode: 400 };
+            }
+            patch.icon = iconCandidate;
+          } else if (iconCandidate) {
+            return { error: "Vui lòng chọn icon trong danh sách hoặc tải ảnh lên.", statusCode: 400 };
+          }
+        }
+
+        return { ok: true, data: patch };
+      }
+
+      if (method === "GET" && pathname === "/api/items") {
+        const session = readSessionFromRequest(req);
+        const includeHidden = Boolean(session) && parsedUrl.searchParams.get("include_hidden") === "1";
+        const cat = sanitizePlainText(parsedUrl.searchParams.get("category") || "", 24);
+        const q = sanitizeSearchQuery(parsedUrl.searchParams.get("q") || "");
+        const items = store.listShopItems({ includeHidden, category: cat, q });
+        sendJson(req, res, 200, { ok: true, items });
+        return;
+      }
+
+      if (method === "POST" && pathname === "/api/items") {
+        const limitResult = rateLimiter.consume(`item_mut:${ip}`, 40, 10 * 60 * 1000);
+        if (!limitResult.allowed) {
+          res.setHeader("Retry-After", String(limitResult.retryAfterSec));
+          sendJson(req, res, 429, { ok: false, error: "Thao tác quá nhanh, vui lòng thử lại sau." });
+          return;
+        }
+        const session = readSessionFromRequest(req);
+        if (!session) {
+          sendJson(req, res, 401, { ok: false, error: "Cần đăng nhập quản trị trước." });
+          return;
+        }
+        if (!verifyCsrf(req, session)) {
+          sendJson(req, res, 403, { ok: false, error: "Invalid CSRF token" });
+          return;
+        }
+
+        const parsed = await parseItemInput(null);
+        if (!parsed.ok) {
+          sendJson(req, res, parsed.statusCode || 400, { ok: false, error: parsed.error });
+          return;
+        }
+
+        const createdItem = store.createShopItem(parsed.data);
+        store.recordAudit(
+          "ITEM_CREATED",
+          session.username,
+          `Thêm item "${createdItem.name}" (${createdItem.unitPriceLabel})`,
+          ip
+        );
+        sendJson(req, res, 201, { ok: true, item: createdItem });
+        return;
+      }
+
+      const itemIdMatch = pathname.match(/^\/api\/items\/(\d+)$/);
+      if (itemIdMatch && method === "PATCH") {
+        const limitResult = rateLimiter.consume(`item_mut:${ip}`, 40, 10 * 60 * 1000);
+        if (!limitResult.allowed) {
+          res.setHeader("Retry-After", String(limitResult.retryAfterSec));
+          sendJson(req, res, 429, { ok: false, error: "Thao tác quá nhanh, vui lòng thử lại sau." });
+          return;
+        }
+        const session = readSessionFromRequest(req);
+        if (!session) {
+          sendJson(req, res, 401, { ok: false, error: "Unauthorized" });
+          return;
+        }
+        if (!verifyCsrf(req, session)) {
+          sendJson(req, res, 403, { ok: false, error: "Invalid CSRF token" });
+          return;
+        }
+
+        const existingItem = store.getShopItemById(Number(itemIdMatch[1]));
+        if (!existingItem) {
+          sendJson(req, res, 404, { ok: false, error: "Không tìm thấy mặt hàng cần sửa." });
+          return;
+        }
+
+        const parsed = await parseItemInput(existingItem);
+        if (!parsed.ok) {
+          sendJson(req, res, parsed.statusCode || 400, { ok: false, error: parsed.error });
+          return;
+        }
+
+        const updatedItem = store.updateShopItem(existingItem.dbId, parsed.data);
+        if (existingItem.icon !== updatedItem.icon && existingItem.icon.startsWith("/uploads/") && !store.isUploadPathReferenced(existingItem.icon)) {
+          const oldRel = existingItem.icon.slice("/uploads/".length);
+          const oldDisk = resolveSafeSubpath(uploadsDir, oldRel);
+          if (oldDisk && fs.existsSync(oldDisk)) fs.unlinkSync(oldDisk);
+        }
+
+        store.recordAudit(
+          "ITEM_UPDATED",
+          session.username,
+          `Sửa item "${updatedItem.name}" (${updatedItem.unitPriceLabel}, active=${updatedItem.isActive})`,
+          ip
+        );
+        sendJson(req, res, 200, { ok: true, item: updatedItem });
+        return;
+      }
+
+      if (itemIdMatch && method === "DELETE") {
+        const session = readSessionFromRequest(req);
+        if (!session) {
+          sendJson(req, res, 401, { ok: false, error: "Unauthorized" });
+          return;
+        }
+        if (!verifyCsrf(req, session)) {
+          sendJson(req, res, 403, { ok: false, error: "Invalid CSRF token" });
+          return;
+        }
+
+        const deletedItem = store.deleteShopItem(Number(itemIdMatch[1]));
+        if (!deletedItem) {
+          sendJson(req, res, 404, { ok: false, error: "Không tìm thấy mặt hàng." });
+          return;
+        }
+        if (deletedItem.icon.startsWith("/uploads/") && !store.isUploadPathReferenced(deletedItem.icon)) {
+          const oldRel = deletedItem.icon.slice("/uploads/".length);
+          const oldDisk = resolveSafeSubpath(uploadsDir, oldRel);
+          if (oldDisk && fs.existsSync(oldDisk)) fs.unlinkSync(oldDisk);
+        }
+
+        store.recordAudit("ITEM_DELETED", session.username, `Xóa item "${deletedItem.name}"`, ip);
+        sendJson(req, res, 200, { ok: true });
+        return;
+      }
+
+      const svcKeyMatch = pathname.match(/^\/api\/services\/([a-z0-9-]+)$/);
+      if (svcKeyMatch && method === "PATCH") {
+        const session = readSessionFromRequest(req);
+        if (!session) {
+          sendJson(req, res, 401, { ok: false, error: "Unauthorized" });
+          return;
+        }
+        if (!verifyCsrf(req, session)) {
+          sendJson(req, res, 403, { ok: false, error: "Invalid CSRF token" });
+          return;
+        }
+
+        const ct = String(req.headers["content-type"] || "").toLowerCase();
+        if (!ct.includes("application/json")) {
+          sendJson(req, res, 415, { ok: false, error: "Content-Type must be application/json" });
+          return;
+        }
+        const rawBody = await readRequestBody(req, 8192);
+        let parsedBody;
+        try {
+          parsedBody = JSON.parse(rawBody.toString("utf8"));
+        } catch {
+          sendJson(req, res, 400, { ok: false, error: "Invalid JSON" });
+          return;
+        }
+
+        const existingSvc = store.getServiceByKey(svcKeyMatch[1]);
+        if (!existingSvc) {
+          sendJson(req, res, 404, { ok: false, error: "Không tìm thấy dịch vụ." });
+          return;
+        }
+
+        const updates = {};
+        if (parsedBody.name !== undefined) {
+          const cleanName = sanitizePlainText(parsedBody.name, 90);
+          if (cleanName.length < 2) {
+            sendJson(req, res, 400, { ok: false, error: "Tên dịch vụ quá ngắn." });
+            return;
+          }
+          updates.name = cleanName;
+        }
+        if (parsedBody.price !== undefined) {
+          const p = Number(parsedBody.price);
+          if (!Number.isInteger(p) || (p !== 0 && p < 1000) || p > 500_000_000) {
+            sendJson(req, res, 400, { ok: false, error: "Giá dịch vụ (VNĐ) phải bằng 0 (báo giá) hoặc từ 1.000 đ." });
+            return;
+          }
+          updates.price = p;
+        }
+        if (parsedBody.unit !== undefined) {
+          const u = sanitizePlainText(parsedBody.unit, 20);
+          if (u) updates.unit = u;
+        }
+        if (parsedBody.note !== undefined) {
+          const n = sanitizePlainText(parsedBody.note, 300);
+          if (n.length < 2) {
+            sendJson(req, res, 400, { ok: false, error: "Mô tả dịch vụ quá ngắn." });
+            return;
+          }
+          updates.note = n;
+        }
+        if (parsedBody.tag !== undefined) {
+          updates.tag = sanitizePlainText(parsedBody.tag, 32);
+        }
+        if (parsedBody.priceText !== undefined) {
+          const pt = sanitizePlainText(parsedBody.priceText, 60);
+          if (pt.length >= 2) updates.priceText = pt;
+        }
+
+        const updatedSvc = store.updateService(existingSvc.id, updates);
+        store.recordAudit(
+          "SERVICE_UPDATED",
+          session.username,
+          `Sửa dịch vụ "${updatedSvc.name}" (${updatedSvc.priceText})`,
+          ip
+        );
+        sendJson(req, res, 200, { ok: true, service: updatedSvc });
         return;
       }
 
@@ -731,13 +1106,18 @@ function createAppServer(options = {}) {
         const nonce = generateNonce();
         const session = readSessionFromRequest(req);
         const integrity = verifyIntegrity();
+        const svcData = store.listServices();
         const html = renderPage({
           route: "/",
           nonce,
           csrfToken: session ? session.csrfToken : "",
           session,
           integrity,
-          data: { accounts: store.listAccounts({ status: "available", limit: 3 }) }
+          data: {
+            accounts: store.listAccounts({ status: "available", limit: 3 }),
+            services: svcData.kichDiemServices,
+            starterAccs: svcData.starterAccs
+          }
         });
         sendHtml(req, res, 404, html, nonce, { cacheControl: "no-store" });
       }

@@ -78,6 +78,63 @@ const ALLOWED_PLANETS = deepFreeze(["Trái Đất", "Namếc", "Xayda"]);
 
 const ALLOWED_STATUSES = deepFreeze(["available", "sold"]);
 
+const ALLOWED_ITEM_CATEGORIES = deepFreeze([
+  { id: "item-x99", label: "Item x99", group: "Item x99" },
+  { id: "da-duiduc", label: "Đá NC & Dùi đục", group: "Đá NC & Dùi đục" },
+  { id: "spl", label: "Sao pha lê", group: "Sao pha lê" },
+  { id: "nr-manh", label: "Ngọc Rồng & Mảnh", group: "Ngọc Rồng & Mảnh" },
+  { id: "khac", label: "Vật phẩm khác", group: "Vật phẩm khác" }
+]);
+
+const ALLOWED_ITEM_TAG_CLASSES = deepFreeze([
+  "",
+  "tag-jade",
+  "tag-hot",
+  "tag-crimson",
+  "planet-earth",
+  "planet-namek",
+  "planet-xayda"
+]);
+
+const BUNDLED_ITEM_ICONS = deepFreeze([
+  { path: "/assets/icons/2754.png", label: "Cuồng nộ", width: 76, height: 80 },
+  { path: "/assets/icons/2755.png", label: "Bổ huyết", width: 80, height: 76 },
+  { path: "/assets/icons/2757.png", label: "Giáp Xên bọ hung", width: 80, height: 64 },
+  { path: "/assets/icons/2758.png", label: "Máy dò Capsule kì bí", width: 80, height: 64 },
+  { path: "/assets/icons/12139.png", label: "Dùi đục", width: 80, height: 76 },
+  { path: "/assets/icons/1420.png", label: "Đá lục bảo", width: 64, height: 64 },
+  { path: "/assets/icons/1419.png", label: "Đá Saphia", width: 48, height: 48 },
+  { path: "/assets/icons/1416.png", label: "Đá Ruby", width: 48, height: 48 },
+  { path: "/assets/icons/1417.png", label: "Đá Titan", width: 48, height: 48 },
+  { path: "/assets/icons/1418.png", label: "Đá thạch anh tím", width: 48, height: 48 },
+  { path: "/assets/icons/3887.png", label: "Sao pha lê đỏ", width: 64, height: 64 },
+  { path: "/assets/icons/3888.png", label: "Sao pha lê lam", width: 64, height: 64 },
+  { path: "/assets/icons/3892.png", label: "Sao pha lê vàng", width: 64, height: 64 },
+  { path: "/assets/icons/3893.png", label: "Sao pha lê lục", width: 64, height: 64 },
+  { path: "/assets/icons/421.png", label: "Ngọc Rồng 3 sao", width: 64, height: 64 },
+  { path: "/assets/icons/8935.png", label: "Mảnh Đội trưởng Vàng", width: 84, height: 84 },
+  { path: "/assets/icons/11048.png", label: "Mảnh Rồng thần Namếc", width: 96, height: 96 },
+  { path: "/assets/icons/14247.png", label: "Mảnh Khỉ Oozaru", width: 72, height: 72 },
+  { path: "/assets/icons/4028.png", label: "Thỏi vàng", width: 84, height: 36 },
+  { path: "/assets/icons/930.png", label: "Vàng tươi / Die", width: 56, height: 56 },
+  { path: "/assets/icons/932.png", label: "Ngọc xanh", width: 56, height: 56 },
+  { path: "/assets/icons/6765.png", label: "Vé tặng ngọc", width: 72, height: 72 },
+  { path: "/assets/icons/7223.png", label: "Capsule kích hoạt", width: 72, height: 72 },
+  { path: "/assets/icons/5004.png", label: "Capsule vàng", width: 72, height: 72 },
+  { path: "/assets/icons/5007.png", label: "Rương vàng", width: 96, height: 68 },
+  { path: "/assets/icons/15686.png", label: "Vé vàng", width: 92, height: 92 },
+  { path: "/assets/icons/15614.png", label: "Bông tai Porata", width: 80, height: 80 },
+  { path: "/assets/icons/4647.png", label: "Áo Thần Linh", width: 56, height: 44 },
+  { path: "/assets/icons/4657.png", label: "Áo Thần Namếc", width: 64, height: 40 },
+  { path: "/assets/icons/4652.png", label: "Áo Thần Xayda", width: 56, height: 44 },
+  { path: "/assets/icons/6324.png", label: "Bánh Pudding", width: 60, height: 64 },
+  { path: "/assets/icons/1407.png", label: "Bùa Trí Tuệ x4", width: 64, height: 64 },
+  { path: "/assets/icons/241.png", label: "Đậu thần cấp 5", width: 48, height: 48 },
+  { path: "/assets/icons/1089.png", label: "Rada cấp 1", width: 48, height: 64 },
+  { path: "/assets/icons/15766.png", label: "Đổi đệ tử", width: 92, height: 92 },
+  { path: "/assets/icons/7101.png", label: "Nâng kỹ năng đệ tử", width: 80, height: 80 }
+]);
+
 const ALLOWED_SERVERS = deepFreeze([
   "SP1",
   "SP2",
@@ -123,7 +180,7 @@ const KICH_DIEM_SERVICES = deepFreeze([
     tag: "Done 3s",
     tagClass: "tag-hot",
     name: "Nạp CR Siêu Tốc",
-    orderName: "Nạp CR (done 3s)",
+    orderName: "Nạp CR",
     price: 810000,
     unit: "gói",
     priceText: "810.000 đ / gói",
@@ -212,61 +269,6 @@ const KICH_DIEM_SERVICES = deepFreeze([
   }
 ]);
 
-const SPL_TYPES = deepFreeze([
-  {
-    id: "spl-441",
-    templateId: 441,
-    name: "Sao pha lê đỏ (ID 441)",
-    shortName: "SPL Đỏ (441)",
-    effect: "Hút 5% HP",
-    description: "Biến 5% sát thương thành HP",
-    price: 1000,
-    icon: "/assets/icons/3887.png",
-    iconAlt: "Sao pha lê đỏ ID 441",
-    width: 64,
-    height: 64
-  },
-  {
-    id: "spl-442",
-    templateId: 442,
-    name: "Sao pha lê lam (ID 442)",
-    shortName: "SPL Lam (442)",
-    effect: "Hút 5% KI",
-    description: "Biến 5% sát thương thành KI",
-    price: 1000,
-    icon: "/assets/icons/3888.png",
-    iconAlt: "Sao pha lê lam ID 442",
-    width: 64,
-    height: 64
-  },
-  {
-    id: "spl-446",
-    templateId: 446,
-    name: "Sao pha lê vàng (ID 446)",
-    shortName: "SPL Vàng (446)",
-    effect: "+5% vàng rơi",
-    description: "Tăng 5% vàng rơi từ quái",
-    price: 1000,
-    icon: "/assets/icons/3892.png",
-    iconAlt: "Sao pha lê vàng ID 446",
-    width: 64,
-    height: 64
-  },
-  {
-    id: "spl-447",
-    templateId: 447,
-    name: "Sao pha lê lục (ID 447)",
-    shortName: "SPL Lục (447)",
-    effect: "+5% TNSM",
-    description: "Tăng 5% tiềm năng, sức mạnh",
-    price: 1000,
-    icon: "/assets/icons/3893.png",
-    iconAlt: "Sao pha lê lục ID 447",
-    width: 64,
-    height: 64
-  }
-]);
-
 const MANH_ACTIVATION_INFOS = deepFreeze([
   {
     id: "manh-dtv",
@@ -347,8 +349,8 @@ const ITEM_PRICE_ROWS = deepFreeze([
     id: "bh-x99",
     category: "item-x99",
     group: "Item x99",
-    name: "x99 Bổ huyết (BH)",
-    orderName: "x99 Bổ huyết (BH)",
+    name: "x99 Bổ huyết",
+    orderName: "x99 Bổ huyết",
     desc: "Tăng +100% HP tối đa trong 10 phút",
     keywords: "x99 bh bổ huyết 10ka 10k 10.000",
     kind: "fixed",
@@ -370,8 +372,8 @@ const ITEM_PRICE_ROWS = deepFreeze([
     id: "gx-x99",
     category: "item-x99",
     group: "Item x99",
-    name: "x99 Giáp Xên bọ hung (GX)",
-    orderName: "x99 Giáp Xên bọ hung (GX)",
+    name: "x99 Giáp Xên bọ hung",
+    orderName: "x99 Giáp Xên bọ hung",
     desc: "Giảm 50% sát thương khi săn boss, doanh trại",
     keywords: "x99 gx giáp xên bọ hung 10ka 10k 10.000",
     kind: "fixed",
@@ -393,8 +395,8 @@ const ITEM_PRICE_ROWS = deepFreeze([
     id: "md-cskb",
     category: "item-x99",
     group: "Item x99",
-    name: "x99 Máy dò Capsule kì bí (MD CSKB)",
-    orderName: "x99 Máy dò Capsule kì bí (MD CSKB)",
+    name: "x99 Máy dò Capsule kì bí",
+    orderName: "x99 Máy dò Capsule kì bí",
     desc: "Dò tìm Viên Capsule kì bí ở Tương Lai",
     keywords: "x99 md cskb máy dò capsule kì bí kỳ bí 40ka 40k 40.000",
     kind: "fixed",
@@ -416,8 +418,8 @@ const ITEM_PRICE_ROWS = deepFreeze([
     id: "dui-duc",
     category: "da-duiduc",
     group: "Đục lỗ",
-    name: "Dùi đục (Có SLL)",
-    orderName: "Dùi đục (SLL)",
+    name: "Dùi đục",
+    orderName: "Dùi đục",
     desc: "Đục lỗ trang bị tại Bà Hạt Mít, sẵn số lượng lớn",
     keywords: "dùi đục 10ka 10.000 có sll số lượng lớn",
     kind: "fixed",
@@ -553,9 +555,9 @@ const ITEM_PRICE_ROWS = deepFreeze([
   {
     id: "spl-441",
     category: "spl",
-    group: "SPL · ID 441",
-    name: "Sao pha lê đỏ (ID 441)",
-    orderName: "Sao pha lê đỏ (ID 441)",
+    group: "Sao pha lê",
+    name: "Sao pha lê đỏ",
+    orderName: "Sao pha lê đỏ",
     desc: "Biến 5% sát thương thành HP khi đánh quái, săn boss",
     keywords: "spl sao pha lê đỏ 441 hút 5% hp máu 1k 1v 1.000 1 viên",
     kind: "fixed",
@@ -569,16 +571,16 @@ const ITEM_PRICE_ROWS = deepFreeze([
     tag: "Hút 5% HP",
     tagClass: "tag-crimson",
     icon: "/assets/icons/3887.png",
-    iconAlt: "Sao pha lê đỏ ID 441",
+    iconAlt: "Sao pha lê đỏ",
     width: 64,
     height: 64
   },
   {
     id: "spl-442",
     category: "spl",
-    group: "SPL · ID 442",
-    name: "Sao pha lê lam (ID 442)",
-    orderName: "Sao pha lê lam (ID 442)",
+    group: "Sao pha lê",
+    name: "Sao pha lê lam",
+    orderName: "Sao pha lê lam",
     desc: "Biến 5% sát thương thành KI khi đánh quái, săn boss",
     keywords: "spl sao pha lê lam xanh dương 442 hút 5% ki mp 1k 1v 1.000 1 viên",
     kind: "fixed",
@@ -592,16 +594,16 @@ const ITEM_PRICE_ROWS = deepFreeze([
     tag: "Hút 5% KI",
     tagClass: "planet-earth",
     icon: "/assets/icons/3888.png",
-    iconAlt: "Sao pha lê lam ID 442",
+    iconAlt: "Sao pha lê lam",
     width: 64,
     height: 64
   },
   {
     id: "spl-446",
     category: "spl",
-    group: "SPL · ID 446",
-    name: "Sao pha lê vàng (ID 446)",
-    orderName: "Sao pha lê vàng (ID 446)",
+    group: "Sao pha lê",
+    name: "Sao pha lê vàng",
+    orderName: "Sao pha lê vàng",
     desc: "Tăng +5% vàng rơi khi đánh quái",
     keywords: "spl sao pha lê vàng 446 +5% vàng rơi 1k 1v 1.000 1 viên",
     kind: "fixed",
@@ -615,16 +617,16 @@ const ITEM_PRICE_ROWS = deepFreeze([
     tag: "+5% Vàng rơi",
     tagClass: "tag-hot",
     icon: "/assets/icons/3892.png",
-    iconAlt: "Sao pha lê vàng ID 446",
+    iconAlt: "Sao pha lê vàng",
     width: 64,
     height: 64
   },
   {
     id: "spl-447",
     category: "spl",
-    group: "SPL · ID 447",
-    name: "Sao pha lê lục (ID 447)",
-    orderName: "Sao pha lê lục (ID 447)",
+    group: "Sao pha lê",
+    name: "Sao pha lê lục",
+    orderName: "Sao pha lê lục",
     desc: "Tăng +5% tiềm năng, sức mạnh (TNSM)",
     keywords: "spl sao pha lê lục xanh lá 447 +5% tnsm tiềm năng sức mạnh 1k 1v 1.000 1 viên",
     kind: "fixed",
@@ -638,7 +640,7 @@ const ITEM_PRICE_ROWS = deepFreeze([
     tag: "+5% TNSM",
     tagClass: "tag-jade",
     icon: "/assets/icons/3893.png",
-    iconAlt: "Sao pha lê lục ID 447",
+    iconAlt: "Sao pha lê lục",
     width: 64,
     height: 64
   },
@@ -646,8 +648,8 @@ const ITEM_PRICE_ROWS = deepFreeze([
     id: "nr-3s",
     category: "nr-manh",
     group: "Ngọc Rồng",
-    name: "Ngọc Rồng 3 sao (NR 3s)",
-    orderName: "Ngọc Rồng 3 sao (NR 3s)",
+    name: "Ngọc Rồng 3 sao",
+    orderName: "Ngọc Rồng 3 sao",
     desc: "Sẵn hàng giao nhanh để ước rồng thần hoặc tích trữ",
     keywords: "nr 3s ngọc rồng 3 sao 2k5 2.500 1 viên",
     kind: "fixed",
@@ -733,98 +735,6 @@ const ITEM_PRICE_ROWS = deepFreeze([
     iconAlt: "Mảnh Khỉ Oozaru",
     width: 72,
     height: 72
-  },
-  {
-    id: "gold-fresh",
-    category: "vang-ngoc",
-    group: "Vàng Server",
-    name: "Thỏi vàng / Vàng tươi (x15)",
-    orderName: "Vàng tươi (x15)",
-    desc: "15 triệu vàng = 1.000 đ (nhập số triệu vàng cần mua)",
-    keywords: "vàng tươi x15 thỏi vàng 15 triệu",
-    kind: "rate",
-    price: 0,
-    ratePerK: 15,
-    unit: "triệu vàng",
-    unitPriceLabel: "15 tr vàng / 1k",
-    defaultQty: 1500,
-    step: 15,
-    maxQty: 1000000,
-    tag: "x15",
-    tagClass: "tag-hot",
-    icon: "/assets/icons/4028.png",
-    iconAlt: "Thỏi vàng",
-    width: 84,
-    height: 36
-  },
-  {
-    id: "gold-die",
-    category: "vang-ngoc",
-    group: "Vàng Server",
-    name: "Vàng die (x60)",
-    orderName: "Vàng die (x60)",
-    desc: "60 triệu vàng = 1.000 đ (nhập số triệu vàng cần mua)",
-    keywords: "vàng die x60 60 triệu",
-    kind: "rate",
-    price: 0,
-    ratePerK: 60,
-    unit: "triệu vàng",
-    unitPriceLabel: "60 tr vàng / 1k",
-    defaultQty: 6000,
-    step: 60,
-    maxQty: 1000000,
-    tag: "x60",
-    tagClass: "tag-hot",
-    icon: "/assets/icons/930.png",
-    iconAlt: "Vàng die",
-    width: 64,
-    height: 56
-  },
-  {
-    id: "gem-ki",
-    category: "vang-ngoc",
-    group: "Ngọc Server",
-    name: "Ngọc kí (x11)",
-    orderName: "Ngọc kí (x11)",
-    desc: "11 ngọc = 1.000 đ (giao trực tiếp qua ngọc kí)",
-    keywords: "ngọc kí x11 11 ngọc",
-    kind: "rate",
-    price: 0,
-    ratePerK: 11,
-    unit: "ngọc",
-    unitPriceLabel: "11 ngọc / 1k",
-    defaultQty: 1100,
-    step: 11,
-    maxQty: 1000000,
-    tag: "x11",
-    tagClass: "tag-jade",
-    icon: "/assets/icons/932.png",
-    iconAlt: "Ngọc kí",
-    width: 56,
-    height: 56
-  },
-  {
-    id: "gem-ve",
-    category: "vang-ngoc",
-    group: "Ngọc Server",
-    name: "Ngọc vé ID 718 (x10)",
-    orderName: "Ngọc vé ID 718 (x10)",
-    desc: "10 ngọc = 1.000 đ (Vé tặng ngọc ID 718: 1 vé = 10 ngọc)",
-    keywords: "ngọc vé x10 vé tặng ngọc id 718",
-    kind: "rate",
-    price: 0,
-    ratePerK: 10,
-    unit: "ngọc",
-    unitPriceLabel: "10 ngọc / 1k",
-    defaultQty: 1000,
-    step: 10,
-    maxQty: 1000000,
-    tag: "ID 718 · x10",
-    tagClass: "tag-jade",
-    icon: "/assets/icons/6765.png",
-    iconAlt: "Vé tặng ngọc ID 718",
-    width: 72,
-    height: 72
   }
 ]);
 
@@ -862,14 +772,14 @@ const FULL_AD_POST = [
   "✅ Nhận kích điểm 300.000 đ - nạp CR 810.000 đ done 3s",
   "✅ Bán x99 Cuồng nộ 15.000 đ / x99 - x99 Bổ huyết 10.000 đ / x99 - x99 Giáp Xên bọ hung 10.000 đ / x99",
   "✅ Bán x999 đá nâng cấp các loại 20.000 đ / 999 - dùi đục 10.000 đ / 1 cái có SLL",
-  "✅ Bán x99 máy dò CSKB 40.000 đ / x99",
+  "✅ Bán x99 máy dò Capsule kì bí 40.000 đ / x99",
   "✅ Cho thuê set thần 3 hành tinh up thức ăn, set SMTN TĐ, XD 5s 10.000 đ / 1 ngày",
-  "✅ Bán vàng tươi x15, vàng die x60 - ngọc kí x11, ngọc vé (ID 718) x10",
-  "✅ Bán SPL 4 loại: Đỏ 441 (Hút HP), Lam 442 (Hút KI), Vàng 446 (+5% vàng), Lục 447 (+5% TNSM) — 1.000 đ / 1 viên",
+  "✅ Bán vàng tươi x15, vàng die x60 - ngọc kí x11, ngọc vé x10",
+  "✅ Bán Sao pha lê 4 loại: Đỏ (Hút HP), Lam (Hút KI), Vàng (+5% vàng), Lục (+5% TNSM) — 1.000 đ / 1 viên",
   "✅ Bán mảnh khỉ (10/125/125), mảnh rồng (3/15), mảnh Đội trưởng Vàng (10/30)",
   "✅ Nhận săn đệ SS - skill 5",
   "✅ Bán acc đậu 5 8.000 đ / 1 acc - acc clone 340k sm 3.000 đ / 1 acc",
-  "✅ Bán NR 3s 2.500 đ / 1 viên",
+  "✅ Bán Ngọc Rồng 3 sao 2.500 đ / 1 viên",
   "✅ Nhận rút VTS tín dụng",
   "✅ Nhận GDTG 20/24 siêu tốc (không nhận mail sống)",
   "✅ Thu all acc + đồ tầm trung => siêu phẩm (BMTT ko bắt scam)",
@@ -933,6 +843,30 @@ function verifyIntegrity() {
   };
 }
 
+function formatItemUnitPriceLabel(kind, price, unit) {
+  if (kind === "quote" || !price || Number(price) <= 0) {
+    return "Báo giá theo lô";
+  }
+  const formatted = `${new Intl.NumberFormat("vi-VN").format(Number(price))} đ`;
+  const cleanUnit = String(unit || "").trim() || "món";
+  if (cleanUnit === "lô 999") return `${formatted} / 999 viên`;
+  if (/^(x\d+|lô|gói|bộ|set)/i.test(cleanUnit)) return `${formatted} / ${cleanUnit}`;
+  return `${formatted} / 1 ${cleanUnit}`;
+}
+
+function formatServicePriceText(serviceKey, price, unit, fallbackText = "Báo giá theo yêu cầu") {
+  const num = Number(price);
+  if (!Number.isFinite(num) || num <= 0) {
+    return fallbackText;
+  }
+  const formatted = `${new Intl.NumberFormat("vi-VN").format(num)} đ`;
+  const cleanUnit = String(unit || "").trim() || "lượt";
+  if (serviceKey === "thue-set" || serviceKey === "acc-dau5" || serviceKey === "acc-clone") {
+    return `${formatted} / 1 ${cleanUnit}`;
+  }
+  return `${formatted} / ${cleanUnit}`;
+}
+
 module.exports = {
   ROOT_DIR,
   OFFICIAL_CONTACTS,
@@ -941,13 +875,17 @@ module.exports = {
   ALLOWED_PLANETS,
   ALLOWED_STATUSES,
   ALLOWED_SERVERS,
+  ALLOWED_ITEM_CATEGORIES,
+  ALLOWED_ITEM_TAG_CLASSES,
+  BUNDLED_ITEM_ICONS,
   KICH_DIEM_SERVICES,
-  SPL_TYPES,
   MANH_ACTIVATION_INFOS,
   ITEM_PRICE_ROWS,
   STARTER_ACCS,
   FULL_AD_POST,
   CONFIG_SHA256,
+  formatItemUnitPriceLabel,
+  formatServicePriceText,
   getOrCreateAppSecret,
   verifyIntegrity
 };

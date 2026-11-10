@@ -6,9 +6,9 @@ Website bán hàng game **Ngọc Rồng Online** chính chủ với giao diện 
 
 - `/` — **Trang chủ tổng quan**: Hero Shenron, 3 khu dịch vụ chính, acc nổi bật, **Mã QR & STK MB Bank chính chủ (`0368018920`)**, 4 liên hệ chính thức.
 - `/kich-diem` — **Path Kích điểm & Dịch vụ VIP**: Nhận kích điểm `300.000 đ`, nạp CR `810.000 đ` done 3s, Thuê Set Thần 3 hành tinh / Set SMTN 5s `10.000 đ / ngày`, Săn Đệ SS – Skill 5, GDTG 20/24 (ko nhận mail sống), Thu All Acc (BMTT), Rút VTS – Tín dụng.
-- `/mua-item` — **Path Mua Item & Tính đơn**: Gộp toàn bộ vào **1 bảng chọn số lượng & tính giá** (Item x99: Cuồng nộ `15k`, BH/GX `10k`, MD CSKB `40k`; 5 loại Đá NC `20k/999`; Dùi đục SLL `10k`; 4 loại SPL ID `441, 442, 446, 447` `1k`; NR 3s `2k5`; Vàng tươi `x15` / die `x60`; Ngọc kí `x11` / Ngọc vé `x10` ID `718`; Mảnh Khỉ / Rồng / Đội trưởng Vàng) kèm **Máy tính Vàng · Ngọc 2 chiều** & **Bảng thông tin Kích mảnh**.
+- `/mua-item` — **Path Mua Item & Tính đơn**: Gộp toàn bộ vào **1 bảng chọn số lượng & tính giá** (Item x99: Cuồng nộ `15k`, Bổ huyết / Giáp Xên `10k`, Máy dò Capsule kì bí `40k`; 5 loại Đá NC `20k/999`; Dùi đục `10k`; 4 loại Sao pha lê `1k`; Ngọc Rồng 3 sao `2k5`; Mảnh Khỉ / Rồng / Đội trưởng Vàng) kèm **Máy tính nhanh Vàng · Ngọc 2 chiều** & **Bảng thông tin Kích mảnh**.
 - `/mua-tai-khoan` — **Path Mua Bán Tài Khoản**: Acc Đậu 5 (`8.000 đ`), Acc Clone 340k SM (`3.000 đ`) và Kho Tài Khoản NRO lọc theo **Server · Hành tinh (`Trái Đất` / `Namếc` / `Xayda`) · Trạng thái**, bấm xem ảnh lớn.
-- `/admin` — **Đường dẫn Quản trị ẩn (không hiện trên menu công khai)**: Đăng nhập Chủ Shop, up hình/đăng/sửa/xóa acc, kiểm tra toàn vẹn STK/Link/QR và xem nhật ký hoạt động.
+- `/admin` — **Đường dẫn Quản trị ẩn (không hiện trên menu công khai)**: Đăng nhập Chủ Shop, thêm/sửa/ẩn/xóa **Item cần bán & icon**, chỉnh giá **Dịch vụ & Acc phổ thông**, up hình/sửa giá/trạng thái **Tài khoản NRO**, kiểm tra thông tin chính chủ & nhật ký hoạt động.
 
 ## 2. Kiến trúc bảo mật đã triển khai
 

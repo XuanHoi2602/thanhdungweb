@@ -48,6 +48,7 @@
 @layer theme {
   :root {
     color-scheme: light dark;
+    --target-size: 24px;
 
     --font-sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -317,6 +318,12 @@
     }
   }
 
+  @media (pointer: coarse) {
+    :root {
+      --target-size: 44px;
+    }
+  }
+
   @media (forced-colors: active) {
     :root {
       --bg-page: Canvas;
@@ -341,6 +348,7 @@
     background-color: var(--bg-page);
     color: var(--text-main);
     overflow-x: clip;
+    overflow-wrap: anywhere;
   }
 
   h1, h2, h3 {
@@ -419,6 +427,12 @@
     margin-inline: auto;
   }
 
+  @media (max-width: 35.99rem) {
+    .container {
+      inline-size: min(100% - 1.25rem, 76rem);
+    }
+  }
+
   .mono-num {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
@@ -443,6 +457,7 @@
   .site-header {
     background-color: var(--bg-page);
     border-block-end: 1px solid var(--border-subtle);
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
     transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
@@ -536,12 +551,23 @@
     border-block-start: 1px solid var(--border-subtle);
     background-color: var(--bg-surface-alt);
     padding-block: 0.4rem;
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
   }
 
   .mobile-path-list {
+    flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    gap: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 0.5rem;
+    padding-block: 0.15rem;
+    gap: 0.45rem;
+  }
+
+  .mobile-path-list li {
+    flex-shrink: 0;
+    scroll-snap-align: start;
   }
 
   .mobile-path-list::-webkit-scrollbar {
@@ -821,6 +847,10 @@
     min-inline-size: 0;
   }
 
+  .hero-copy {
+    container: hero-copy / inline-size;
+  }
+
   .hero-pills {
     display: flex;
     flex-wrap: wrap;
@@ -858,9 +888,10 @@
   }
 
   .hero-title {
-    font-size: clamp(2rem, 1.3rem + 3vw, 3.2rem);
+    font-size: clamp(1.72rem, 1.25rem + 2.3vw, 3.1rem);
     font-weight: 800;
-    margin-block-end: 1rem;
+    line-height: 1.16;
+    margin-block-end: 0.9rem;
   }
 
   .hero-accent {
@@ -870,25 +901,53 @@
 
   .hero-desc {
     color: var(--text-muted);
-    font-size: 1.03rem;
-    margin-block-end: 1.5rem;
+    font-size: 1.02rem;
+    margin-block-end: 1.35rem;
   }
 
   .hero-cta-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-block-end: 1.5rem;
+    gap: 0.7rem;
+    margin-block-end: 1.35rem;
+  }
+
+  .hero-copy .hero-cta-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  @container hero-copy (inline-size >= 27rem) {
+    .hero-copy .hero-cta-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-copy .hero-cta-row .btn {
+      inline-size: 100%;
+    }
   }
 
   .hero-metrics {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  @container hero-copy (inline-size >= 34rem) {
+    .hero-metrics {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
   }
 
   .metric-card {
-    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.3rem;
+    min-inline-size: 0;
+    padding: 0.8rem 0.85rem;
     border-radius: 0.9rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-subtle);
@@ -896,16 +955,20 @@
   }
 
   .metric-card dt {
-    font-size: 0.78rem;
+    font-size: clamp(0.72rem, 0.7rem + 0.16vw, 0.78rem);
+    line-height: 1.25;
     color: var(--text-muted);
     font-weight: 600;
-    margin-block-end: 0.2rem;
+    margin-block-end: 0;
+    text-wrap: balance;
   }
 
   .metric-card dd {
-    font-size: 1.08rem;
-    font-weight: 700;
+    font-size: clamp(0.96rem, 0.9rem + 0.3vw, 1.06rem);
+    line-height: 1.2;
+    font-weight: 800;
     color: var(--accent-primary);
+    white-space: nowrap;
   }
 
   .orb-stage {
@@ -1600,6 +1663,24 @@
     }
   }
 
+  @container item-table (inline-size < 25rem) {
+    .item-catalog-table tbody td.td-qty {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.45rem;
+    }
+
+    .item-catalog-table tbody td.td-qty .item-qty-picker {
+      inline-size: 100%;
+      justify-content: space-between;
+    }
+
+    .item-catalog-table tbody td.td-qty .item-qty-input {
+      flex: 1 1 4rem;
+      min-inline-size: 3.5rem;
+    }
+  }
+
   /* Bảng Thông Tin Kích Mảnh */
   .manh-section {
     background-color: var(--bg-page);
@@ -1858,8 +1939,13 @@
     gap: 0.5rem;
   }
 
-  @container calc-card (inline-size >= 21rem) {
-    .radio-pills,
+  @container calc-card (inline-size >= 18.5rem) {
+    .radio-pills {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @container calc-card (inline-size >= 21.5rem) {
     .mode-pills {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1908,7 +1994,7 @@
     font-weight: 700;
   }
 
-  .field-group input,
+  .field-group input:not([type="checkbox"], [type="radio"]),
   .field-group select,
   .field-group textarea,
   .order-extra textarea {
@@ -2250,6 +2336,358 @@
     gap: 0.4rem;
   }
 
+  /* Admin CMS Forms, Navigation & Responsive Management Tables */
+  .admin-mgmt-section,
+  .admin-item-form-card,
+  #admin-upload-box,
+  #admin-audit-section {
+    scroll-margin-block-start: 5.5rem;
+  }
+
+  .admin-quick-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding-block: 0.9rem 0.25rem;
+  }
+
+  .admin-quick-nav a {
+    white-space: nowrap;
+  }
+
+  .admin-item-form-card {
+    margin-block-end: 1.5rem;
+  }
+
+  .admin-items-list-card {
+    margin-block-start: 1.25rem;
+  }
+
+  .admin-edit-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.75rem 1rem;
+    margin-block-end: 1.1rem;
+    border-radius: 0.85rem;
+    background-color: var(--accent-gold-bg);
+    color: var(--accent-gold-fg);
+    border: 1px solid color-mix(in oklab, var(--accent-gold) 45%, transparent);
+    font-size: 0.92rem;
+  }
+
+  .admin-unit-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+    margin-block-start: 0.25rem;
+  }
+
+  .admin-icon-picker-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.85rem 1rem;
+    align-items: end;
+    padding: 0.9rem;
+    border-radius: 0.9rem;
+    background-color: var(--bg-surface-alt);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .admin-icon-picker-row > :nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .admin-icon-preview-box {
+    inline-size: 3.75rem;
+    block-size: 3.75rem;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  .admin-icon-preview-box img {
+    max-inline-size: 2.8rem;
+    max-block-size: 2.8rem;
+    object-fit: contain;
+  }
+
+  .admin-icon-file-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .admin-icon-picker-row input[type="file"] {
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.75rem;
+    border: 1.5px dashed var(--border-strong);
+    background-color: var(--bg-surface);
+    font-size: 0.86rem;
+    cursor: pointer;
+    flex: 1 1 12rem;
+  }
+
+  .admin-checkbox-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-block-size: 2.9rem;
+  }
+
+  .admin-checkbox-pill input[type="checkbox"] {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    min-inline-size: 0;
+    min-block-size: 0;
+    padding: 0;
+    flex-shrink: 0;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+  }
+
+  .admin-inline-price-box {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .admin-inline-price-input,
+  .admin-svc-price-input {
+    inline-size: 7.4rem;
+    min-inline-size: 5.5rem;
+    min-block-size: 2.45rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 0.6rem;
+    border: 1.5px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    font-weight: 700;
+    font-size: 0.94rem;
+  }
+
+  .admin-svc-head {
+    display: grid;
+    gap: 0.4rem;
+    justify-items: start;
+  }
+
+  .admin-svc-name-input,
+  .admin-svc-note-input {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 2.55rem;
+    padding: 0.42rem 0.68rem;
+    border-radius: 0.65rem;
+    border: 1.5px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .admin-svc-name-input {
+    font-weight: 700;
+  }
+
+  .admin-unit-caption {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-block-start: 0.22rem;
+  }
+
+  .admin-unit-suffix {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .is-hidden-row {
+    opacity: 0.68;
+  }
+
+  .admin-table-wrapper {
+    container: admin-table / inline-size;
+    overflow: auto;
+    max-inline-size: 100%;
+  }
+
+  .admin-cms-table {
+    inline-size: 100%;
+    min-inline-size: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  #admin-items-table {
+    --label-2: "Đơn giá";
+    --label-3: "Trạng thái";
+    --label-4: "Thao tác";
+  }
+
+  #admin-services-table {
+    --label-2: "Nội dung mô tả";
+    --label-3: "Giá bán";
+    --label-4: "Lưu";
+  }
+
+  #admin-acc-table {
+    --label-2: "Ảnh & Tiêu đề";
+    --label-3: "Server · Hành tinh";
+    --label-4: "Giá bán";
+    --label-5: "Trạng thái";
+    --label-6: "Thao tác";
+  }
+
+  .admin-cms-table thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    background-color: var(--bg-surface-alt);
+    border-block-end: 1.5px solid var(--border-subtle);
+  }
+
+  .admin-cms-table thead th:first-child {
+    border-start-start-radius: 0.65rem;
+  }
+
+  .admin-cms-table thead th:last-child {
+    border-start-end-radius: 0.65rem;
+  }
+
+  .admin-cms-table tbody th {
+    text-align: start;
+    font-size: 0.94rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text-main);
+    background-color: var(--bg-surface);
+    text-wrap: pretty;
+  }
+
+  .admin-cms-table tbody td {
+    min-inline-size: 0;
+  }
+
+  .admin-cms-table tbody tr[hidden] {
+    display: none !important;
+  }
+
+  @container admin-table (inline-size < 54rem) {
+    .admin-cms-table,
+    .admin-cms-table thead,
+    .admin-cms-table tbody,
+    .admin-cms-table tr,
+    .admin-cms-table th,
+    .admin-cms-table td {
+      display: block;
+    }
+
+    .admin-cms-table thead {
+      display: none;
+    }
+
+    .admin-cms-table tbody tr {
+      margin-block-end: 0.95rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.95rem;
+      overflow: clip;
+      background-color: var(--bg-surface);
+      box-shadow: var(--shadow-card);
+    }
+
+    .admin-cms-table tbody tr:last-child {
+      margin-block-end: 0;
+    }
+
+    .admin-cms-table tbody th {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 2;
+      background-color: var(--bg-surface-alt);
+      border-block-end: 1px solid var(--border-subtle);
+      padding: 0.8rem 0.9rem;
+    }
+
+    .admin-cms-table tbody td {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem 0.75rem;
+      padding: 0.65rem 0.9rem;
+      border-block-end: 1px dashed var(--border-subtle);
+    }
+
+    .admin-cms-table tbody td:last-child {
+      border-block-end: 0;
+      padding: 0.75rem 0.9rem 0.85rem;
+    }
+
+    .admin-cms-table tbody td:nth-child(2)::before {
+      content: var(--label-2) ": ";
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .admin-cms-table tbody td:nth-child(3)::before {
+      content: var(--label-3) ": ";
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .admin-cms-table tbody td:nth-child(4)::before {
+      content: var(--label-4) ": ";
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .admin-cms-table tbody td:nth-child(5)::before {
+      content: var(--label-5) ": ";
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .admin-cms-table tbody td.td-admin-actions::before {
+      content: none;
+    }
+
+    .admin-cms-table tbody td.td-admin-svc-note::before,
+    .admin-cms-table tbody td.td-admin-price::before,
+    .admin-cms-table tbody td.td-admin-svc-price::before {
+      flex-basis: 100%;
+    }
+
+    .admin-cms-table .admin-inline-price-box {
+      inline-size: 100%;
+    }
+
+    .admin-cms-table .admin-inline-price-input,
+    .admin-cms-table .admin-svc-price-input {
+      flex: 1 1 7rem;
+    }
+
+    .admin-cms-table .table-action-group {
+      inline-size: 100%;
+    }
+
+    .admin-cms-table .table-action-group .btn,
+    .admin-cms-table .admin-svc-save-btn {
+      flex: 1 1 auto;
+      min-block-size: 2.75rem;
+    }
+  }
+
   .integrity-alert {
     padding: 1.25rem;
     border-radius: 0.9rem;
@@ -2521,7 +2959,8 @@
 
   /* Footer */
   .site-footer {
-    padding-block: 2.25rem 5.5rem;
+    padding-block: 2.25rem calc(5.75rem + env(safe-area-inset-bottom, 0px));
+    padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
     border-block-start: 1px solid var(--border-subtle);
   }
 
@@ -2547,7 +2986,7 @@
   .footer-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.5rem 1rem;
     font-size: 0.9rem;
     font-weight: 700;
   }
@@ -2562,11 +3001,12 @@
   /* Mobile Sticky Dock */
   .mobile-dock {
     position: fixed;
-    inset-block-end: 0.75rem;
-    inset-inline: 0.75rem;
+    inset-block-end: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    inset-inline-start: max(0.75rem, env(safe-area-inset-left, 0px));
+    inset-inline-end: max(0.75rem, env(safe-area-inset-right, 0px));
     z-index: 35;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0.5rem;
     padding: 0.45rem;
     border-radius: 1rem;
@@ -2618,6 +3058,10 @@
     transition-behavior: allow-discrete;
   }
 
+  dialog:modal {
+    overscroll-behavior: contain;
+  }
+
   dialog[open] {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -2629,6 +3073,8 @@
   }
 
   dialog::backdrop {
+    overflow: hidden;
+    overscroll-behavior: contain;
     background-color: rgb(4 17 12 / 0);
     backdrop-filter: blur(0px);
     transition:
@@ -2883,10 +3329,11 @@
     position: fixed;
     z-index: 60;
     inset-block-start: auto;
-    inset-inline-start: auto;
-    inset-block-end: 4.5rem;
-    inset-inline-end: 1rem;
-    margin: 0;
+    inset-inline: max(0.75rem, env(safe-area-inset-left, 0px)) max(0.75rem, env(safe-area-inset-right, 0px));
+    inset-block-end: calc(4.85rem + env(safe-area-inset-bottom, 0px));
+    margin-block: 0;
+    margin-inline: auto;
+    inline-size: fit-content;
     padding: 0.75rem 1rem;
     border-radius: 0.85rem;
     border: 1px solid var(--accent-primary);
@@ -2896,7 +3343,7 @@
     display: none;
     align-items: center;
     gap: 0.75rem;
-    max-inline-size: min(92%, 24rem);
+    max-inline-size: min(calc(100% - 1.5rem), 24rem);
     opacity: 0;
     transform: translateY(10px);
     transition-property: opacity, transform, display, overlay;
@@ -2926,6 +3373,193 @@
     line-height: 1;
   }
 
+  @media (max-width: 39.99rem) {
+    .header-inner {
+      padding-block: 0.5rem;
+      gap: 0.45rem 0.65rem;
+    }
+
+    .brand-orb {
+      inline-size: 1.85rem;
+      block-size: 1.85rem;
+    }
+
+    .brand-name {
+      font-size: 0.92rem;
+    }
+
+    .theme-toggle-text {
+      display: none;
+    }
+
+    .btn-icon-ghost {
+      padding-inline: 0.6rem;
+    }
+
+    .btn-order {
+      padding-inline: 0.72rem;
+      font-size: 0.82rem;
+    }
+
+    .hero-section {
+      padding-block: 1.35rem 2rem;
+    }
+
+    .subhero-section {
+      padding-block: 1.35rem 1.5rem;
+    }
+
+    .hero-grid {
+      gap: 1.35rem;
+    }
+
+    .hero-desc {
+      font-size: 0.96rem;
+      margin-block-end: 1.1rem;
+    }
+
+    .hero-metrics {
+      gap: 0.55rem;
+    }
+
+    .metric-card {
+      padding: 0.72rem 0.75rem;
+      border-radius: 0.8rem;
+    }
+
+    .path-hub-section,
+    .catalog-section,
+    .manh-section,
+    .item-pricing-section,
+    .rates-section,
+    .services-section,
+    .starter-acc-section,
+    .admin-inline-section,
+    .admin-shield-section,
+    .admin-console-form-section,
+    .admin-mgmt-section,
+    .bank-section,
+    .contact-section {
+      padding-block: 2rem;
+    }
+
+    .section-head {
+      gap: 0.75rem;
+      margin-block-end: 1.15rem;
+    }
+
+    .hub-card,
+    .pillar-card,
+    .rates-table-card,
+    .calculator-card,
+    .manh-summary-card,
+    .bank-info-card,
+    .qr-showcase-card,
+    .item-pricing-card,
+    .admin-panel-card,
+    .shield-card {
+      padding: 1rem;
+      border-radius: 1rem;
+    }
+
+    .filter-tabs {
+      gap: 0.42rem;
+    }
+
+    .filter-btn {
+      padding-inline: 0.78rem;
+      font-size: 0.82rem;
+    }
+
+    .table-order-footer {
+      padding: 0.85rem;
+      gap: 0.65rem;
+    }
+
+    .table-order-footer .btn {
+      inline-size: 100%;
+    }
+
+    .bank-cta-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .bank-cta-row > :first-child {
+      grid-column: 1 / -1;
+    }
+
+    .qr-frame {
+      max-inline-size: 16.5rem;
+    }
+
+    dialog {
+      inline-size: min(100% - 1rem, 38rem);
+      max-block-size: 92dvh;
+      border-radius: 1rem;
+    }
+
+    .dialog-shell {
+      padding: 1rem;
+      gap: 0.8rem;
+    }
+
+    .dialog-head h2 {
+      font-size: 1.08rem;
+    }
+
+    .order-items-wrap {
+      max-block-size: 28dvh;
+      padding: 0.55rem;
+    }
+
+    .order-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.55rem;
+    }
+
+    .order-row-ctrl {
+      inline-size: 100%;
+    }
+
+    .order-row-remove {
+      margin-inline-start: auto;
+    }
+
+    .order-bank-mini {
+      align-items: flex-start;
+    }
+
+    .order-bank-actions {
+      inline-size: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 33.99rem) {
+    .order-btn-label {
+      display: none;
+    }
+
+    .btn-order {
+      padding-inline: 0.6rem;
+      gap: 0.35rem;
+    }
+
+    .manh-tier-pill,
+    .manh-qty-pill {
+      padding: 0.28rem 0.55rem;
+      font-size: 0.78rem;
+    }
+
+    .hero-caption-bar {
+      padding: 0.75rem 0.9rem;
+    }
+  }
+
   @media (min-width: 56rem) {
     .primary-nav {
       display: block;
@@ -2951,6 +3585,14 @@
       grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
     }
 
+    .admin-icon-picker-row {
+      grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .admin-icon-picker-row > :nth-child(3) {
+      grid-column: auto;
+    }
+
     .manh-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       grid-template-rows: auto 1fr auto;
@@ -2968,11 +3610,14 @@
     }
 
     .site-footer {
-      padding-block-end: 2.25rem;
+      padding-block-end: max(2.25rem, env(safe-area-inset-bottom, 0px));
     }
 
     .toast-box {
-      inset-block-end: 1.25rem;
+      inset-inline-start: auto;
+      inset-inline-end: max(1.25rem, env(safe-area-inset-right, 0px));
+      inset-block-end: max(1.25rem, env(safe-area-inset-bottom, 0px));
+      margin-inline: 0;
     }
   }
 
@@ -2985,13 +3630,41 @@
     .item-qty-input,
     .order-qty-input,
     .btn-sm,
-    .toast-close {
-      min-block-size: 3rem;
+    .mobile-path-list a,
+    .footer-links a,
+    .radio-pill,
+    .btn-dialog-close,
+    .btn-clear-search,
+    .toast-close,
+    .admin-inline-price-input,
+    .admin-svc-price-input,
+    .admin-svc-name-input,
+    .admin-svc-note-input,
+    .admin-unit-chip,
+    .admin-quick-nav a,
+    .admin-checkbox-pill {
+      min-block-size: var(--target-size);
     }
 
     .qty-btn,
+    .btn-icon-ghost,
+    .btn-dialog-close,
+    .btn-clear-search,
     .toast-close {
-      min-inline-size: 3rem;
+      min-inline-size: var(--target-size);
+    }
+
+    .item-qty-picker,
+    .order-row-ctrl,
+    .filter-tabs,
+    .card-actions,
+    .contact-actions,
+    .bank-cta-row,
+    .table-action-group,
+    .admin-unit-chips,
+    .admin-inline-price-box,
+    .admin-quick-nav {
+      gap: 0.45rem;
     }
   }
 

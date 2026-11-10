@@ -12,29 +12,6 @@
     qrImageUrl: "/assets/qr-mb-thanhdung.jpg"
   });
 
-  let fullAdPostText = [
-    "🔥 SHOP NGỌC RỒNG ONLINE THANH DUNG 🔥",
-    "✅ Nhận kích điểm 300.000 đ - nạp CR 810.000 đ done 3s",
-    "✅ Bán x99 Cuồng nộ 15.000 đ / x99 - x99 Bổ huyết 10.000 đ / x99 - x99 Giáp Xên bọ hung 10.000 đ / x99",
-    "✅ Bán x999 đá nâng cấp các loại 20.000 đ / 999 - dùi đục 10.000 đ / 1 cái có SLL",
-    "✅ Bán x99 máy dò CSKB 40.000 đ / x99",
-    "✅ Cho thuê set thần 3 hành tinh up thức ăn, set SMTN TĐ, XD 5s 10.000 đ / 1 ngày",
-    "✅ Bán vàng tươi x15, vàng die x60 - ngọc kí x11, ngọc vé (ID 718) x10",
-    "✅ Bán SPL 4 loại: Đỏ 441 (Hút HP), Lam 442 (Hút KI), Vàng 446 (+5% vàng), Lục 447 (+5% TNSM) — 1.000 đ / 1 viên",
-    "✅ Bán mảnh khỉ (10/125/125), mảnh rồng (3/15), mảnh Đội trưởng Vàng (10/30)",
-    "✅ Nhận săn đệ SS - skill 5",
-    "✅ Bán acc đậu 5 8.000 đ / 1 acc - acc clone 340k SM 3.000 đ / 1 acc",
-    "✅ Bán NR 3s 2.500 đ / 1 viên",
-    "✅ Nhận rút VTS tín dụng",
-    "✅ Nhận GDTG 20/24 siêu tốc (không nhận mail sống)",
-    "✅ Thu all acc + đồ tầm trung => siêu phẩm (BMTT ko bắt scam)",
-    `📌 Link box sp1: ${VERIFIED.zaloBoxSp1Url}`,
-    `📌 Link group sp123 Thanh Dung: ${VERIFIED.fbGroupSp123Url}`,
-    `🏦 MB Bank chính chủ: ${VERIFIED.accountNumber} - ${VERIFIED.accountOwner}`,
-    `💬 Facebook: ${VERIFIED.facebookUrl}`,
-    `💬 Zalo: ${VERIFIED.zaloUrl} (0368.018.920)`
-  ].join("\n");
-
   const metaCsrfEl = document.querySelector('meta[name="csrf-token"]');
   let csrfToken = metaCsrfEl ? metaCsrfEl.getAttribute("content") || "" : "";
 
@@ -247,10 +224,6 @@
       const data = await resp.json();
       if (!data || !data.ok) return;
 
-      if (typeof data.fullAdPost === "string" && data.fullAdPost.length > 50) {
-        fullAdPostText = data.fullAdPost;
-      }
-
       const expectedSha = document.body.getAttribute("data-config-sha256");
       const mismatch =
         (expectedSha && data.configSha256 !== expectedSha) ||
@@ -293,12 +266,14 @@
     }
 
     if (themeBtn && themeLabel) {
-      themeBtn.setAttribute("aria-pressed", String(isPinned));
-      themeLabel.textContent = isPinned
+      const labelText = isPinned
         ? "Dùng theo máy"
         : activeTheme === "dark"
           ? "Chế độ Sáng"
           : "Chế độ Tối";
+      themeBtn.setAttribute("aria-pressed", String(isPinned));
+      themeBtn.setAttribute("aria-label", labelText);
+      themeLabel.textContent = labelText;
     }
   };
 
@@ -370,7 +345,7 @@
     if (itemTableStatus) {
       if (visibleCount === 0) {
         itemTableStatus.textContent =
-          "Không tìm thấy mặt hàng khớp từ khóa. Thử tìm: cuồng nộ, đá nc, dùi đục, spl 441 447, nr 3s, mảnh khỉ, vàng tươi, ngọc vé 718...";
+          "Không tìm thấy mặt hàng khớp từ khóa. Thử tìm: cuồng nộ, bổ huyết, đá nc, dùi đục, sao pha lê, ngọc rồng 3 sao, mảnh khỉ...";
       } else if (activeCategory === "all" && !query) {
         itemTableStatus.textContent = `Đang hiển thị tất cả ${visibleCount} mặt hàng.`;
       } else {
@@ -439,8 +414,8 @@
     if (id === "gem-ve") {
       const tickets = qty / 10;
       return Number.isInteger(tickets)
-        ? `${formatNumber(tickets)} vé ID 718`
-        : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé ID 718`;
+        ? `${formatNumber(tickets)} vé`
+        : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé`;
     }
     if ((id === "gold-fresh" || id === "gold-die") && qty >= 1000) {
       return `~${(qty / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ vàng`;
@@ -509,13 +484,13 @@
     },
     "gem-ve": {
       id: "gem-ve",
-      orderName: "Ngọc vé ID 718 (x10)",
+      orderName: "Ngọc vé (x10)",
       unit: "ngọc",
-      rateText: "Ngọc vé x10 (ID 718)",
-      qtyLabel: "Số ngọc vé muốn mua (mỗi vé ID 718 = 10 ngọc)",
-      qtyHint: "Nhập số lượng ngọc vé cần mua (ví dụ 1000 ngọc = 100 vé ID 718 = 100.000 đ).",
+      rateText: "Ngọc vé x10",
+      qtyLabel: "Số ngọc vé muốn mua (mỗi vé = 10 ngọc)",
+      qtyHint: "Nhập số lượng ngọc vé cần mua (ví dụ 1000 ngọc = 100 vé = 100.000 đ).",
       unitsPerK: 10,
-      computeFromMoneyK: (k) => `${formatNumber(k * 10)} ngọc (${formatNumber(k)} vé ID 718)`,
+      computeFromMoneyK: (k) => `${formatNumber(k * 10)} ngọc (${formatNumber(k)} vé)`,
       computeFromQty: (qty) => {
         const costVND = computeRateCost(qty, 10);
         const ticketNote = formatRateBonusNote("gem-ve", qty);
@@ -659,12 +634,20 @@
   const copyOrderBtn = document.getElementById("copy-order-btn");
   const clearOrderBtn = document.getElementById("clear-order-btn");
 
-  const LEGACY_SPL_BY_KEY = {
-    "spl-441": "Sao pha lê đỏ (ID 441)",
-    "spl-442": "Sao pha lê lam (ID 442)",
-    "spl-446": "Sao pha lê vàng (ID 446)",
-    "spl-447": "Sao pha lê lục (ID 447)"
+  const CLEAN_ITEM_NAMES_BY_ID = {
+    "nap-cr": "Nạp CR",
+    "bh-x99": "x99 Bổ huyết",
+    "gx-x99": "x99 Giáp Xên bọ hung",
+    "md-cskb": "x99 Máy dò Capsule kì bí",
+    "dui-duc": "Dùi đục",
+    "spl-441": "Sao pha lê đỏ",
+    "spl-442": "Sao pha lê lam",
+    "spl-446": "Sao pha lê vàng",
+    "spl-447": "Sao pha lê lục",
+    "nr-3s": "Ngọc Rồng 3 sao"
   };
+
+  const LEGACY_DIRTY_ITEM_PATTERN = /\((?:ID\s*\d+|NR\s*3s|BH|GX|MD\s*CSKB)\)|\bID\s*718\b|done\s*3s/i;
 
   const normalizeOrderItem = (raw) => {
     if (!raw || typeof raw !== "object") return null;
@@ -681,7 +664,7 @@
         const perUnit = countMatch ? Math.max(1, Number(countMatch[1])) : Math.max(1, Math.round(Number(raw.price || 1000) / 1000));
         return {
           id: splId,
-          name: LEGACY_SPL_BY_KEY[splId] || splId,
+          name: CLEAN_ITEM_NAMES_BY_ID[splId] || splId,
           kind: "fixed",
           price: 1000,
           ratePerK: 0,
@@ -695,7 +678,7 @@
         const perUnit = countMatch ? Math.max(1, Number(countMatch[1])) : Math.max(1, Math.floor(Number(raw.price || 2500) / 2500));
         return {
           id: "nr-3s",
-          name: "Ngọc Rồng 3 sao (NR 3s)",
+          name: "Ngọc Rồng 3 sao",
           kind: "fixed",
           price: 2500,
           ratePerK: 0,
@@ -748,9 +731,14 @@
     const step = Math.max(1, Math.floor(Number(raw.step) || (kind === "rate" && ratePerK > 0 ? ratePerK : 1)));
     const maxQty = kind === "rate" ? 10000000 : 99999;
 
+    const resolvedName =
+      CLEAN_ITEM_NAMES_BY_ID[rawId] && (!raw.name || LEGACY_DIRTY_ITEM_PATTERN.test(rawName))
+        ? CLEAN_ITEM_NAMES_BY_ID[rawId]
+        : rawName;
+
     return {
       id: rawId,
-      name: rawName,
+      name: resolvedName,
       kind,
       price,
       ratePerK,
@@ -837,6 +825,7 @@
     });
 
     if (orderCountEl) orderCountEl.textContent = String(lineCount);
+    if (openOrderBtn) openOrderBtn.setAttribute("aria-label", `Mở đơn tính nhanh (${lineCount} mặt hàng)`);
     if (mobileOrderCountEl) mobileOrderCountEl.textContent = String(lineCount);
 
     let priceSummaryText = "0 đ";
@@ -1183,16 +1172,31 @@
   if (mobileOpenOrderBtn) mobileOpenOrderBtn.addEventListener("click", openOrderModal);
 
   const wireDialogBackdropFallback = (dlg) => {
-    if (!dlg || "closedBy" in HTMLDialogElement.prototype) return;
-    dlg.addEventListener("click", (event) => {
-      if (event.target !== dlg) return;
+    if (!dlg) return;
+    dlg.addEventListener("close", () => {
+      dlg.returnValue = "";
+    });
+    if ("closedBy" in HTMLDialogElement.prototype) return;
+
+    const isOutsideDialog = (e) => {
       const rect = dlg.getBoundingClientRect();
-      const inside =
-        rect.top <= event.clientY &&
-        event.clientY <= rect.top + rect.height &&
-        rect.left <= event.clientX &&
-        event.clientX <= rect.left + rect.width;
-      if (!inside) dlg.close();
+      return (
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom
+      );
+    };
+
+    let pressedOutside = false;
+    dlg.addEventListener("pointerdown", (event) => {
+      pressedOutside = isOutsideDialog(event);
+    });
+    dlg.addEventListener("pointerup", (event) => {
+      if (pressedOutside && isOutsideDialog(event) && dlg.open) {
+        dlg.close();
+      }
+      pressedOutside = false;
     });
   };
 
@@ -1291,13 +1295,6 @@
     });
   }
 
-  const copyFullPostBtn = document.getElementById("copy-full-post-btn");
-  if (copyFullPostBtn) {
-    copyFullPostBtn.addEventListener("click", () => {
-      copyToClipboard(fullAdPostText, "toàn bộ bảng giá Thanh Dung NRO");
-    });
-  }
-
   /* =========================================================
      9. Account Gallery, Lightbox, Image Preview Upload & Admin
      ========================================================= */
@@ -1317,7 +1314,22 @@
   const accLightboxAddBtn = document.getElementById("acc-lightbox-add-btn");
   const accLightboxZaloLink = document.getElementById("acc-lightbox-zalo-link");
 
+  const accEditDialog = document.getElementById("acc-edit-dialog");
+  const accEditForm = document.getElementById("acc-edit-form");
+  const accEditIdInput = document.getElementById("acc-edit-id");
+  const accEditCodeLabel = document.getElementById("acc-edit-code-label");
+  const accEditTitleInput = document.getElementById("acc-edit-title-input");
+  const accEditPriceInput = document.getElementById("acc-edit-price-input");
+  const accEditPricePreview = document.getElementById("acc-edit-price-preview");
+  const accEditServerSelect = document.getElementById("acc-edit-server-select");
+  const accEditPlanetSelect = document.getElementById("acc-edit-planet-select");
+  const accEditNoteInput = document.getElementById("acc-edit-note-input");
+  const accEditStatusEl = document.getElementById("acc-edit-status");
+  const accEditSubmitBtn = document.getElementById("acc-edit-submit-btn");
+  const accEditCancelBtn = document.getElementById("acc-edit-cancel-btn");
+
   wireDialogBackdropFallback(accLightboxDialog);
+  wireDialogBackdropFallback(accEditDialog);
 
   let currentAccountsCache = [];
   let currentLightboxAcc = null;
@@ -1460,6 +1472,11 @@
   };
 
   const renderAdminTable = (accounts) => {
+    const adminAccCountEl = document.getElementById("admin-acc-count");
+    const adminNavAccCountEl = document.getElementById("admin-nav-acc-count");
+    if (adminAccCountEl) adminAccCountEl.textContent = String(accounts.length);
+    if (adminNavAccCountEl) adminNavAccCountEl.textContent = String(accounts.length);
+
     const tbody = document.getElementById("admin-acc-tbody");
     if (!tbody) return;
     tbody.textContent = "";
@@ -1479,11 +1496,12 @@
       const tr = document.createElement("tr");
       tr.dataset.accRowId = String(acc.id);
 
-      const tdCode = document.createElement("td");
-      tdCode.className = "mono-num";
+      const thCode = document.createElement("th");
+      thCode.scope = "row";
+      thCode.className = "mono-num";
       const codeStrong = document.createElement("strong");
       codeStrong.textContent = `#${acc.code}`;
-      tdCode.appendChild(codeStrong);
+      thCode.appendChild(codeStrong);
 
       const tdInfo = document.createElement("td");
       const infoWrap = document.createElement("div");
@@ -1503,10 +1521,32 @@
       tdSvPl.textContent = `${acc.server_name} · ${acc.planet}`;
 
       const tdPrice = document.createElement("td");
-      tdPrice.className = "mono-num";
-      const priceStrong = document.createElement("strong");
-      priceStrong.textContent = formatVND(acc.price_vnd);
-      tdPrice.appendChild(priceStrong);
+      tdPrice.className = "td-admin-price";
+      const priceBox = document.createElement("div");
+      priceBox.className = "admin-inline-price-box";
+
+      const priceInput = document.createElement("input");
+      priceInput.type = "number";
+      priceInput.className = "acc-inline-price-input admin-inline-price-input mono-num";
+      priceInput.value = String(Number(acc.price_vnd));
+      priceInput.min = "1000";
+      priceInput.max = "500000000";
+      priceInput.step = "1000";
+      priceInput.inputMode = "numeric";
+      priceInput.setAttribute("aria-label", `Giá Acc ${acc.code}`);
+
+      const savePriceBtn = document.createElement("button");
+      savePriceBtn.type = "button";
+      savePriceBtn.className = "btn btn-outline btn-sm acc-save-price-btn";
+      savePriceBtn.dataset.accId = String(acc.id);
+      savePriceBtn.textContent = "Lưu giá";
+
+      const priceCaption = document.createElement("span");
+      priceCaption.className = "admin-unit-caption mono-num";
+      priceCaption.textContent = formatVND(acc.price_vnd);
+
+      priceBox.append(priceInput, savePriceBtn);
+      tdPrice.append(priceBox, priceCaption);
 
       const tdStatus = document.createElement("td");
       const stPill = document.createElement("span");
@@ -1515,8 +1555,15 @@
       tdStatus.appendChild(stPill);
 
       const tdActions = document.createElement("td");
+      tdActions.className = "td-admin-actions";
       const actGroup = document.createElement("div");
       actGroup.className = "table-action-group";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "btn btn-outline btn-sm acc-edit-btn";
+      editBtn.dataset.accId = String(acc.id);
+      editBtn.textContent = "Sửa";
 
       const toggleBtn = document.createElement("button");
       toggleBtn.type = "button";
@@ -1532,10 +1579,10 @@
       delBtn.dataset.accCode = acc.code;
       delBtn.textContent = "Xóa";
 
-      actGroup.append(toggleBtn, delBtn);
+      actGroup.append(editBtn, toggleBtn, delBtn);
       tdActions.appendChild(actGroup);
 
-      tr.append(tdCode, tdInfo, tdSvPl, tdPrice, tdStatus, tdActions);
+      tr.append(thCode, tdInfo, tdSvPl, tdPrice, tdStatus, tdActions);
       tbody.appendChild(tr);
     });
   };
@@ -1909,7 +1956,155 @@
     });
   }
 
+  if (accEditCancelBtn && accEditDialog) {
+    accEditCancelBtn.addEventListener("click", () => {
+      if (accEditDialog.open) accEditDialog.close();
+    });
+  }
+
+  if (accEditPriceInput && accEditPricePreview) {
+    accEditPriceInput.addEventListener("input", () => {
+      const val = Number(accEditPriceInput.value);
+      accEditPricePreview.textContent =
+        Number.isFinite(val) && val >= 1000
+          ? `Hiển thị: ${formatVND(Math.floor(val))}`
+          : "Hiển thị: —";
+    });
+  }
+
+  if (accEditForm) {
+    accEditForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = Number(accEditIdInput ? accEditIdInput.value : 0);
+      if (!id) return;
+
+      if (accEditStatusEl) {
+        accEditStatusEl.hidden = true;
+        accEditStatusEl.classList.remove("is-error");
+      }
+
+      const payload = {
+        title: accEditTitleInput ? accEditTitleInput.value.trim() : "",
+        price_vnd: Math.floor(Number(accEditPriceInput ? accEditPriceInput.value : 0)),
+        server_name: accEditServerSelect ? accEditServerSelect.value : "",
+        planet: accEditPlanetSelect ? accEditPlanetSelect.value : "",
+        note: accEditNoteInput ? accEditNoteInput.value.trim() : ""
+      };
+
+      if (accEditSubmitBtn) accEditSubmitBtn.disabled = true;
+      try {
+        const resp = await fetch(`/api/accounts/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          credentials: "same-origin",
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) {
+          if (accEditStatusEl) {
+            accEditStatusEl.textContent = data.error || "Không thể cập nhật tài khoản.";
+            accEditStatusEl.classList.add("is-error");
+            accEditStatusEl.hidden = false;
+          }
+          return;
+        }
+        if (accEditDialog && accEditDialog.open) accEditDialog.close();
+        showToast(`Đã cập nhật thông tin Acc #${data.account.code}.`);
+        await fetchAndRenderAccounts();
+      } catch {
+        if (accEditStatusEl) {
+          accEditStatusEl.textContent = "Lỗi kết nối máy chủ.";
+          accEditStatusEl.classList.add("is-error");
+          accEditStatusEl.hidden = false;
+        }
+      } finally {
+        if (accEditSubmitBtn) accEditSubmitBtn.disabled = false;
+      }
+    });
+  }
+
   document.addEventListener("click", async (event) => {
+    const saveAccPriceBtn = event.target.closest(".acc-save-price-btn");
+    if (saveAccPriceBtn) {
+      const id = Number(saveAccPriceBtn.dataset.accId);
+      const row = saveAccPriceBtn.closest("tr");
+      const priceInput = row ? row.querySelector(".acc-inline-price-input") : null;
+      const nextPrice = Math.floor(Number(priceInput ? priceInput.value : 0));
+      if (!Number.isInteger(nextPrice) || nextPrice < 1000 || nextPrice > 500000000) {
+        showToast("Giá tài khoản phải từ 1.000 đ đến 500.000.000 đ.");
+        if (priceInput) priceInput.focus();
+        return;
+      }
+
+      saveAccPriceBtn.disabled = true;
+      try {
+        const resp = await fetch(`/api/accounts/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ price_vnd: nextPrice })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          showToast(`Đã lưu giá mới Acc #${data.account.code}: ${formatVND(data.account.price_vnd)}.`);
+          await fetchAndRenderAccounts();
+        } else {
+          showToast(data.error || "Không thể cập nhật giá Acc.");
+        }
+      } catch {
+        showToast("Không thể kết nối máy chủ.");
+      } finally {
+        saveAccPriceBtn.disabled = false;
+      }
+      return;
+    }
+
+    const editAccBtn = event.target.closest(".acc-edit-btn");
+    if (editAccBtn && accEditDialog) {
+      const id = Number(editAccBtn.dataset.accId);
+      let acc = currentAccountsCache.find((x) => x.id === id);
+      if (!acc) {
+        await fetchAndRenderAccounts();
+        acc = currentAccountsCache.find((x) => x.id === id);
+      }
+      if (!acc) {
+        showToast("Không tìm thấy dữ liệu tài khoản để sửa.");
+        return;
+      }
+
+      if (accEditIdInput) accEditIdInput.value = String(acc.id);
+      if (accEditCodeLabel) accEditCodeLabel.textContent = `#${acc.code}`;
+      if (accEditTitleInput) accEditTitleInput.value = acc.title || "";
+      if (accEditPriceInput) accEditPriceInput.value = String(Number(acc.price_vnd) || 1000);
+      if (accEditPricePreview) {
+        accEditPricePreview.textContent = `Hiển thị: ${formatVND(acc.price_vnd)}`;
+      }
+      if (accEditServerSelect) {
+        if (![...accEditServerSelect.options].some((o) => o.value === acc.server_name)) {
+          const opt = document.createElement("option");
+          opt.value = acc.server_name;
+          opt.textContent = acc.server_name;
+          accEditServerSelect.appendChild(opt);
+        }
+        accEditServerSelect.value = acc.server_name;
+      }
+      if (accEditPlanetSelect) accEditPlanetSelect.value = acc.planet;
+      if (accEditNoteInput) accEditNoteInput.value = acc.note || "";
+      if (accEditStatusEl) {
+        accEditStatusEl.hidden = true;
+        accEditStatusEl.classList.remove("is-error");
+      }
+
+      if (!accEditDialog.open) accEditDialog.showModal();
+      return;
+    }
+
     const toggleBtn = event.target.closest(".acc-toggle-status-btn");
     if (toggleBtn) {
       const id = toggleBtn.dataset.accId;
@@ -1965,6 +2160,655 @@
         }
       } finally {
         delBtn.disabled = false;
+      }
+    }
+  });
+
+  /* =========================================================
+     10. Admin CMS: Shop Items & Services Pricing (/admin)
+     ========================================================= */
+  const adminItemForm = document.getElementById("admin-item-form");
+  const itemEditBanner = document.getElementById("item-edit-banner");
+  const itemEditBannerName = document.getElementById("item-edit-banner-name");
+  const itemEditCancelBtn = document.getElementById("item-edit-cancel-btn");
+  const itemEditIdEl = document.getElementById("item-edit-id");
+  const itemNameEl = document.getElementById("item-name");
+  const itemCategoryEl = document.getElementById("item-category");
+  const itemKindEl = document.getElementById("item-kind");
+  const itemPriceEl = document.getElementById("item-price");
+  const adminItemPricePreviewEl = document.getElementById("admin-item-price-preview");
+  const itemUnitEl = document.getElementById("item-unit");
+  const itemDefaultQtyEl = document.getElementById("item-default-qty");
+  const itemSortOrderEl = document.getElementById("item-sort-order");
+  const itemTagEl = document.getElementById("item-tag");
+  const itemTagClassEl = document.getElementById("item-tag-class");
+  const itemIconSelectEl = document.getElementById("item-icon-select");
+  const itemIconFileEl = document.getElementById("item-icon-file");
+  const itemIconFileClearBtn = document.getElementById("item-icon-file-clear");
+  const adminItemIconPreviewEl = document.getElementById("admin-item-icon-preview");
+  const itemDescEl = document.getElementById("item-desc");
+  const itemKeywordsEl = document.getElementById("item-keywords");
+  const itemIsActiveEl = document.getElementById("item-is-active");
+  const adminItemStatusEl = document.getElementById("admin-item-status");
+  const adminItemSubmitBtn = document.getElementById("admin-item-submit");
+  const adminItemResetBtn = document.getElementById("admin-item-reset-btn");
+  const adminItemSearchEl = document.getElementById("admin-item-search");
+  const adminItemsTbody = document.getElementById("admin-items-tbody");
+  const adminItemsCountEl = document.getElementById("admin-items-count");
+  const adminNavItemsCountEl = document.getElementById("admin-nav-items-count");
+  const adminItemsStatusEl = document.getElementById("admin-items-status");
+
+  let adminItemsCache = [];
+  let activeItemIconBlobUrl = "";
+
+  const revokeItemIconBlob = () => {
+    if (activeItemIconBlobUrl) {
+      URL.revokeObjectURL(activeItemIconBlobUrl);
+      activeItemIconBlobUrl = "";
+    }
+  };
+
+  const formatItemUnitPreviewText = (kind, price, unit) => {
+    if (kind === "quote" || !price || Number(price) <= 0) {
+      return "Hiển thị: Báo giá theo lô";
+    }
+    const formatted = `${formatNumber(Math.floor(Number(price)))} đ`;
+    const cleanUnit = String(unit || "").trim() || "món";
+    if (cleanUnit === "lô 999") return `Hiển thị: ${formatted} / 999 viên`;
+    if (/^(x\d+|lô|gói|bộ|set)/i.test(cleanUnit)) return `Hiển thị: ${formatted} / ${cleanUnit}`;
+    return `Hiển thị: ${formatted} / 1 ${cleanUnit}`;
+  };
+
+  const updateAdminItemFormPreview = () => {
+    const kind = itemKindEl ? itemKindEl.value : "fixed";
+    const isQuote = kind === "quote";
+    if (itemPriceEl) {
+      itemPriceEl.disabled = isQuote;
+      itemPriceEl.required = !isQuote;
+    }
+    if (adminItemPricePreviewEl) {
+      const priceVal = itemPriceEl ? Number(itemPriceEl.value) : 0;
+      const unitVal = itemUnitEl ? itemUnitEl.value : "cái";
+      adminItemPricePreviewEl.textContent = formatItemUnitPreviewText(kind, priceVal, unitVal);
+    }
+  };
+
+  const syncItemIconPreviewFromSelect = () => {
+    if (!adminItemIconPreviewEl || !itemIconSelectEl) return;
+    if (activeItemIconBlobUrl) return;
+    adminItemIconPreviewEl.src = safeImagePath(itemIconSelectEl.value || "/assets/icons/2754.png");
+  };
+
+  const clearCustomIconOption = () => {
+    if (!itemIconSelectEl) return;
+    itemIconSelectEl.querySelectorAll('[data-custom-upload-opt="1"]').forEach((opt) => {
+      opt.remove();
+    });
+  };
+
+  const resetItemForm = () => {
+    if (!adminItemForm) return;
+    revokeItemIconBlob();
+    clearCustomIconOption();
+    adminItemForm.reset();
+    if (itemEditIdEl) itemEditIdEl.value = "";
+    if (itemEditBanner) itemEditBanner.hidden = true;
+    if (itemEditBannerName) itemEditBannerName.textContent = "";
+    if (adminItemSubmitBtn) adminItemSubmitBtn.textContent = "+ Thêm Item Vào Bảng Giá";
+    if (itemIconFileEl) itemIconFileEl.value = "";
+    if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = true;
+    if (itemIsActiveEl) itemIsActiveEl.checked = true;
+    if (adminItemStatusEl) {
+      adminItemStatusEl.hidden = true;
+      adminItemStatusEl.classList.remove("is-error");
+    }
+    updateAdminItemFormPreview();
+    syncItemIconPreviewFromSelect();
+  };
+
+  const populateItemFormForEdit = (item) => {
+    if (!adminItemForm || !item) return;
+    revokeItemIconBlob();
+    clearCustomIconOption();
+
+    if (itemEditIdEl) itemEditIdEl.value = String(item.dbId);
+    if (itemEditBannerName) itemEditBannerName.textContent = item.name;
+    if (itemEditBanner) itemEditBanner.hidden = false;
+    if (adminItemSubmitBtn) adminItemSubmitBtn.textContent = "Lưu Thay Đổi Mặt Hàng";
+
+    if (itemNameEl) itemNameEl.value = item.name || "";
+    if (itemCategoryEl) itemCategoryEl.value = item.category || "khac";
+    if (itemKindEl) itemKindEl.value = item.kind === "quote" ? "quote" : "fixed";
+    if (itemPriceEl) {
+      itemPriceEl.value = item.kind === "quote" ? "10000" : String(Number(item.price) || 1000);
+    }
+    if (itemUnitEl) itemUnitEl.value = item.unit || "cái";
+    if (itemDefaultQtyEl) {
+      itemDefaultQtyEl.value = String(Math.max(1, Number(item.defaultQty) || 1));
+    }
+    if (itemSortOrderEl) {
+      const sortNum = Number(item.sortOrder);
+      itemSortOrderEl.value = Number.isFinite(sortNum) ? String(sortNum) : "200";
+    }
+    if (itemTagEl) itemTagEl.value = item.tag || "";
+    if (itemTagClassEl) itemTagClassEl.value = item.tagClass || "";
+    if (itemDescEl) itemDescEl.value = item.desc || "";
+    if (itemKeywordsEl) itemKeywordsEl.value = (item.keywords || "").slice(0, 180);
+    if (itemIsActiveEl) itemIsActiveEl.checked = Boolean(item.isActive);
+    if (itemIconFileEl) itemIconFileEl.value = "";
+    if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = true;
+
+    if (itemIconSelectEl && item.icon) {
+      const hasOpt = [...itemIconSelectEl.options].some((o) => o.value === item.icon);
+      if (!hasOpt) {
+        const customOpt = document.createElement("option");
+        customOpt.value = item.icon;
+        customOpt.textContent = "Ảnh Icon đã tải lên hiện tại";
+        customOpt.dataset.customUploadOpt = "1";
+        itemIconSelectEl.prepend(customOpt);
+      }
+      itemIconSelectEl.value = item.icon;
+    }
+
+    if (adminItemStatusEl) {
+      adminItemStatusEl.hidden = true;
+      adminItemStatusEl.classList.remove("is-error");
+    }
+
+    updateAdminItemFormPreview();
+    syncItemIconPreviewFromSelect();
+    adminItemForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (itemNameEl) itemNameEl.focus({ preventScroll: true });
+  };
+
+  const renderAdminItemsRows = (itemsList) => {
+    if (!adminItemsTbody) return;
+    const query = normalizeText(adminItemSearchEl ? adminItemSearchEl.value.trim() : "");
+    const filtered = !query
+      ? itemsList
+      : itemsList.filter((it) =>
+          normalizeText(`${it.name} ${it.desc} ${it.group} ${it.tag} ${it.keywords}`).includes(query)
+        );
+
+    if (adminItemsCountEl) adminItemsCountEl.textContent = String(itemsList.length);
+    if (adminNavItemsCountEl) adminNavItemsCountEl.textContent = String(itemsList.length);
+    if (adminItemsStatusEl) {
+      adminItemsStatusEl.textContent = query
+        ? `Tìm thấy ${filtered.length} / ${itemsList.length} mặt hàng khớp "${adminItemSearchEl.value.trim()}".`
+        : `Đang có ${itemsList.length} mặt hàng trong kho bảng giá.`;
+    }
+
+    adminItemsTbody.textContent = "";
+
+    if (filtered.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      td.textContent = itemsList.length === 0
+        ? "Chưa có mặt hàng nào. Hãy thêm mặt hàng mới ở biểu mẫu bên trên."
+        : "Không có mặt hàng nào khớp từ khóa tìm kiếm.";
+      tr.appendChild(td);
+      adminItemsTbody.appendChild(tr);
+      return;
+    }
+
+    filtered.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.dataset.itemDbId = String(item.dbId);
+      if (!item.isActive) tr.classList.add("is-hidden-row");
+
+      const thItem = document.createElement("th");
+      thItem.scope = "row";
+      thItem.className = "th-admin-item";
+
+      const cellWrap = document.createElement("div");
+      cellWrap.className = "table-item-cell";
+
+      const img = document.createElement("img");
+      img.src = safeImagePath(item.icon);
+      img.alt = "";
+      img.width = Number(item.width) || 48;
+      img.height = Number(item.height) || 48;
+      img.className = "table-sprite";
+
+      const copyDiv = document.createElement("div");
+      copyDiv.className = "table-item-copy";
+
+      const titleRow = document.createElement("div");
+      titleRow.className = "table-item-title-row";
+
+      const strongName = document.createElement("strong");
+      strongName.textContent = item.name;
+      const catBadge = document.createElement("span");
+      catBadge.className = "cat-badge";
+      catBadge.textContent = item.group || "";
+      titleRow.append(strongName, catBadge);
+
+      if (item.tag) {
+        const tagSpan = document.createElement("span");
+        tagSpan.className = `tag-pill ${item.tagClass || ""}`.trim();
+        tagSpan.textContent = item.tag;
+        titleRow.appendChild(tagSpan);
+      }
+
+      const descSpan = document.createElement("span");
+      descSpan.className = "table-item-desc";
+      descSpan.textContent = item.desc || "";
+
+      copyDiv.append(titleRow, descSpan);
+      cellWrap.append(img, copyDiv);
+      thItem.appendChild(cellWrap);
+
+      const tdPrice = document.createElement("td");
+      tdPrice.className = "td-admin-price";
+      if (item.kind === "quote") {
+        const quoteBadge = document.createElement("span");
+        quoteBadge.className = "tag-pill";
+        quoteBadge.textContent = "Báo giá theo lô";
+        const quoteCap = document.createElement("span");
+        quoteCap.className = "admin-unit-caption";
+        quoteCap.textContent = "Khách liên hệ Zalo / FB";
+        tdPrice.append(quoteBadge, quoteCap);
+      } else {
+        const priceBox = document.createElement("div");
+        priceBox.className = "admin-inline-price-box";
+
+        const priceInput = document.createElement("input");
+        priceInput.type = "number";
+        priceInput.className = "admin-inline-price-input mono-num";
+        priceInput.value = String(Number(item.price));
+        priceInput.min = "100";
+        priceInput.max = "500000000";
+        priceInput.step = "100";
+        priceInput.inputMode = "numeric";
+        priceInput.setAttribute("aria-label", `Đơn giá ${item.name}`);
+
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.className = "btn btn-outline btn-sm admin-item-save-price-btn";
+        saveBtn.dataset.itemDbId = String(item.dbId);
+        saveBtn.textContent = "Lưu giá";
+
+        priceBox.append(priceInput, saveBtn);
+
+        const capSpan = document.createElement("span");
+        capSpan.className = "admin-unit-caption mono-num";
+        capSpan.textContent = item.unitPriceLabel || formatVND(item.price);
+
+        tdPrice.append(priceBox, capSpan);
+      }
+
+      const tdStatus = document.createElement("td");
+      tdStatus.className = "td-admin-status";
+      const statusBadge = document.createElement("span");
+      statusBadge.className = `tag-pill ${item.isActive ? "tag-jade" : "tag-crimson"}`;
+      statusBadge.textContent = item.isActive ? "Đang bán" : "Đang ẩn";
+      tdStatus.appendChild(statusBadge);
+
+      const tdActions = document.createElement("td");
+      tdActions.className = "td-admin-actions";
+      const actGroup = document.createElement("div");
+      actGroup.className = "table-action-group";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "btn btn-outline btn-sm admin-item-edit-btn";
+      editBtn.dataset.itemDbId = String(item.dbId);
+      editBtn.textContent = "Sửa";
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "btn btn-outline btn-sm admin-item-toggle-btn";
+      toggleBtn.dataset.itemDbId = String(item.dbId);
+      toggleBtn.dataset.nextActive = item.isActive ? "0" : "1";
+      toggleBtn.textContent = item.isActive ? "Ẩn" : "Hiện";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn btn-danger-outline btn-sm admin-item-delete-btn";
+      deleteBtn.dataset.itemDbId = String(item.dbId);
+      deleteBtn.dataset.itemName = item.name;
+      deleteBtn.textContent = "Xóa";
+
+      actGroup.append(editBtn, toggleBtn, deleteBtn);
+      tdActions.appendChild(actGroup);
+
+      tr.append(thItem, tdPrice, tdStatus, tdActions);
+      adminItemsTbody.appendChild(tr);
+    });
+  };
+
+  const fetchAndRenderAdminItems = async () => {
+    if (!adminItemsTbody) return;
+    try {
+      const resp = await fetch("/api/items?include_hidden=1", { credentials: "same-origin" });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (!data || !data.ok || !Array.isArray(data.items)) return;
+      adminItemsCache = data.items;
+      renderAdminItemsRows(adminItemsCache);
+    } catch {
+      // Ignore transient network errors
+    }
+  };
+
+  if (adminItemsTbody) {
+    fetchAndRenderAdminItems();
+  }
+
+  if (adminItemForm) {
+    if (itemKindEl) itemKindEl.addEventListener("change", updateAdminItemFormPreview);
+    if (itemPriceEl) itemPriceEl.addEventListener("input", updateAdminItemFormPreview);
+    if (itemUnitEl) itemUnitEl.addEventListener("input", updateAdminItemFormPreview);
+
+    document.querySelectorAll(".admin-unit-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        if (!itemUnitEl) return;
+        itemUnitEl.value = chip.dataset.unit || "cái";
+        updateAdminItemFormPreview();
+        itemUnitEl.focus();
+      });
+    });
+
+    if (itemIconSelectEl) {
+      itemIconSelectEl.addEventListener("change", () => {
+        if (itemIconFileEl && itemIconFileEl.files && itemIconFileEl.files.length > 0) {
+          itemIconFileEl.value = "";
+          if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = true;
+        }
+        revokeItemIconBlob();
+        syncItemIconPreviewFromSelect();
+      });
+    }
+
+    if (itemIconFileEl) {
+      itemIconFileEl.addEventListener("change", () => {
+        revokeItemIconBlob();
+        const file = itemIconFileEl.files && itemIconFileEl.files[0];
+        if (!file) {
+          if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = true;
+          syncItemIconPreviewFromSelect();
+          return;
+        }
+        if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+          showToast("Chỉ chấp nhận icon định dạng PNG, JPG hoặc WebP.");
+          itemIconFileEl.value = "";
+          if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = true;
+          syncItemIconPreviewFromSelect();
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showToast("Ảnh icon không được vượt quá 5 MB.");
+          itemIconFileEl.value = "";
+          if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = true;
+          syncItemIconPreviewFromSelect();
+          return;
+        }
+        activeItemIconBlobUrl = URL.createObjectURL(file);
+        if (adminItemIconPreviewEl) {
+          adminItemIconPreviewEl.src = activeItemIconBlobUrl;
+        }
+        if (itemIconFileClearBtn) itemIconFileClearBtn.hidden = false;
+      });
+    }
+
+    if (itemIconFileClearBtn && itemIconFileEl) {
+      itemIconFileClearBtn.addEventListener("click", () => {
+        itemIconFileEl.value = "";
+        itemIconFileClearBtn.hidden = true;
+        revokeItemIconBlob();
+        syncItemIconPreviewFromSelect();
+      });
+    }
+
+    if (itemEditCancelBtn) {
+      itemEditCancelBtn.addEventListener("click", resetItemForm);
+    }
+    if (adminItemResetBtn) {
+      adminItemResetBtn.addEventListener("click", resetItemForm);
+    }
+
+    updateAdminItemFormPreview();
+    syncItemIconPreviewFromSelect();
+
+    adminItemForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (adminItemStatusEl) {
+        adminItemStatusEl.hidden = true;
+        adminItemStatusEl.classList.remove("is-error");
+      }
+
+      const editId = Number(itemEditIdEl ? itemEditIdEl.value : 0);
+      const isEdit = Number.isInteger(editId) && editId > 0;
+      const formData = new FormData(adminItemForm);
+
+      formData.set("isActive", itemIsActiveEl && itemIsActiveEl.checked ? "1" : "0");
+      if (itemKindEl && itemKindEl.value === "quote") {
+        formData.set("price", "0");
+      }
+      if (!itemIconFileEl || !itemIconFileEl.files || itemIconFileEl.files.length === 0) {
+        formData.delete("iconFile");
+      }
+
+      if (adminItemSubmitBtn) adminItemSubmitBtn.disabled = true;
+
+      try {
+        const resp = await fetch(isEdit ? `/api/items/${encodeURIComponent(editId)}` : "/api/items", {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "X-CSRF-Token": csrfToken },
+          credentials: "same-origin",
+          body: formData
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || !data.ok) {
+          if (adminItemStatusEl) {
+            adminItemStatusEl.textContent = data.error || "Không thể lưu mặt hàng.";
+            adminItemStatusEl.classList.add("is-error");
+            adminItemStatusEl.hidden = false;
+          }
+          return;
+        }
+
+        const savedName = data.item ? data.item.name : "mặt hàng";
+        resetItemForm();
+        if (adminItemStatusEl) {
+          adminItemStatusEl.textContent = isEdit
+            ? `Đã lưu thay đổi "${savedName}" và đồng bộ ngay lên trang Mua Item!`
+            : `Đã thêm thành công "${savedName}" vào trang Mua Item!`;
+          adminItemStatusEl.hidden = false;
+        }
+        showToast(isEdit ? `Đã cập nhật "${savedName}".` : `Đã thêm "${savedName}" lên shop!`);
+        await fetchAndRenderAdminItems();
+      } catch {
+        if (adminItemStatusEl) {
+          adminItemStatusEl.textContent = "Lỗi kết nối máy chủ khi lưu mặt hàng.";
+          adminItemStatusEl.classList.add("is-error");
+          adminItemStatusEl.hidden = false;
+        }
+      } finally {
+        if (adminItemSubmitBtn) adminItemSubmitBtn.disabled = false;
+      }
+    });
+  }
+
+  if (adminItemSearchEl) {
+    adminItemSearchEl.addEventListener("input", () => {
+      renderAdminItemsRows(adminItemsCache);
+    });
+  }
+
+  document.addEventListener("click", async (event) => {
+    const saveItemPriceBtn = event.target.closest(".admin-item-save-price-btn");
+    if (saveItemPriceBtn) {
+      const dbId = Number(saveItemPriceBtn.dataset.itemDbId);
+      const row = saveItemPriceBtn.closest("tr");
+      const priceInput = row ? row.querySelector(".admin-inline-price-input") : null;
+      const nextPrice = Math.floor(Number(priceInput ? priceInput.value : 0));
+      if (!Number.isInteger(nextPrice) || nextPrice < 100 || nextPrice > 500000000) {
+        showToast("Đơn giá item phải từ 100 đ đến 500.000.000 đ.");
+        if (priceInput) priceInput.focus();
+        return;
+      }
+
+      saveItemPriceBtn.disabled = true;
+      try {
+        const resp = await fetch(`/api/items/${encodeURIComponent(dbId)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ price: nextPrice })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          showToast(`Đã cập nhật giá "${data.item.name}": ${data.item.unitPriceLabel}`);
+          await fetchAndRenderAdminItems();
+        } else {
+          showToast(data.error || "Không thể lưu đơn giá.");
+        }
+      } catch {
+        showToast("Không thể kết nối máy chủ.");
+      } finally {
+        saveItemPriceBtn.disabled = false;
+      }
+      return;
+    }
+
+    const editItemBtn = event.target.closest(".admin-item-edit-btn");
+    if (editItemBtn) {
+      const dbId = Number(editItemBtn.dataset.itemDbId);
+      let item = adminItemsCache.find((x) => x.dbId === dbId);
+      if (!item) {
+        await fetchAndRenderAdminItems();
+        item = adminItemsCache.find((x) => x.dbId === dbId);
+      }
+      if (!item) {
+        showToast("Không tìm thấy dữ liệu mặt hàng.");
+        return;
+      }
+      populateItemFormForEdit(item);
+      return;
+    }
+
+    const toggleItemBtn = event.target.closest(".admin-item-toggle-btn");
+    if (toggleItemBtn) {
+      const dbId = Number(toggleItemBtn.dataset.itemDbId);
+      const nextActive = toggleItemBtn.dataset.nextActive === "1";
+      toggleItemBtn.disabled = true;
+      try {
+        const resp = await fetch(`/api/items/${encodeURIComponent(dbId)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ isActive: nextActive })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          showToast(
+            nextActive
+              ? `Đã hiện "${data.item.name}" trên trang Mua Item.`
+              : `Đã tạm ẩn "${data.item.name}" khỏi trang Mua Item.`
+          );
+          await fetchAndRenderAdminItems();
+        } else {
+          showToast(data.error || "Không thể cập nhật hiển thị.");
+        }
+      } catch {
+        showToast("Không thể kết nối máy chủ.");
+      } finally {
+        toggleItemBtn.disabled = false;
+      }
+      return;
+    }
+
+    const deleteItemBtn = event.target.closest(".admin-item-delete-btn");
+    if (deleteItemBtn) {
+      const dbId = Number(deleteItemBtn.dataset.itemDbId);
+      const itemName = deleteItemBtn.dataset.itemName || `#${dbId}`;
+      if (!window.confirm(`Xác nhận xóa vĩnh viễn mặt hàng "${itemName}"?`)) {
+        return;
+      }
+      deleteItemBtn.disabled = true;
+      try {
+        const resp = await fetch(`/api/items/${encodeURIComponent(dbId)}`, {
+          method: "DELETE",
+          headers: { "X-CSRF-Token": csrfToken },
+          credentials: "same-origin"
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+          if (itemEditIdEl && Number(itemEditIdEl.value) === dbId) {
+            resetItemForm();
+          }
+          showToast(`Đã xóa mặt hàng "${itemName}".`);
+          await fetchAndRenderAdminItems();
+        } else {
+          showToast(data.error || "Xóa mặt hàng thất bại.");
+        }
+      } catch {
+        showToast("Không thể kết nối máy chủ.");
+      } finally {
+        deleteItemBtn.disabled = false;
+      }
+      return;
+    }
+
+    const saveSvcBtn = event.target.closest(".admin-svc-save-btn");
+    if (saveSvcBtn) {
+      const key = saveSvcBtn.dataset.serviceKey;
+      const row = saveSvcBtn.closest("tr");
+      if (!key || !row) return;
+
+      const nameInput = row.querySelector(".admin-svc-name-input");
+      const noteInput = row.querySelector(".admin-svc-note-input");
+      const priceInput = row.querySelector(".admin-svc-price-input");
+      const captionEl = row.querySelector(".th-admin-svc .admin-unit-caption");
+
+      const name = nameInput ? nameInput.value.trim() : "";
+      const note = noteInput ? noteInput.value.trim() : "";
+      const price = Math.floor(Number(priceInput ? priceInput.value : 0));
+
+      if (!name || name.length < 2) {
+        showToast("Tên dịch vụ cần tối thiểu 2 ký tự.");
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!Number.isInteger(price) || (price !== 0 && price < 1000) || price > 500000000) {
+        showToast("Giá dịch vụ phải bằng 0 (báo giá) hoặc từ 1.000 đ.");
+        if (priceInput) priceInput.focus();
+        return;
+      }
+
+      saveSvcBtn.disabled = true;
+      try {
+        const resp = await fetch(`/api/services/${encodeURIComponent(key)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({ name, note, price })
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok && data.service) {
+          if (captionEl) {
+            captionEl.textContent = `Hiển thị: ${data.service.priceText}`;
+          }
+          showToast(`Đã lưu giá "${data.service.name}": ${data.service.priceText}`);
+        } else {
+          showToast(data.error || "Không thể lưu dịch vụ.");
+        }
+      } catch {
+        showToast("Không thể kết nối máy chủ.");
+      } finally {
+        saveSvcBtn.disabled = false;
       }
     }
   });

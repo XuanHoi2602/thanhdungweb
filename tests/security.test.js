@@ -112,7 +112,23 @@ async function runTests() {
   try {
     console.log("1. Testing Multi-Path HTML Routes & Namek Jade Lock & CSP Nonce...");
     const routes = [
-      { path: "/", mustInclude: ["THANH DUNG NRO", 'data-palette="namek-jade"', "0368018920", "Tài khoản chính chủ", "/kich-diem", "/mua-item", "/mua-tai-khoan"] },
+      {
+        path: "/",
+        mustInclude: [
+          "THANH DUNG NRO",
+          "viewport-fit=cover",
+          'data-palette="namek-jade"',
+          "0368018920",
+          "Tài khoản chính chủ",
+          "Kích điểm · CR",
+          "Vàng Tươi · Die",
+          "Ngọc Kí · Vé",
+          "GDTG Uy Tín",
+          "/kich-diem",
+          "/mua-item",
+          "/mua-tai-khoan"
+        ]
+      },
       { path: "/kich-diem", mustInclude: ["300.000 đ / lượt", "810.000 đ / gói", "Thuê Set Thần", "GDTG 20/24", "Không nhận giao dịch"] },
       {
         path: "/mua-item",
@@ -125,16 +141,18 @@ async function runTests() {
           "x99 Cuồng nộ",
           "15.000 đ / x99",
           "x99 Bổ huyết",
-          "Giáp Xên",
+          "x99 Giáp Xên bọ hung",
+          "x99 Máy dò Capsule kì bí",
+          "Dùi đục",
           "Vàng tươi (x15)",
           "Vàng die (x60)",
           "Ngọc kí (x11)",
-          "Ngọc vé ID 718 (x10)",
-          "ID 718",
-          "Sao pha lê đỏ (ID 441)",
-          "Sao pha lê lam (ID 442)",
-          "Sao pha lê vàng (ID 446)",
-          "Sao pha lê lục (ID 447)",
+          "Ngọc vé (x10)",
+          "Sao pha lê đỏ",
+          "Sao pha lê lam",
+          "Sao pha lê vàng",
+          "Sao pha lê lục",
+          "Ngọc Rồng 3 sao",
           "Hút 5% HP",
           "Hút 5% KI",
           "+5% vàng rơi",
@@ -149,10 +167,21 @@ async function runTests() {
           "Mảnh Khỉ Oozaru",
           "125 mảnh"
         ],
-        mustNotInclude: ['id="catalog-grid"', 'id="calc-spl-fieldset"']
+        mustNotInclude: [
+          'id="catalog-grid"',
+          'id="calc-spl-fieldset"',
+          'data-category="vang-ngoc"',
+          'data-item-id="gold-fresh"',
+          'data-item-id="gem-ve"'
+        ]
       },
       { path: "/mua-tai-khoan", mustInclude: ["Acc Đậu thần cấp 5", "Acc Clone 340k SM", "Kho Tài Khoản NRO", "Trái Đất", "Namếc", "Xayda"] },
-      { path: "/admin", mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password", '<meta name="robots" content="noindex, nofollow">'], isAdminRoute: true }
+      {
+        path: "/admin",
+        mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password", '<meta name="robots" content="noindex, nofollow">'],
+        mustNotInclude: ['id="admin-item-form"', 'id="admin-items-table"', 'id="admin-services-table"', 'id="acc-edit-dialog"'],
+        isAdminRoute: true
+      }
     ];
 
     const forbiddenUiJargon = [
@@ -167,7 +196,20 @@ async function runTests() {
       "Frontend",
       "(icon TeaMobi chính gốc)",
       "Kho đầy đủ Cuồng nộ",
-      "TeaMobi"
+      "TeaMobi",
+      "(ID 441)",
+      "(ID 442)",
+      "(ID 446)",
+      "(ID 447)",
+      "ID 718",
+      "(NR 3s)",
+      "(BH)",
+      "(GX)",
+      "(MD CSKB)",
+      "(Có SLL)",
+      "(SLL)",
+      "copy-full-post-btn",
+      "Sao chép bảng giá tổng"
     ];
 
     const publicHiddenAdminTokens = [
@@ -176,7 +218,11 @@ async function runTests() {
       "Đăng Nhập Quản Trị",
       "Đăng Nhập Up Acc",
       "toggle-admin-acc-panel",
-      'id="quan-ly-acc"'
+      'id="quan-ly-acc"',
+      'id="admin-item-form"',
+      'id="admin-items-table"',
+      'id="admin-services-table"',
+      'id="acc-edit-dialog"'
     ];
 
     const seenNonces = new Set();
@@ -220,11 +266,26 @@ async function runTests() {
     }
     assert.equal(seenNonces.size, routes.length, "Each HTML response must receive a unique cryptographic nonce");
 
-    console.log("2. Testing Frontend Zero-DOM-Sink Hygiene, Static Assets & Traversal Protection...");
+    console.log("2. Testing Frontend Zero-DOM-Sink Hygiene, CSS Balance, Static Assets & Traversal Protection...");
     const appJs = fs.readFileSync(path.join(__dirname, "..", "public", "app.js"), "utf8");
     for (const sink of [".innerHTML", ".outerHTML", "insertAdjacentHTML", "document.write(", "eval("]) {
       assert(!appJs.includes(sink), `Dangerous sink found in public/app.js: ${sink}`);
     }
+    assert(!appJs.includes("copy-full-post-btn"), "Removed full ad post copy handler must stay absent from app.js");
+    const stylesCss = fs.readFileSync(path.join(__dirname, "..", "public", "styles.css"), "utf8");
+    let cssDepth = 0;
+    let cssMinDepth = 0;
+    for (let i = 0; i < stylesCss.length; i += 1) {
+      if (stylesCss[i] === "{") cssDepth += 1;
+      else if (stylesCss[i] === "}") {
+        cssDepth -= 1;
+        if (cssDepth < cssMinDepth) cssMinDepth = cssDepth;
+      }
+    }
+    assert.equal(cssDepth, 0, "public/styles.css must have balanced braces");
+    assert.equal(cssMinDepth, 0, "public/styles.css must never drop below depth 0");
+    assert(stylesCss.includes("--target-size: 44px"), "styles.css must include touch target sizing");
+    assert(stylesCss.includes("env(safe-area-inset-bottom"), "styles.css must pad mobile UI for safe-area insets");
 
     for (const staticOk of [
       { url: "/styles.css", ct: "text/css" },
@@ -260,9 +321,11 @@ async function runTests() {
     assert.equal(shopData.contacts.facebookUrl, "https://www.facebook.com/Thanhdungg.Kem");
     assert.equal(shopData.contacts.zaloUrl, "http://zalo.me/84368018920");
     assert.equal(shopData.integrity.ok, true, "QR integrity SHA-256 must verify clean");
-    assert(shopData.fullAdPost.includes("441"), "Full ad post should list SPL 441");
-    assert(shopData.fullAdPost.includes("447"), "Full ad post should list SPL 447");
+    assert(shopData.fullAdPost.includes("Sao pha lê 4 loại"), "Full ad post should list clean 4 SPL types");
+    assert(shopData.fullAdPost.includes("Ngọc Rồng 3 sao"), "Full ad post should list NR 3 sao");
     assert(shopData.fullAdPost.includes("10/125/125"), "Full ad post should list Manh Khi tiers");
+    assert(!shopData.fullAdPost.includes("ID 718"), "Full ad post should not contain internal ID notes");
+    assert(!shopData.fullAdPost.includes("441"), "Full ad post should not contain SPL ID notes");
 
     console.log("4. Testing Fetch Metadata Isolation & Auth Gates...");
     const crossSiteAttempt = await fetch(`${baseUrl}/api/accounts`, {
@@ -479,6 +542,12 @@ async function runTests() {
     const authedAdminHtml = await authedAdminPage.text();
     assert(authedAdminHtml.includes("Lịch Sử Đăng Nhập"));
     assert(authedAdminHtml.includes("Cảnh Báo Bất Thường"));
+    assert(authedAdminHtml.includes('id="admin-item-form"'));
+    assert(authedAdminHtml.includes('id="admin-items-table"'));
+    assert(authedAdminHtml.includes('id="admin-services-table"'));
+    assert(authedAdminHtml.includes('id="acc-edit-dialog"'));
+    assert(authedAdminHtml.includes("acc-save-price-btn"));
+    assert(authedAdminHtml.includes("acc-edit-btn"));
     for (const jargon of [...forbiddenUiJargon, "Audit Logs", "CSP Reports"]) {
       assert(!authedAdminHtml.toLowerCase().includes(jargon.toLowerCase()), `Forbidden UI jargon "${jargon}" leaked on authenticated /admin`);
     }
@@ -494,6 +563,185 @@ async function runTests() {
     assert.equal(delResp.status, 200);
     const imgAfterDel = await fetch(`${baseUrl}${acc.image_path}`);
     assert.equal(imgAfterDel.status, 404, "Deleted account image file must be removed from uploads/");
+
+    console.log("9. Testing Admin Shop Item CMS, Live Price Edits & Service Price Updates...");
+    const unauthItemPost = await fetch(`${baseUrl}/api/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Hack Item", category: "khac", price: 1000, unit: "cái", desc: "Test" })
+    });
+    assert.equal(unauthItemPost.status, 401, "Unauthenticated POST /api/items must return 401");
+
+    const badCsrfItemPost = await fetch(`${baseUrl}/api/items`, {
+      method: "POST",
+      headers: { Cookie: sessionCookie, "X-CSRF-Token": "wrong-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Hack Item", category: "khac", price: 1000, unit: "cái", desc: "Test" })
+    });
+    assert.equal(badCsrfItemPost.status, 403, "Invalid CSRF token on POST /api/items must return 403");
+
+    const unauthSvcPatch = await fetch(`${baseUrl}/api/services/kik-diem`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ price: 999000 })
+    });
+    assert.equal(unauthSvcPatch.status, 401, "Unauthenticated PATCH /api/services/* must return 401");
+
+    // Reject spoofed SVG upload on item icon
+    const fakeSvgIconPayload = buildMultipartPayload(
+      { name: "Item SVG Test", category: "khac", kind: "fixed", price: "15000", unit: "cái", desc: "Test SVG block" },
+      { name: "iconFile", filename: "evil.png", mime: "image/png", data: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>') }
+    );
+    const badIconResp = await fetch(`${baseUrl}/api/items`, {
+      method: "POST",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": `multipart/form-data; boundary=${fakeSvgIconPayload.boundary}`
+      },
+      body: fakeSvgIconPayload.body
+    });
+    assert.equal(badIconResp.status, 400, "Spoofed SVG upload on /api/items must return 400");
+
+    // Create item via JSON (category "khac" triggers dynamic filter tab + verify XSS escaping)
+    const createJsonItemResp = await fetch(`${baseUrl}/api/items`, {
+      method: "POST",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: "Bông tai Porata <script>alert(1)</script>",
+        category: "khac",
+        kind: "fixed",
+        price: 35000,
+        unit: "cái",
+        desc: "Tăng chỉ số <img src=x onerror=alert(1)> VIP",
+        icon: "/assets/icons/2754.png"
+      })
+    });
+    assert.equal(createJsonItemResp.status, 201);
+    const createdJsonItem = (await createJsonItemResp.json()).item;
+    assert.equal(createdJsonItem.unitPriceLabel, "35.000 đ / 1 cái");
+    assert.equal(createdJsonItem.category, "khac");
+
+    // Create item via multipart + real PNG icon
+    const customPngIcon = buildValidPngBuffer(48, 48);
+    const createPngItemPayload = buildMultipartPayload(
+      {
+        name: "Cải trang Broly Admin Test",
+        category: "khac",
+        kind: "fixed",
+        price: "25000",
+        unit: "bộ",
+        desc: "Item thêm từ Admin kèm icon riêng",
+        isActive: "1"
+      },
+      { name: "iconFile", filename: "broly.png", mime: "image/png", data: customPngIcon }
+    );
+    const createPngItemResp = await fetch(`${baseUrl}/api/items`, {
+      method: "POST",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": `multipart/form-data; boundary=${createPngItemPayload.boundary}`
+      },
+      body: createPngItemPayload.body
+    });
+    assert.equal(createPngItemResp.status, 201);
+    const pngItem = (await createPngItemResp.json()).item;
+    assert.match(pngItem.icon, /^\/uploads\/[0-9a-f-]{36}\.png$/);
+
+    // Public /mua-item must render new items, dynamic "khac" tab, and escape XSS safely
+    const muaItemWithNewHtml = await (await fetch(`${baseUrl}/mua-item`)).text();
+    assert(muaItemWithNewHtml.includes('data-category="khac"'), "New 'khac' item should activate 'Vật phẩm khác' tab on /mua-item");
+    assert(muaItemWithNewHtml.includes("Cải trang Broly Admin Test"));
+    assert(muaItemWithNewHtml.includes("35.000 đ / 1 cái"));
+    assert(!muaItemWithNewHtml.includes("<script>alert(1)</script>"), "Raw <script> in item name must be escaped on /mua-item");
+    assert(!muaItemWithNewHtml.includes("<img src=x onerror=alert(1)>"), "Raw <img> XSS in item desc must be escaped on /mua-item");
+    assert(muaItemWithNewHtml.includes("&lt;script&gt;alert(1)&lt;/script&gt;"));
+
+    // Update price inline via PATCH /api/items/:id
+    const patchItemPriceResp = await fetch(`${baseUrl}/api/items/${pngItem.dbId}`, {
+      method: "PATCH",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ price: 42000 })
+    });
+    assert.equal(patchItemPriceResp.status, 200);
+    const updatedPngItem = (await patchItemPriceResp.json()).item;
+    assert.equal(updatedPngItem.unitPriceLabel, "42.000 đ / bộ");
+
+    const muaItemUpdatedHtml = await (await fetch(`${baseUrl}/mua-item`)).text();
+    assert(muaItemUpdatedHtml.includes("42.000 đ / bộ"), "Updated item price must reflect on /mua-item immediately");
+
+    // Hide item -> excluded from public API and /mua-item, visible only via ?include_hidden=1 while authed
+    const hideItemResp = await fetch(`${baseUrl}/api/items/${pngItem.dbId}`, {
+      method: "PATCH",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ isActive: false })
+    });
+    assert.equal(hideItemResp.status, 200);
+    const pubItemsAfterHide = (await (await fetch(`${baseUrl}/api/items`)).json()).items;
+    assert(!pubItemsAfterHide.some((it) => it.dbId === pngItem.dbId), "Hidden item must not appear in public GET /api/items");
+    const adminItemsAfterHide = (
+      await (await fetch(`${baseUrl}/api/items?include_hidden=1`, { headers: { Cookie: sessionCookie } })).json()
+    ).items;
+    assert(adminItemsAfterHide.some((it) => it.dbId === pngItem.dbId), "Hidden item must appear for admin include_hidden=1");
+    const unauthHiddenProbe = (await (await fetch(`${baseUrl}/api/items?include_hidden=1`)).json()).items;
+    assert(!unauthHiddenProbe.some((it) => it.dbId === pngItem.dbId), "Unauthenticated ?include_hidden=1 must ignore flag");
+
+    // Delete both custom items and verify uploaded icon removed from disk
+    const delPngItemResp = await fetch(`${baseUrl}/api/items/${pngItem.dbId}`, {
+      method: "DELETE",
+      headers: { Cookie: sessionCookie, "X-CSRF-Token": loginJson.csrfToken }
+    });
+    assert.equal(delPngItemResp.status, 200);
+    const delIconCheck = await fetch(`${baseUrl}${pngItem.icon}`);
+    assert.equal(delIconCheck.status, 404, "Deleted item custom uploaded icon must be removed from uploads/");
+    await fetch(`${baseUrl}/api/items/${createdJsonItem.dbId}`, {
+      method: "DELETE",
+      headers: { Cookie: sessionCookie, "X-CSRF-Token": loginJson.csrfToken }
+    });
+
+    // Update service price -> reflected immediately on /kich-diem
+    const patchSvcResp = await fetch(`${baseUrl}/api/services/kik-diem`, {
+      method: "PATCH",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ price: 320000 })
+    });
+    assert.equal(patchSvcResp.status, 200);
+    const patchSvcJson = await patchSvcResp.json();
+    assert.equal(patchSvcJson.service.price, 320000);
+    assert.equal(patchSvcJson.service.priceText, "320.000 đ / lượt");
+    const kichDiemUpdatedHtml = await (await fetch(`${baseUrl}/kich-diem`)).text();
+    assert(kichDiemUpdatedHtml.includes("320.000 đ / lượt"), "Updated service price must reflect live on /kich-diem");
+
+    // Update posted account price & title via PATCH /api/accounts/:id -> reflected on /mua-tai-khoan
+    const patchJpgAccResp = await fetch(`${baseUrl}/api/accounts/${jpgJson.account.id}`, {
+      method: "PATCH",
+      headers: {
+        Cookie: sessionCookie,
+        "X-CSRF-Token": loginJson.csrfToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ price_vnd: 1350000, title: "Acc Xayda Đã Sửa Giá" })
+    });
+    assert.equal(patchJpgAccResp.status, 200);
+    const accUpdatedHtml = await (await fetch(`${baseUrl}/mua-tai-khoan`)).text();
+    assert(accUpdatedHtml.includes("1.350.000 đ"));
+    assert(accUpdatedHtml.includes("Acc Xayda Đã Sửa Giá"));
 
     // Logout clears session cookie
     const logoutResp = await fetch(`${baseUrl}/api/auth/logout`, {

@@ -5,6 +5,9 @@ const {
   OFFICIAL_BANK,
   ALLOWED_PLANETS,
   ALLOWED_SERVERS,
+  ALLOWED_ITEM_CATEGORIES,
+  ALLOWED_ITEM_TAG_CLASSES,
+  BUNDLED_ITEM_ICONS,
   KICH_DIEM_SERVICES,
   MANH_ACTIVATION_INFOS,
   ITEM_PRICE_ROWS,
@@ -25,9 +28,9 @@ const ROUTE_META = {
       "Chuyên mục Kích điểm 300.000 đ, Nạp CR 810.000 đ done 3s, Thuê Set Thần 3 hành tinh / Set SMTN 5s 10.000 đ/ngày, Săn Đệ SS Skill 5, GDTG 20/24, Thu All Acc & Rút VTS Tín dụng."
   },
   "/mua-item": {
-    title: "Mua Item NRO · Cuồng Nộ, BH, GX, Đá NC, Vàng, Ngọc, SPL | Thanh Dung NRO",
+    title: "Mua Item NRO · Cuồng Nộ, Đá NC, Sao Pha Lê, Vàng Ngọc | Thanh Dung NRO",
     description:
-      "Bảng chọn số lượng & tính giá 1 chạm cho tất cả Item x99, 5 loại Đá nâng cấp x999, Dùi đục SLL, 4 loại SPL (441, 442, 446, 447), NR 3s, Mảnh Khỉ/Rồng/Đội trưởng Vàng, Vàng tươi x15 / die x60, Ngọc kí x11 / Ngọc vé x10 (ID 718)."
+      "Bảng chọn số lượng & tính giá 1 chạm cho Item x99, 5 loại Đá nâng cấp x999, Dùi đục SLL, 4 loại Sao pha lê, Ngọc Rồng 3 sao, Kích mảnh và Máy tính Vàng · Ngọc 2 chiều."
   },
   "/mua-tai-khoan": {
     title: "Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server | Thanh Dung NRO",
@@ -364,14 +367,28 @@ function renderAccountCardMarkup(acc, { isAdmin = false } = {}) {
   `;
 }
 
-function renderHomeView({ latestAccounts, integrity }) {
+function findServiceById(list, fallbackList, id) {
+  return (
+    (Array.isArray(list) && list.find((x) => x.id === id)) ||
+    fallbackList.find((x) => x.id === id) ||
+    { price: 0, priceText: "Liên hệ" }
+  );
+}
+
+function renderHomeView({ latestAccounts, services = KICH_DIEM_SERVICES, starterAccs = STARTER_ACCS, integrity }) {
+  const kikDiem = findServiceById(services, KICH_DIEM_SERVICES, "kik-diem");
+  const napCr = findServiceById(services, KICH_DIEM_SERVICES, "nap-cr");
+  const thueSet = findServiceById(services, KICH_DIEM_SERVICES, "thue-set");
+  const accDau5 = findServiceById(starterAccs, STARTER_ACCS, "acc-dau5");
+  const accClone = findServiceById(starterAccs, STARTER_ACCS, "acc-clone");
+
   const teaserCards =
     latestAccounts.length > 0
       ? `<div class="acc-grid" id="home-acc-teaser">
           ${latestAccounts.slice(0, 3).map((acc) => renderAccountCardMarkup(acc)).join("")}
         </div>`
       : `<div class="empty-state-box">
-          <p>Kho Acc Đậu 5 (<code>8.000 đ</code>) &amp; Acc Clone 340k SM (<code>3.000 đ</code>) luôn sẵn số lượng lớn. Xem toàn bộ danh sách tài khoản theo Server tại mục <strong>Mua Tài Khoản</strong>.</p>
+          <p>Kho Acc Đậu 5 (<code>${escapeHtml(formatVndServer(accDau5.price))}</code>) &amp; Acc Clone 340k SM (<code>${escapeHtml(formatVndServer(accClone.price))}</code>) luôn sẵn số lượng lớn. Xem toàn bộ danh sách tài khoản theo Server tại mục <strong>Mua Tài Khoản</strong>.</p>
           <a href="/mua-tai-khoan" class="btn btn-primary">Mở Kho Tài Khoản NRO</a>
         </div>`;
 
@@ -404,27 +421,24 @@ function renderHomeView({ latestAccounts, integrity }) {
             <a href="${escapeHtml(OFFICIAL_CONTACTS.facebookUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="fb-link" class="btn btn-secondary">
               <span>Inbox Facebook Thanh Dung</span>
             </a>
-            <button type="button" id="copy-full-post-btn" class="btn btn-outline">
-              <span>Sao chép bảng giá tổng</span>
-            </button>
           </div>
 
           <dl class="hero-metrics">
             <div class="metric-card">
-              <dt>Kích điểm / Nạp CR</dt>
+              <dt>Kích điểm · CR</dt>
               <dd class="mono-num">Done 3s</dd>
             </div>
             <div class="metric-card">
-              <dt>Vàng Tươi / Vàng Die</dt>
+              <dt>Vàng Tươi · Die</dt>
               <dd class="mono-num">x15 / x60</dd>
             </div>
             <div class="metric-card">
-              <dt>Ngọc Kí / Ngọc Vé</dt>
+              <dt>Ngọc Kí · Vé</dt>
               <dd class="mono-num">x11 / x10</dd>
             </div>
             <div class="metric-card">
-              <dt>Trung Gian Uy Tín</dt>
-              <dd class="mono-num">GDTG 20/24</dd>
+              <dt>GDTG Uy Tín</dt>
+              <dd class="mono-num">20/24h</dd>
             </div>
           </dl>
         </div>
@@ -442,7 +456,7 @@ function renderHomeView({ latestAccounts, integrity }) {
             <div class="hero-caption-bar">
               <div class="caption-item">
                 <span class="caption-label">Nạp Siêu Tốc Done 3s</span>
-                <strong class="mono-num">Kích điểm 300.000 đ · Nạp CR 810.000 đ</strong>
+                <strong class="mono-num">Kích điểm ${escapeHtml(formatVndServer(kikDiem.price))} · Nạp CR ${escapeHtml(formatVndServer(napCr.price))}</strong>
               </div>
               <div class="caption-item">
                 <span class="caption-label">Cộng Đồng Chính Chủ</span>
@@ -473,7 +487,7 @@ function renderHomeView({ latestAccounts, integrity }) {
             </div>
             <span class="eyebrow">Nạp &amp; Dịch vụ</span>
             <h3>Kích Điểm · Nạp CR · Thuê Set · Săn Đệ &amp; GDTG</h3>
-            <p class="pretty-text">Nhận kích điểm 300.000 đ, nạp CR 810.000 đ done 3s, thuê Set Thần 3 hành tinh / SMTN 5s 10.000 đ/ngày, săn đệ SS Skill 5, GDTG 20/24 (ko mail sống), thu all acc &amp; rút VTS.</p>
+            <p class="pretty-text">Nhận kích điểm ${escapeHtml(formatVndServer(kikDiem.price))}, nạp CR ${escapeHtml(formatVndServer(napCr.price))} done 3s, thuê Set Thần 3 hành tinh / SMTN 5s ${escapeHtml(thueSet.priceText)}, săn đệ SS Skill 5, GDTG 20/24 (ko mail sống), thu all acc &amp; rút VTS.</p>
             <a href="/kich-diem" class="btn btn-primary btn-full">Vào trang Kích Điểm &amp; Dịch Vụ</a>
           </article>
 
@@ -484,8 +498,8 @@ function renderHomeView({ latestAccounts, integrity }) {
               <span class="item-slot"><img src="/assets/icons/8935.png" alt="" width="84" height="84" class="game-sprite"></span>
             </div>
             <span class="eyebrow">Vật phẩm · Vàng · Ngọc</span>
-            <h3>Mua Item x99 · Đá NC · Vàng · Ngọc · SPL &amp; Mảnh</h3>
-            <p class="pretty-text">Gộp chung tất cả vào 1 bảng chọn số lượng &amp; tính giá: Item x99, 5 loại Đá NC, Dùi đục, 4 loại SPL (441 · 442 · 446 · 447), NR 3s, Mảnh Khỉ/Rồng/Đội trưởng Vàng, Vàng &amp; Ngọc.</p>
+            <h3>Mua Item x99 · Đá NC · Sao Pha Lê &amp; Vàng Ngọc</h3>
+            <p class="pretty-text">Gộp gọn bảng chọn số lượng &amp; tính giá: Item x99, 5 loại Đá NC, Dùi đục, 4 loại Sao pha lê, Ngọc Rồng 3 sao, Kích mảnh và Máy tính Vàng · Ngọc 2 chiều.</p>
             <a href="/mua-item" class="btn btn-primary btn-full">Vào trang Mua Item &amp; Tính Đơn</a>
           </article>
 
@@ -497,7 +511,7 @@ function renderHomeView({ latestAccounts, integrity }) {
             </div>
             <span class="eyebrow">Tài khoản NRO</span>
             <h3>Mua Bán Tài Khoản NRO (Có Ảnh Acc &amp; Lọc Server)</h3>
-            <p class="pretty-text">Acc Đậu 5 (8.000 đ), Acc Clone 340k SM (3.000 đ) và Kho Tài Khoản NRO đăng bán kèm ảnh thật, giá VNĐ, Server, Hành tinh (Trái Đất / Namếc / Xayda) &amp; ghi chú quảng cáo chi tiết.</p>
+            <p class="pretty-text">Acc Đậu 5 (${escapeHtml(formatVndServer(accDau5.price))}), Acc Clone 340k SM (${escapeHtml(formatVndServer(accClone.price))}) và Kho Tài Khoản NRO đăng bán kèm ảnh thật, giá VNĐ, Server, Hành tinh (Trái Đất / Namếc / Xayda) &amp; ghi chú quảng cáo chi tiết.</p>
             <a href="/mua-tai-khoan" class="btn btn-primary btn-full">Vào Kho Mua Bán Tài Khoản</a>
           </article>
         </div>
@@ -523,8 +537,11 @@ function renderHomeView({ latestAccounts, integrity }) {
   `;
 }
 
-function renderKichDiemView({ integrity }) {
-  const cardsHtml = KICH_DIEM_SERVICES.map((svc) =>
+function renderKichDiemView({ services = KICH_DIEM_SERVICES, integrity }) {
+  const activeServices = services.length > 0 ? services : KICH_DIEM_SERVICES;
+  const kikDiem = findServiceById(activeServices, KICH_DIEM_SERVICES, "kik-diem");
+  const napCr = findServiceById(activeServices, KICH_DIEM_SERVICES, "nap-cr");
+  const cardsHtml = activeServices.map((svc) =>
     renderProductCard(svc, { showDayPicker: svc.id === "thue-set" })
   ).join("");
 
@@ -551,7 +568,7 @@ function renderKichDiemView({ integrity }) {
         <div class="section-head">
           <div>
             <span class="eyebrow">Bảng dịch vụ trọng điểm</span>
-            <h2>Kích Điểm 300k · Nạp CR 810k · Thuê Set · Săn Đệ · GDTG</h2>
+            <h2>Kích Điểm ${escapeHtml(formatVndServer(kikDiem.price))} · Nạp CR ${escapeHtml(formatVndServer(napCr.price))} · Thuê Set · Săn Đệ · GDTG</h2>
             <p class="pretty-text">Bấm <strong>+ Thêm vào đơn</strong> để gom yêu cầu, sau đó gửi tin nhắn trực tiếp sang Facebook hoặc Zalo Thanh Dung.</p>
           </div>
         </div>
@@ -629,8 +646,8 @@ function formatRowInitialSubtotal(row) {
     if (row.id === "gem-ve") {
       const tickets = row.defaultQty / 10;
       hint = Number.isInteger(tickets)
-        ? `= ${new Intl.NumberFormat("vi-VN").format(tickets)} vé ID 718`
-        : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé ID 718`;
+        ? `= ${new Intl.NumberFormat("vi-VN").format(tickets)} vé`
+        : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé`;
     } else if ((row.id === "gold-fresh" || row.id === "gold-die") && row.defaultQty >= 1000) {
       hint = `~${(row.defaultQty / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ vàng`;
     }
@@ -639,20 +656,21 @@ function formatRowInitialSubtotal(row) {
   return { main: formatVndServer(row.price * row.defaultQty), hint: "" };
 }
 
-function renderMuaItemView({ integrity }) {
+function renderMuaItemView({ items = ITEM_PRICE_ROWS, integrity }) {
+  const activeItems = Array.isArray(items) ? items : ITEM_PRICE_ROWS;
   const categoryCounts = {
-    all: ITEM_PRICE_ROWS.length,
-    "item-x99": ITEM_PRICE_ROWS.filter((r) => r.category === "item-x99").length,
-    "da-duiduc": ITEM_PRICE_ROWS.filter((r) => r.category === "da-duiduc").length,
-    spl: ITEM_PRICE_ROWS.filter((r) => r.category === "spl").length,
-    "nr-manh": ITEM_PRICE_ROWS.filter((r) => r.category === "nr-manh").length,
-    "vang-ngoc": ITEM_PRICE_ROWS.filter((r) => r.category === "vang-ngoc").length
+    all: activeItems.length,
+    "item-x99": activeItems.filter((r) => r.category === "item-x99").length,
+    "da-duiduc": activeItems.filter((r) => r.category === "da-duiduc").length,
+    spl: activeItems.filter((r) => r.category === "spl").length,
+    "nr-manh": activeItems.filter((r) => r.category === "nr-manh").length,
+    khac: activeItems.filter((r) => r.category === "khac").length
   };
 
-  const tableRowsHtml = ITEM_PRICE_ROWS.map((row) => {
+  const tableRowsHtml = activeItems.map((row) => {
     const initial = formatRowInitialSubtotal(row);
     const tagBadge = row.tag
-      ? `<span class="tag-pill ${escapeHtml(row.tagClass)}">${escapeHtml(row.tag)}</span>`
+      ? `<span class="tag-pill ${escapeHtml(row.tagClass || "")}">${escapeHtml(row.tag)}</span>`
       : "";
     const hintHtml = initial.hint
       ? `<span class="row-sub-hint">${escapeHtml(initial.hint)}</span>`
@@ -662,9 +680,9 @@ function renderMuaItemView({ integrity }) {
       <tr
         class="item-qty-row"
         data-category="${escapeHtml(row.category)}"
-        data-keywords="${escapeHtml(row.keywords)}"
+        data-keywords="${escapeHtml(row.keywords || "")}"
         data-item-id="${escapeHtml(row.id)}"
-        data-item-name="${escapeHtml(row.orderName)}"
+        data-item-name="${escapeHtml(row.orderName || row.name)}"
         data-item-kind="${escapeHtml(row.kind)}"
         data-item-price="${Number(row.price)}"
         data-item-rate-per-k="${Number(row.ratePerK || 0)}"
@@ -673,13 +691,13 @@ function renderMuaItemView({ integrity }) {
       >
         <th scope="row" class="th-item">
           <div class="table-item-cell">
-            <img src="${escapeHtml(row.icon)}" alt="${escapeHtml(row.iconAlt)}" width="${Number(row.width)}" height="${Number(row.height)}" loading="lazy" class="table-sprite">
+            <img src="${escapeHtml(row.icon)}" alt="${escapeHtml(row.iconAlt || row.name)}" width="${Number(row.width) || 64}" height="${Number(row.height) || 64}" loading="lazy" class="table-sprite">
             <div class="table-item-copy">
               <div class="table-item-title-row">
                 <strong>${escapeHtml(row.name)}</strong>
                 ${tagBadge}
               </div>
-              <span class="table-item-desc">${escapeHtml(row.desc)}</span>
+              <span class="table-item-desc">${escapeHtml(row.desc || "")}</span>
             </div>
           </div>
         </th>
@@ -687,7 +705,7 @@ function renderMuaItemView({ integrity }) {
         <td class="td-qty">
           <div class="item-qty-picker">
             <button type="button" class="qty-btn row-dec" aria-label="Giảm số lượng ${escapeHtml(row.name)}">&minus;</button>
-            <input type="number" class="item-qty-input mono-num" value="${Number(row.defaultQty)}" min="1" max="${Number(row.maxQty)}" step="1" inputmode="numeric" aria-label="Số lượng ${escapeHtml(row.name)}">
+            <input type="number" class="item-qty-input mono-num" value="${Number(row.defaultQty) || 1}" min="1" max="${Number(row.maxQty) || 9999}" step="1" inputmode="numeric" aria-label="Số lượng ${escapeHtml(row.name)}">
             <button type="button" class="qty-btn row-inc" aria-label="Tăng số lượng ${escapeHtml(row.name)}">+</button>
             <span class="qty-unit-hint">${escapeHtml(row.unit)}</span>
           </div>
@@ -746,10 +764,10 @@ function renderMuaItemView({ integrity }) {
     <section class="subhero-section compact-subhero">
       <div class="container subhero-inner">
         <div class="hero-pills">
-          <span class="pill pill-jade">Item x99 · Đá NC · SPL (441–447) · NR 3s · Mảnh · Vàng · Ngọc</span>
+          <span class="pill pill-jade">Item x99 · Đá NC · Sao pha lê · Ngọc Rồng 3 sao · Kích mảnh</span>
         </div>
         <h1>Mua Item &amp; Tính Giá Nhanh</h1>
-        <p class="pretty-text">Gộp chung toàn bộ mặt hàng vào một bảng tính gọn nhẹ — chọn số lượng để xem thành tiền và thêm vào đơn gửi Facebook / Zalo.</p>
+        <p class="pretty-text">Chọn số lượng vật phẩm ở bảng dưới để tính giá tức thì, hoặc dùng Máy Tính Vàng · Ngọc 2 chiều ngay bên dưới.</p>
         <div class="hero-cta-row">
           <a href="#bang-gia-item" class="btn btn-primary">Bảng tính Item &amp; Giá</a>
           <a href="#vang-ngoc" class="btn btn-secondary">Quy đổi Vàng · Ngọc 2 chiều</a>
@@ -763,7 +781,7 @@ function renderMuaItemView({ integrity }) {
         <div class="section-head">
           <div>
             <span class="eyebrow">Chọn số lượng &amp; tự động tính tiền</span>
-            <h2>Bảng Mua Bán Item · SPL · NR 3s · Vàng · Ngọc &amp; Mảnh</h2>
+            <h2>Bảng Mua Bán Item · Đá NC · Sao Pha Lê &amp; Mảnh</h2>
             <p class="pretty-text">Chỉnh số lượng ở dòng cần mua rồi bấm <strong>+ Thêm</strong>, sau đó mở đơn để kiểm tra và gửi sang shop.</p>
           </div>
           <button type="button" id="open-order-from-items-btn" class="btn btn-primary">
@@ -789,7 +807,7 @@ function renderMuaItemView({ integrity }) {
                     autocapitalize="off"
                     spellcheck="false"
                     enterkeyhint="search"
-                    placeholder="Tìm nhanh: cuồng nộ, đá nc, dùi đục, spl 447, nr 3s, mảnh khỉ, vàng tươi, ngọc vé 718..."
+                    placeholder="Tìm nhanh: cuồng nộ, bổ huyết, đá nc, dùi đục, sao pha lê, ngọc rồng 3 sao, mảnh khỉ..."
                     autocomplete="off"
                   >
                   <button type="button" id="clear-search-btn" class="btn-clear-search" hidden aria-label="Xóa từ khóa tìm kiếm">Xóa</button>
@@ -801,9 +819,9 @@ function renderMuaItemView({ integrity }) {
               <button type="button" class="filter-btn is-active" data-category="all" aria-pressed="true">Tất cả (${categoryCounts.all})</button>
               <button type="button" class="filter-btn" data-category="item-x99" aria-pressed="false">Item x99 (${categoryCounts["item-x99"]})</button>
               <button type="button" class="filter-btn" data-category="da-duiduc" aria-pressed="false">Đá NC &amp; Dùi đục (${categoryCounts["da-duiduc"]})</button>
-              <button type="button" class="filter-btn" data-category="spl" aria-pressed="false">SPL 441–447 (${categoryCounts.spl})</button>
-              <button type="button" class="filter-btn" data-category="nr-manh" aria-pressed="false">NR 3s &amp; Mảnh (${categoryCounts["nr-manh"]})</button>
-              <button type="button" class="filter-btn" data-category="vang-ngoc" aria-pressed="false">Vàng &amp; Ngọc (${categoryCounts["vang-ngoc"]})</button>
+              <button type="button" class="filter-btn" data-category="spl" aria-pressed="false">Sao pha lê (${categoryCounts.spl})</button>
+              <button type="button" class="filter-btn" data-category="nr-manh" aria-pressed="false">Ngọc Rồng &amp; Mảnh (${categoryCounts["nr-manh"]})</button>
+              ${categoryCounts.khac > 0 ? `<button type="button" class="filter-btn" data-category="khac" aria-pressed="false">Vật phẩm khác (${categoryCounts.khac})</button>` : ""}
             </div>
           </div>
 
@@ -811,7 +829,7 @@ function renderMuaItemView({ integrity }) {
 
           <div tabindex="0" role="region" aria-labelledby="item-table-caption" class="table-wrapper">
             <table class="item-pricing-table item-catalog-table">
-              <caption id="item-table-caption" class="visually-hidden">Bảng chọn số lượng và tính giá Item, Đá NC, Dùi đục, SPL, NR 3s, Mảnh, Vàng và Ngọc</caption>
+              <caption id="item-table-caption" class="visually-hidden">Bảng chọn số lượng và tính giá Item, Đá NC, Dùi đục, Sao pha lê, Ngọc Rồng 3 sao và Mảnh</caption>
               <thead>
                 <tr>
                   <th scope="col">Mặt Hàng</th>
@@ -823,7 +841,7 @@ function renderMuaItemView({ integrity }) {
               </thead>
               <tbody id="item-table-body">
                 ${tableRowsHtml}
-                <tr id="item-empty-row" hidden>
+                <tr id="item-empty-row"${activeItems.length === 0 ? "" : " hidden"}>
                   <td colspan="5" class="item-empty-cell">
                     Không tìm thấy mặt hàng phù hợp với từ khóa hiện tại.
                     <button type="button" id="reset-item-filter-btn" class="btn btn-outline btn-sm">Hiện tất cả</button>
@@ -883,8 +901,8 @@ function renderMuaItemView({ integrity }) {
                 </label>
                 <label class="radio-pill" for="calc-gem-ve">
                   <input type="radio" id="calc-gem-ve" name="calcType" value="gem-ve">
-                  <img src="/assets/icons/6765.png" alt="Vé tặng ngọc ID 718" width="72" height="72" loading="lazy" class="pill-sprite">
-                  <span>Ngọc vé ID 718 (x10)</span>
+                  <img src="/assets/icons/6765.png" alt="Vé tặng ngọc" width="72" height="72" loading="lazy" class="pill-sprite">
+                  <span>Ngọc vé (x10)</span>
                 </label>
               </div>
             </fieldset>
@@ -1070,8 +1088,12 @@ function renderAdminAuthAndUploadSection({ session, showToggleNote = true }) {
   return `${showToggleNote ? "" : ""}${loginBlock}${uploadBlock}`;
 }
 
-function renderMuaTaiKhoanView({ accounts, session, integrity }) {
-  const starterMarkup = STARTER_ACCS.map(
+function renderMuaTaiKhoanView({ accounts, starterAccs = STARTER_ACCS, session, integrity }) {
+  const activeStarterAccs = starterAccs.length > 0 ? starterAccs : STARTER_ACCS;
+  const accDau5 = findServiceById(activeStarterAccs, STARTER_ACCS, "acc-dau5");
+  const accClone = findServiceById(activeStarterAccs, STARTER_ACCS, "acc-clone");
+
+  const starterMarkup = activeStarterAccs.map(
     (acc) => `
       <article class="starter-acc-card">
         <div class="card-top">
@@ -1122,7 +1144,7 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
         </div>
         <h1>Mua Bán Tài Khoản Ngọc Rồng Online · Đủ Server</h1>
         <p class="pretty-text">
-          Cung cấp Acc Đậu thần cấp 5 (<code>8.000 đ</code>), Acc Clone 340k SM (<code>3.000 đ</code>) và Kho Tài Khoản NRO đủ server Trái Đất · Namếc · Xayda kèm ảnh thật, giá niêm yết và ghi chú minh bạch.
+          Cung cấp Acc Đậu thần cấp 5 (<code>${escapeHtml(formatVndServer(accDau5.price))}</code>), Acc Clone 340k SM (<code>${escapeHtml(formatVndServer(accClone.price))}</code>) và Kho Tài Khoản NRO đủ server Trái Đất · Namếc · Xayda kèm ảnh thật, giá niêm yết và ghi chú minh bạch.
         </p>
         <div class="hero-cta-row">
           <a href="#kho-tai-khoan" class="btn btn-primary">Xem Kho Acc (${accounts.length})</a>
@@ -1203,22 +1225,337 @@ function renderMuaTaiKhoanView({ accounts, session, integrity }) {
   `;
 }
 
-function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, integrity }) {
+function renderAdminConsoleView({ session, accounts, items = [], services = [], starterAccs = [], auditLogs, cspReports, integrity }) {
+  const itemCategoryOptions = ALLOWED_ITEM_CATEGORIES.map(
+    (cat) => `<option value="${escapeHtml(cat.id)}">${escapeHtml(cat.label)}</option>`
+  ).join("");
+
+  const tagClassLabels = {
+    "": "Mặc định",
+    "tag-jade": "Xanh ngọc",
+    "tag-hot": "Vàng nổi bật",
+    "tag-crimson": "Đỏ nổi bật",
+    "planet-earth": "Xanh dương (TĐ)",
+    "planet-namek": "Xanh lá (Namếc)",
+    "planet-xayda": "Vàng đất (Xayda)"
+  };
+
+  const tagClassOptions = ALLOWED_ITEM_TAG_CLASSES.map(
+    (cls) => `<option value="${escapeHtml(cls)}">${escapeHtml(tagClassLabels[cls] || cls)}</option>`
+  ).join("");
+
+  const bundledIconOptions = BUNDLED_ITEM_ICONS.map(
+    (ic) => `<option value="${escapeHtml(ic.path)}">${escapeHtml(ic.label)}</option>`
+  ).join("");
+
+  const unitPresetChips = ["cái", "viên", "x99", "bộ", "mảnh", "lô 999", "lượt"]
+    .map((u) => `<button type="button" class="btn btn-outline btn-sm admin-unit-chip" data-unit="${escapeHtml(u)}">${escapeHtml(u)}</button>`)
+    .join("");
+
+  const adminItemRowsHtml =
+    items.length === 0
+      ? '<tr><td colspan="4">Chưa có mặt hàng nào. Hãy thêm mặt hàng mới ở biểu mẫu bên trên.</td></tr>'
+      : items
+          .map((item) => {
+            const hiddenBadge = item.isActive
+              ? '<span class="tag-pill tag-jade">Đang bán</span>'
+              : '<span class="tag-pill tag-crimson">Đang ẩn</span>';
+            const tagBadge = item.tag
+              ? `<span class="tag-pill ${escapeHtml(item.tagClass || "")}">${escapeHtml(item.tag)}</span>`
+              : "";
+            const priceCellInner =
+              item.kind === "quote"
+                ? `<span class="tag-pill">Báo giá theo lô</span><span class="admin-unit-caption">Khách liên hệ Zalo / FB</span>`
+                : `<div class="admin-inline-price-box">
+                    <input type="number" class="admin-inline-price-input mono-num" value="${Number(item.price)}" min="100" max="500000000" step="100" inputmode="numeric" aria-label="Đơn giá ${escapeHtml(item.name)}">
+                    <button type="button" class="btn btn-outline btn-sm admin-item-save-price-btn" data-item-db-id="${Number(item.dbId)}">Lưu giá</button>
+                  </div>
+                  <span class="admin-unit-caption mono-num">${escapeHtml(item.unitPriceLabel)}</span>`;
+
+            return `
+              <tr data-item-db-id="${Number(item.dbId)}" class="${item.isActive ? "" : "is-hidden-row"}">
+                <th scope="row" class="th-admin-item">
+                  <div class="table-item-cell">
+                    <img src="${escapeHtml(item.icon)}" alt="" width="${Number(item.width) || 48}" height="${Number(item.height) || 48}" class="table-sprite">
+                    <div class="table-item-copy">
+                      <div class="table-item-title-row">
+                        <strong>${escapeHtml(item.name)}</strong>
+                        <span class="cat-badge">${escapeHtml(item.group)}</span>
+                        ${tagBadge}
+                      </div>
+                      <span class="table-item-desc">${escapeHtml(item.desc || "")}</span>
+                    </div>
+                  </div>
+                </th>
+                <td class="td-admin-price">${priceCellInner}</td>
+                <td class="td-admin-status">${hiddenBadge}</td>
+                <td class="td-admin-actions">
+                  <div class="table-action-group">
+                    <button type="button" class="btn btn-outline btn-sm admin-item-edit-btn" data-item-db-id="${Number(item.dbId)}">Sửa</button>
+                    <button type="button" class="btn btn-outline btn-sm admin-item-toggle-btn" data-item-db-id="${Number(item.dbId)}" data-next-active="${item.isActive ? "0" : "1"}">${item.isActive ? "Ẩn" : "Hiện"}</button>
+                    <button type="button" class="btn btn-danger-outline btn-sm admin-item-delete-btn" data-item-db-id="${Number(item.dbId)}" data-item-name="${escapeHtml(item.name)}">Xóa</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+
+  const combinedServices = [...services, ...starterAccs];
+  const adminServicesRowsHtml = combinedServices
+    .map(
+      (svc) => `
+      <tr data-service-key="${escapeHtml(svc.id)}">
+        <th scope="row" class="th-admin-svc">
+          <div class="admin-svc-head">
+            <span class="cat-badge">${svc.kind === "starter" ? "Acc Phổ Thông" : "Dịch Vụ"}</span>
+            <input type="text" class="admin-svc-name-input" value="${escapeHtml(svc.name)}" maxlength="90" aria-label="Tên ${escapeHtml(svc.name)}">
+            <span class="admin-unit-caption mono-num">Hiển thị: ${escapeHtml(svc.priceText)}</span>
+          </div>
+        </th>
+        <td class="td-admin-svc-note">
+          <input type="text" class="admin-svc-note-input" value="${escapeHtml(svc.note || "")}" maxlength="300" aria-label="Mô tả ${escapeHtml(svc.name)}">
+        </td>
+        <td class="td-admin-svc-price">
+          <div class="admin-inline-price-box">
+            <input type="number" class="admin-svc-price-input mono-num" value="${Number(svc.price)}" min="0" max="500000000" step="1000" inputmode="numeric" aria-label="Giá ${escapeHtml(svc.name)}">
+            <span class="admin-unit-suffix">/ ${escapeHtml(svc.unit)}</span>
+          </div>
+          <span class="admin-unit-caption">(0 = Báo giá Zalo / FB)</span>
+        </td>
+        <td class="td-admin-actions">
+          <button type="button" class="btn btn-primary btn-sm admin-svc-save-btn" data-service-key="${escapeHtml(svc.id)}">Lưu</button>
+        </td>
+      </tr>
+    `
+    )
+    .join("");
+
+  const quickNavBlock = session
+    ? `
+      <nav class="admin-quick-nav container" aria-label="Điều hướng nhanh quản trị">
+        <a href="#admin-items-section" class="btn btn-outline btn-sm">Thêm &amp; Sửa Item (<span id="admin-nav-items-count">${items.length}</span>)</a>
+        <a href="#admin-services-section" class="btn btn-outline btn-sm">Giá Dịch Vụ (${combinedServices.length})</a>
+        <a href="#admin-upload-box" class="btn btn-outline btn-sm">Đăng Acc Mới</a>
+        <a href="#admin-acc-section" class="btn btn-outline btn-sm">Kho Acc (<span id="admin-nav-acc-count">${accounts.length}</span>)</a>
+        <a href="#admin-audit-section" class="btn btn-outline btn-sm">Nhật ký</a>
+      </nav>
+    `
+    : "";
+
   const adminMgmtBlock = session
     ? `
-      <section class="admin-mgmt-section">
+      <section id="admin-items-section" class="admin-mgmt-section">
         <div class="container">
           <div class="section-head">
             <div>
-              <span class="eyebrow">Quản lý kho Acc</span>
-              <h2>Danh Sách Tài Khoản Đã Đăng (${accounts.length})</h2>
+              <span class="eyebrow">Quản lý kho Item &amp; Giá bán</span>
+              <h2>Thêm Mặt Hàng Mới &amp; Chỉnh Sửa Giá Item (<span id="admin-items-count">${items.length}</span>)</h2>
+              <p class="pretty-text">Mặt hàng thêm mới hoặc sửa giá sẽ cập nhật ngay trên trang Mua Item cho khách chọn đơn.</p>
+            </div>
+          </div>
+
+          <div class="admin-panel-card admin-item-form-card">
+            <div id="item-edit-banner" class="admin-edit-banner" hidden>
+              <span>Đang chỉnh sửa mặt hàng: <strong id="item-edit-banner-name"></strong></span>
+              <button type="button" id="item-edit-cancel-btn" class="btn btn-outline btn-sm">Hủy sửa &amp; Thêm mới</button>
+            </div>
+
+            <form id="admin-item-form" class="secure-form" method="POST" action="/api/items" enctype="multipart/form-data">
+              <input type="hidden" id="item-edit-id" value="">
+
+              <div class="form-row-2">
+                <div class="field-group">
+                  <label for="item-name">Tên mặt hàng cần bán <span class="req-star">*</span></label>
+                  <input type="text" id="item-name" name="name" maxlength="90" required placeholder="Ví dụ: Bông tai Porata cấp 2 / Cải trang Broly">
+                </div>
+
+                <div class="field-group">
+                  <label for="item-category">Nhóm danh mục <span class="req-star">*</span></label>
+                  <select id="item-category" name="category" required>
+                    ${itemCategoryOptions}
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="field-group">
+                  <label for="item-kind">Hình thức tính giá <span class="req-star">*</span></label>
+                  <select id="item-kind" name="kind">
+                    <option value="fixed">Cố định đơn giá (VNĐ)</option>
+                    <option value="quote">Báo giá theo lô (Khách nhắn Zalo/FB)</option>
+                  </select>
+                </div>
+
+                <div class="field-group">
+                  <label for="item-price">Đơn giá (VNĐ) <span class="req-star">*</span></label>
+                  <input type="number" id="item-price" name="price" min="100" max="500000000" step="100" inputmode="numeric" value="10000" required>
+                  <span id="admin-item-price-preview" class="field-hint mono-num">Hiển thị: 10.000 đ / 1 cái</span>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="field-group">
+                  <label for="item-unit">Đơn vị bán <span class="req-star">*</span></label>
+                  <input type="text" id="item-unit" name="unit" maxlength="24" value="cái" required placeholder="cái, viên, x99, bộ, mảnh, lô 999">
+                  <div class="admin-unit-chips" aria-label="Chọn nhanh đơn vị">
+                    ${unitPresetChips}
+                  </div>
+                </div>
+
+                <div class="form-row-2">
+                  <div class="field-group">
+                    <label for="item-default-qty">SL mặc định trong bảng</label>
+                    <input type="number" id="item-default-qty" name="defaultQty" min="1" max="9999" value="1" inputmode="numeric">
+                  </div>
+                  <div class="field-group">
+                    <label for="item-sort-order">Thứ tự ưu tiên</label>
+                    <input type="number" id="item-sort-order" name="sortOrder" min="0" max="9999" value="200" inputmode="numeric">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="field-group">
+                  <label for="item-tag">Nhãn nổi bật ngắn (tuỳ chọn)</label>
+                  <input type="text" id="item-tag" name="tag" maxlength="32" placeholder="Ví dụ: Sẵn kho, Giá mềm, Mới về">
+                </div>
+
+                <div class="field-group">
+                  <label for="item-tag-class">Màu nhãn</label>
+                  <select id="item-tag-class" name="tagClass">
+                    ${tagClassOptions}
+                  </select>
+                </div>
+              </div>
+
+              <div class="admin-icon-picker-row">
+                <div class="item-slot admin-icon-preview-box" aria-hidden="true">
+                  <img id="admin-item-icon-preview" src="/assets/icons/2754.png" alt="Xem trước icon mặt hàng" width="48" height="48" class="game-sprite">
+                </div>
+
+                <div class="field-group">
+                  <label for="item-icon-select">Chọn biểu tượng Item có sẵn</label>
+                  <select id="item-icon-select" name="icon">
+                    ${bundledIconOptions}
+                  </select>
+                </div>
+
+                <div class="field-group">
+                  <label for="item-icon-file">Hoặc tải ảnh Icon riêng (PNG/JPG/WebP ≤ 5MB)</label>
+                  <div class="admin-icon-file-wrap">
+                    <input type="file" id="item-icon-file" name="iconFile" accept="image/png,image/jpeg,image/webp">
+                    <button type="button" id="item-icon-file-clear" class="btn btn-outline btn-sm" hidden>Bỏ ảnh riêng</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label for="item-desc">Mô tả công dụng / nội dung chi tiết <span class="req-star">*</span></label>
+                <textarea id="item-desc" name="desc" rows="2" maxlength="240" required placeholder="Ví dụ: Tăng sức đánh, chỉ số hoặc lưu ý quy cách giao dịch cho khách hàng..."></textarea>
+              </div>
+
+              <div class="form-row-2">
+                <div class="field-group">
+                  <label for="item-keywords">Từ khóa tìm kiếm nhanh (tuỳ chọn)</label>
+                  <input type="text" id="item-keywords" name="keywords" maxlength="180" placeholder="Ví dụ: cải trang bong tai porata x99 vip">
+                </div>
+
+                <div class="field-group">
+                  <span class="field-hint">Trạng thái hiển thị</span>
+                  <label class="radio-pill admin-checkbox-pill" for="item-is-active">
+                    <input type="checkbox" id="item-is-active" name="isActive" value="1" checked>
+                    <span>Hiển thị công khai trên trang Mua Item</span>
+                  </label>
+                </div>
+              </div>
+
+              <p id="admin-item-status" class="form-status" role="status" hidden></p>
+
+              <div class="form-actions-row">
+                <button type="submit" id="admin-item-submit" class="btn btn-primary">+ Thêm Item Vào Bảng Giá</button>
+                <button type="button" id="admin-item-reset-btn" class="btn btn-outline">Làm mới biểu mẫu</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="item-pricing-card admin-items-list-card">
+            <div class="table-toolbar">
+              <div class="search-input-wrap">
+                <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="search" id="admin-item-search" placeholder="Lọc nhanh item cần chỉnh giá hoặc sửa mô tả..." autocomplete="off">
+              </div>
+            </div>
+
+            <p id="admin-items-status" class="catalog-status" aria-live="polite">Đang có ${items.length} mặt hàng trong kho bảng giá.</p>
+
+            <div tabindex="0" role="region" aria-labelledby="admin-items-caption" class="table-wrapper admin-table-wrapper">
+              <table class="item-pricing-table admin-cms-table" id="admin-items-table">
+                <caption id="admin-items-caption" class="visually-hidden">Danh sách Item, chỉnh giá nhanh, ẩn hiện và xóa mặt hàng</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Mặt hàng &amp; Nội dung</th>
+                    <th scope="col">Đơn giá (VNĐ)</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-items-tbody">
+                  ${adminItemRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-services-section" class="admin-mgmt-section admin-services-mgmt-section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Cập nhật giá dịch vụ &amp; Acc phổ thông</span>
+              <h2>Chỉnh Sửa Giá Kích Điểm · Nạp CR · Thuê Set · Acc Đậu 5 / Clone</h2>
+              <p class="pretty-text">Thay đổi trực tiếp tên, mô tả hoặc giá bán rồi bấm <strong>Lưu</strong> ở dòng tương ứng.</p>
             </div>
           </div>
 
           <div class="item-pricing-card">
-            <div class="table-scroll">
-              <table class="item-pricing-table" id="admin-acc-table">
-                <caption>Quản lý giá, trạng thái &amp; xóa tài khoản đã đăng</caption>
+            <div tabindex="0" role="region" aria-labelledby="admin-services-caption" class="table-wrapper admin-table-wrapper">
+              <table class="item-pricing-table admin-cms-table" id="admin-services-table">
+                <caption id="admin-services-caption" class="visually-hidden">Chỉnh sửa giá và mô tả dịch vụ và Acc phổ thông</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Dịch vụ / Loại Acc</th>
+                    <th scope="col">Nội dung mô tả</th>
+                    <th scope="col">Giá bán (VNĐ)</th>
+                    <th scope="col">Lưu</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-services-tbody">
+                  ${adminServicesRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="admin-acc-section" class="admin-mgmt-section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Quản lý kho Acc</span>
+              <h2>Danh Sách Tài Khoản Đã Đăng (<span id="admin-acc-count">${accounts.length}</span>)</h2>
+            </div>
+          </div>
+
+          <div class="item-pricing-card">
+            <div tabindex="0" role="region" aria-labelledby="admin-acc-caption" class="table-wrapper admin-table-wrapper">
+              <table class="item-pricing-table admin-cms-table" id="admin-acc-table">
+                <caption id="admin-acc-caption">Quản lý giá, sửa thông tin, trạng thái &amp; xóa tài khoản đã đăng</caption>
                 <thead>
                   <tr>
                     <th scope="col">Mã Acc</th>
@@ -1237,7 +1574,7 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
                           .map(
                             (acc) => `
                         <tr data-acc-row-id="${Number(acc.id)}">
-                          <td class="mono-num"><strong>#${escapeHtml(acc.code)}</strong></td>
+                          <th scope="row" class="mono-num"><strong>#${escapeHtml(acc.code)}</strong></th>
                           <td>
                             <div class="table-item-cell">
                               <img src="${escapeHtml(acc.image_path)}" alt="" width="${Number(acc.image_width)}" height="${Number(acc.image_height)}" class="table-sprite">
@@ -1245,14 +1582,21 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
                             </div>
                           </td>
                           <td>${escapeHtml(acc.server_name)} · ${escapeHtml(acc.planet)}</td>
-                          <td class="mono-num"><strong>${escapeHtml(formatVndServer(acc.price_vnd))}</strong></td>
+                          <td class="td-admin-price">
+                            <div class="admin-inline-price-box">
+                              <input type="number" class="acc-inline-price-input admin-inline-price-input mono-num" value="${Number(acc.price_vnd)}" min="1000" max="500000000" step="1000" inputmode="numeric" aria-label="Giá Acc ${escapeHtml(acc.code)}">
+                              <button type="button" class="btn btn-outline btn-sm acc-save-price-btn" data-acc-id="${Number(acc.id)}">Lưu giá</button>
+                            </div>
+                            <span class="admin-unit-caption mono-num">${escapeHtml(formatVndServer(acc.price_vnd))}</span>
+                          </td>
                           <td>
                             <span class="tag-pill ${acc.status === "sold" ? "tag-crimson" : "tag-jade"}">
                               ${acc.status === "sold" ? "Đã bán" : "Đang bán"}
                             </span>
                           </td>
-                          <td>
+                          <td class="td-admin-actions">
                             <div class="table-action-group">
+                              <button type="button" class="btn btn-outline btn-sm acc-edit-btn" data-acc-id="${Number(acc.id)}">Sửa</button>
                               <button type="button" class="btn btn-outline btn-sm acc-toggle-status-btn" data-acc-id="${Number(acc.id)}" data-next-status="${acc.status === "sold" ? "available" : "sold"}">
                                 ${acc.status === "sold" ? "Mở bán" : "Đã bán"}
                               </button>
@@ -1271,7 +1615,7 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
             </div>
           </div>
 
-          <div class="security-audit-grid">
+          <div id="admin-audit-section" class="security-audit-grid">
             <div class="rates-table-card">
               <span class="eyebrow">Nhật ký hoạt động</span>
               <h3>Lịch Sử Đăng Nhập &amp; Thao Tác</h3>
@@ -1352,14 +1696,16 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
       <div class="container subhero-inner">
         <div class="hero-pills">
           <span class="pill pill-jade">Khu vực quản trị</span>
-          <span class="pill pill-gold">Đăng bán Acc &amp; Theo dõi hệ thống</span>
+          <span class="pill pill-gold">Quản lý Item · Giá · Tài khoản</span>
         </div>
         <h1>Quản Trị Shop Thanh Dung</h1>
         <p class="pretty-text">
-          Khu vực dành riêng cho chủ shop để đăng bán tài khoản kèm hình ảnh, cập nhật trạng thái đơn và kiểm tra thông tin thanh toán chính chủ MB Bank <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code>.
+          Khu vực dành riêng cho chủ shop để thêm/sửa mặt hàng, chỉnh giá dịch vụ, đăng bán tài khoản kèm hình ảnh và theo dõi thanh toán chính chủ MB Bank <code>${escapeHtml(OFFICIAL_BANK.accountNumber)}</code>.
         </p>
       </div>
     </section>
+
+    ${quickNavBlock}
 
     <section class="admin-shield-section">
       <div class="container">
@@ -1389,15 +1735,19 @@ function renderAdminConsoleView({ session, accounts, auditLogs, cspReports, inte
 
 function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) {
   const meta = ROUTE_META[route] || ROUTE_META["/"];
+  const services = Array.isArray(data.services) && data.services.length > 0 ? data.services : KICH_DIEM_SERVICES;
+  const starterAccs = Array.isArray(data.starterAccs) && data.starterAccs.length > 0 ? data.starterAccs : STARTER_ACCS;
+  const items = Array.isArray(data.items) ? data.items : ITEM_PRICE_ROWS;
   let mainHtml = "";
 
   if (route === "/kich-diem") {
-    mainHtml = renderKichDiemView({ integrity });
+    mainHtml = renderKichDiemView({ services, integrity });
   } else if (route === "/mua-item") {
-    mainHtml = renderMuaItemView({ integrity });
+    mainHtml = renderMuaItemView({ items, integrity });
   } else if (route === "/mua-tai-khoan") {
     mainHtml = renderMuaTaiKhoanView({
       accounts: data.accounts || [],
+      starterAccs,
       session,
       integrity
     });
@@ -1405,6 +1755,9 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
     mainHtml = renderAdminConsoleView({
       session,
       accounts: data.accounts || [],
+      items: data.items || [],
+      services,
+      starterAccs,
       auditLogs: data.auditLogs || [],
       cspReports: data.cspReports || [],
       integrity
@@ -1412,6 +1765,8 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
   } else {
     mainHtml = renderHomeView({
       latestAccounts: data.accounts || [],
+      services,
+      starterAccs,
       integrity
     });
   }
@@ -1422,11 +1777,79 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
   const robotsMetaTag =
     route === "/admin" ? `<meta name="robots" content="noindex, nofollow">` : "";
 
+  const accEditServerOptions = ALLOWED_SERVERS.map(
+    (sv) => `<option value="${escapeHtml(sv)}">${escapeHtml(sv)}</option>`
+  ).join("");
+  const accEditPlanetOptions = ALLOWED_PLANETS.map(
+    (pl) => `<option value="${escapeHtml(pl)}">${escapeHtml(pl)}</option>`
+  ).join("");
+  const accEditDialogHtml =
+    route === "/admin" && session
+      ? `
+  <!-- Admin Account Edit Dialog -->
+  <dialog id="acc-edit-dialog" closedby="any" aria-labelledby="acc-edit-title">
+    <div class="dialog-shell">
+      <div class="dialog-head">
+        <div>
+          <h2 id="acc-edit-title">Chỉnh Sửa Tài Khoản <span id="acc-edit-code-label" class="mono-num"></span></h2>
+          <p class="dialog-sub">Cập nhật tiêu đề, giá bán, server, hành tinh hoặc ghi chú rao bán.</p>
+        </div>
+        <form method="dialog">
+          <button type="submit" class="btn-dialog-close" aria-label="Đóng hộp thoại sửa tài khoản">&times;</button>
+        </form>
+      </div>
+
+      <form id="acc-edit-form" class="secure-form">
+        <input type="hidden" id="acc-edit-id" value="">
+
+        <div class="field-group">
+          <label for="acc-edit-title-input">Tiêu đề tài khoản <span class="req-star">*</span></label>
+          <input type="text" id="acc-edit-title-input" name="title" minlength="3" maxlength="90" required autofocus>
+        </div>
+
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="acc-edit-price-input">Giá bán (VNĐ) <span class="req-star">*</span></label>
+            <input type="number" id="acc-edit-price-input" name="price_vnd" min="1000" max="500000000" step="1000" inputmode="numeric" required>
+            <span id="acc-edit-price-preview" class="field-hint mono-num">Hiển thị: —</span>
+          </div>
+
+          <div class="field-group">
+            <label for="acc-edit-server-select">Server <span class="req-star">*</span></label>
+            <select id="acc-edit-server-select" name="server_name" required>
+              ${accEditServerOptions}
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="acc-edit-planet-select">Hành tinh <span class="req-star">*</span></label>
+          <select id="acc-edit-planet-select" name="planet" required>
+            ${accEditPlanetOptions}
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="acc-edit-note-input">Ghi chú rao bán chi tiết <span class="req-star">*</span></label>
+          <textarea id="acc-edit-note-input" name="note" rows="4" minlength="3" maxlength="1200" required></textarea>
+        </div>
+
+        <p id="acc-edit-status" class="form-status" role="status" hidden></p>
+
+        <div class="dialog-actions">
+          <button type="submit" id="acc-edit-submit-btn" class="btn btn-primary">Lưu thay đổi Acc</button>
+          <button type="button" id="acc-edit-cancel-btn" class="btn btn-outline">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </dialog>`
+      : "";
+
   return `<!DOCTYPE html>
 <html lang="vi" data-palette="namek-jade">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   ${robotsMetaTag}
   ${csrfMetaTag}
@@ -1487,21 +1910,21 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
         </nav>
 
         <div class="header-actions">
-          <button type="button" id="theme-toggle" class="btn-icon-ghost" aria-pressed="false">
+          <button type="button" id="theme-toggle" class="btn-icon-ghost" aria-pressed="false" aria-label="Chuyển chế độ Sáng hoặc Tối">
             <svg class="icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="4"/>
               <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
             </svg>
-            <span id="theme-toggle-label">Chế độ Tối</span>
+            <span id="theme-toggle-label" class="theme-toggle-text">Chế độ Tối</span>
           </button>
 
-          <button type="button" id="open-order-btn" class="btn-order">
+          <button type="button" id="open-order-btn" class="btn-order" aria-label="Mở đơn tính nhanh">
             <svg class="icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
               <line x1="3" y1="6" x2="21" y2="6"/>
               <path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
-            <span>Đơn tính nhanh</span>
+            <span class="order-btn-label">Đơn tính nhanh</span>
             <span id="order-count" class="count-badge" aria-live="polite">0</span>
           </button>
         </div>
@@ -1621,6 +2044,7 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
       </div>
     </div>
   </dialog>
+  ${accEditDialogHtml}
 
   <!-- Native Popover Toast Notification -->
   <div class="toast-region" aria-live="polite" aria-atomic="true">
