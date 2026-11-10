@@ -1986,12 +1986,21 @@
   .field-group {
     display: grid;
     gap: 0.35rem;
+    align-content: start;
     min-inline-size: 0;
   }
 
-  .field-group label {
+  .field-group > label,
+  .field-label-text {
+    display: block;
     font-size: 0.9rem;
     font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .field-group input:not([type="checkbox"], [type="radio"], [type="file"]),
+  .field-group select {
+    block-size: 3rem;
   }
 
   .field-group input:not([type="checkbox"], [type="radio"]),
@@ -2000,12 +2009,13 @@
   .order-extra textarea {
     inline-size: 100%;
     min-inline-size: 0;
-    min-block-size: 2.9rem;
-    padding: 0.6rem 0.85rem;
+    min-block-size: 3rem;
+    padding: 0.55rem 0.85rem;
+    line-height: 1.35;
     border-radius: 0.75rem;
     border: 1.5px solid var(--border-subtle);
     background-color: var(--bg-surface);
-    font-size: 1rem;
+    font-size: max(1rem, 1em);
   }
 
   .field-group textarea,
@@ -2070,6 +2080,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
     gap: 0.85rem;
+    align-items: start;
   }
 
   .acc-grid {
@@ -2113,8 +2124,9 @@
 
   .acc-photo-img {
     inline-size: 100%;
-    aspect-ratio: 16 / 10;
-    object-fit: cover;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    background-color: #06150f;
     transition: transform 0.25s ease;
   }
 
@@ -2240,6 +2252,7 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    align-items: start;
   }
 
   .upload-drop-col,
@@ -2269,7 +2282,7 @@
 
   .acc-preview-frame img {
     inline-size: 100%;
-    max-block-size: 16rem;
+    max-block-size: 20rem;
     object-fit: contain;
     border-radius: 0.65rem;
     background-color: #06150f;
@@ -2289,7 +2302,11 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.45rem;
-    align-items: center;
+    align-items: stretch;
+  }
+
+  .password-input-wrap .btn {
+    min-block-size: 3rem;
   }
 
   .form-error {
@@ -2422,7 +2439,8 @@
   }
 
   .admin-icon-picker-row input[type="file"] {
-    padding: 0.5rem 0.65rem;
+    min-block-size: 3rem;
+    padding: 0.55rem 0.65rem;
     border-radius: 0.75rem;
     border: 1.5px dashed var(--border-strong);
     background-color: var(--bg-surface);
@@ -2435,7 +2453,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    min-block-size: 2.9rem;
+    min-block-size: 3rem;
   }
 
   .admin-checkbox-pill input[type="checkbox"] {
@@ -2698,18 +2716,149 @@
     gap: 0.45rem;
   }
 
-  .lightbox-img-wrap {
-    background-color: #04110c;
+  #acc-lightbox-dialog {
+    inline-size: min(100% - 1rem, 74rem);
+    block-size: min(94dvh, 66rem);
+    max-block-size: 95dvh;
+  }
+
+  #acc-lightbox-dialog[data-expanded="1"] {
+    inline-size: calc(100dvw - 0.5rem);
+    max-inline-size: calc(100dvw - 0.5rem);
+    block-size: 96dvh;
+    max-block-size: 97dvh;
+  }
+
+  .lightbox-shell {
+    display: grid;
+    grid-template-rows: auto auto minmax(14rem, 1fr) auto auto;
+    gap: 0.75rem;
+    inline-size: 100%;
+    block-size: 100%;
+    padding: 1.15rem;
+  }
+
+  .lightbox-head-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .lightbox-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.85rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.8rem;
+    background-color: var(--bg-surface-alt);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .lightbox-zoom-btns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .lightbox-zoom-btns .btn.is-active {
+    border-color: var(--accent-primary);
+    background-color: var(--accent-jade-bg);
+    color: var(--accent-jade-fg);
+  }
+
+  .lightbox-meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .lightbox-pan-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .lightbox-stage {
+    position: relative;
+    container-type: size;
+    inline-size: 100%;
+    block-size: 100%;
+    min-block-size: 14rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
     border-radius: 0.85rem;
     border: 1px solid var(--border-subtle);
+    background-color: #04110c;
+    user-select: none;
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+
+  .lightbox-stage[data-zoom="fit"] {
     overflow: hidden;
   }
 
-  .lightbox-img-wrap img {
-    inline-size: 100%;
-    max-block-size: 56dvh;
+  .lightbox-stage-inner {
+    display: grid;
+    place-items: safe center;
+    min-inline-size: 100%;
+    min-block-size: 100%;
+    inline-size: max-content;
+    block-size: max-content;
+  }
+
+  .lightbox-stage img {
+    display: block;
+    max-inline-size: none;
+    max-block-size: none;
+    cursor: zoom-in;
+  }
+
+  .lightbox-stage[data-zoom="fit"][data-fit-axis="width"] img {
+    inline-size: 100cqi;
+    block-size: auto;
+    max-block-size: 100cqb;
     object-fit: contain;
-    margin-inline: auto;
+  }
+
+  .lightbox-stage[data-zoom="fit"][data-fit-axis="height"] img {
+    block-size: 100cqb;
+    inline-size: auto;
+    max-inline-size: 100cqi;
+    object-fit: contain;
+  }
+
+  .lightbox-stage[data-fit-axis="width"][data-zoom="125"] img { inline-size: 125cqi; block-size: auto; }
+  .lightbox-stage[data-fit-axis="width"][data-zoom="150"] img { inline-size: 150cqi; block-size: auto; }
+  .lightbox-stage[data-fit-axis="width"][data-zoom="200"] img { inline-size: 200cqi; block-size: auto; }
+  .lightbox-stage[data-fit-axis="width"][data-zoom="250"] img { inline-size: 250cqi; block-size: auto; }
+  .lightbox-stage[data-fit-axis="width"][data-zoom="300"] img { inline-size: 300cqi; block-size: auto; }
+  .lightbox-stage[data-fit-axis="width"][data-zoom="400"] img { inline-size: 400cqi; block-size: auto; }
+
+  .lightbox-stage[data-fit-axis="height"][data-zoom="125"] img { block-size: 125cqb; inline-size: auto; }
+  .lightbox-stage[data-fit-axis="height"][data-zoom="150"] img { block-size: 150cqb; inline-size: auto; }
+  .lightbox-stage[data-fit-axis="height"][data-zoom="200"] img { block-size: 200cqb; inline-size: auto; }
+  .lightbox-stage[data-fit-axis="height"][data-zoom="250"] img { block-size: 250cqb; inline-size: auto; }
+  .lightbox-stage[data-fit-axis="height"][data-zoom="300"] img { block-size: 300cqb; inline-size: auto; }
+  .lightbox-stage[data-fit-axis="height"][data-zoom="400"] img { block-size: 400cqb; inline-size: auto; }
+
+  .lightbox-stage.is-pannable img {
+    cursor: grab;
+  }
+
+  .lightbox-stage.is-dragging,
+  .lightbox-stage.is-dragging img {
+    cursor: grabbing;
+  }
+
+  .lightbox-note {
+    max-block-size: 5.5rem;
+    overflow-y: auto;
+    flex-grow: 0;
   }
 
   /* Service Pillars */
@@ -3498,6 +3647,30 @@
       inline-size: min(100% - 1rem, 38rem);
       max-block-size: 92dvh;
       border-radius: 1rem;
+    }
+
+    #acc-lightbox-dialog {
+      inline-size: calc(100% - 0.5rem);
+      block-size: 94dvh;
+      max-block-size: 96dvh;
+    }
+
+    #acc-lightbox-dialog[data-expanded="1"] {
+      block-size: 96dvh;
+    }
+
+    .lightbox-shell {
+      grid-template-rows: auto auto minmax(11rem, 1fr) auto auto;
+      padding: 0.85rem;
+      gap: 0.6rem;
+    }
+
+    .lightbox-stage {
+      min-block-size: 11rem;
+    }
+
+    .lightbox-pan-hint {
+      display: none;
     }
 
     .dialog-shell {

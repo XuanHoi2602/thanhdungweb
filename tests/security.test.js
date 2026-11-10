@@ -6,6 +6,7 @@ const os = require("node:os");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { createAppServer } = require("../server");
+const { initDatabase } = require("../src/db");
 
 function buildValidPngBuffer(width = 32, height = 24) {
   const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -175,11 +176,25 @@ async function runTests() {
           'data-item-id="gem-ve"'
         ]
       },
-      { path: "/mua-tai-khoan", mustInclude: ["Acc Đậu thần cấp 5", "Acc Clone 340k SM", "Kho Tài Khoản NRO", "Trái Đất", "Namếc", "Xayda"] },
+      {
+        path: "/mua-tai-khoan",
+        mustInclude: [
+          "Acc Đậu thần cấp 5",
+          "Acc Clone 340k SM",
+          "Kho Tài Khoản NRO",
+          "Trái Đất",
+          "Namếc",
+          "Xayda",
+          'id="acc-lightbox-stage"',
+          'id="acc-zoom-in-btn"',
+          'id="acc-zoom-out-btn"',
+          'id="acc-lightbox-expand-btn"'
+        ]
+      },
       {
         path: "/admin",
         mustInclude: ["Quản Trị Shop Thanh Dung", "Trạng Thái Thanh Toán", "login-username", "login-password", '<meta name="robots" content="noindex, nofollow">'],
-        mustNotInclude: ['id="admin-item-form"', 'id="admin-items-table"', 'id="admin-services-table"', 'id="acc-edit-dialog"'],
+        mustNotInclude: ['value="thanhdung"', 'id="admin-item-form"', 'id="admin-items-table"', 'id="admin-services-table"', 'id="acc-edit-dialog"'],
         isAdminRoute: true
       }
     ];
@@ -319,7 +334,7 @@ async function runTests() {
     assert.equal(shopData.bank.accountNumber, "0368018920");
     assert.equal(shopData.bank.accountOwner, "NGUYỄN HOÀNG THANH DUNG");
     assert.equal(shopData.contacts.facebookUrl, "https://www.facebook.com/Thanhdungg.Kem");
-    assert.equal(shopData.contacts.zaloUrl, "http://zalo.me/84368018920");
+    assert.equal(shopData.contacts.zaloUrl, "https://zalo.me/84368018920");
     assert.equal(shopData.integrity.ok, true, "QR integrity SHA-256 must verify clean");
     assert(shopData.fullAdPost.includes("Sao pha lê 4 loại"), "Full ad post should list clean 4 SPL types");
     assert(shopData.fullAdPost.includes("Ngọc Rồng 3 sao"), "Full ad post should list NR 3 sao");
@@ -795,7 +810,24 @@ async function runTests() {
       const rwCookie = rwLogin.headers.get("set-cookie") || "";
       assert(rwCookie.includes("__Host-td_session="), "Railway HTTPS proxy must elevate cookie to __Host-td_session");
       assert(rwCookie.includes("; Secure"), "Railway HTTPS proxy must enforce Secure cookie flag");
-      assert.match(rwLogin.headers.get("strict-transport-security") || "", /max-age=/, "Railway HTTPS proxy must set HSTS header");
+      assert.match(rwLogin.headers.get("strict-transport-security") || "", /max-age=31536000/, "Railway HTTPS proxy must set 1-year HSTS header");
+
+      const hostCookieValue = rwCookie.split(";")[0].split("=").slice(1).join("=");
+      const downgradeAuth = await fetch(`http://127.0.0.1:${rwPort}/api/auth/me`, {
+        headers: {
+          "X-Forwarded-Proto": "https",
+          Cookie: `td_session=${hostCookieValue}`
+        }
+      });
+      assert.equal((await downgradeAuth.json()).authenticated, false, "HTTPS requests must reject legacy non-__Host session cookie");
+
+      const strictAuth = await fetch(`http://127.0.0.1:${rwPort}/api/auth/me`, {
+        headers: {
+          "X-Forwarded-Proto": "https",
+          Cookie: `__Host-td_session=${hostCookieValue}`
+        }
+      });
+      assert.equal((await strictAuth.json()).authenticated, true, "HTTPS requests must accept __Host-td_session cookie");
 
       process.env.TRUST_PROXY = "0";
       const untrustedLogin = await fetch(`http://127.0.0.1:${rwPort}/api/auth/login`, {
@@ -816,6 +848,118 @@ async function runTests() {
         else process.env[k] = v;
       }
     }
+
+    console.log("10. Testing Open Redirect Defense, JSON Null/Array Guards, Price=0 Quote, Brute-Force Lock & Session Rotation...");
+    for (const evilPath of ["/%2fevil.com/", "///evil.com/", "/%5cevil.com/"]) {
+      const redirProbe = await fetch(`${baseUrl}${evilPath}`, { redirect: "manual" });
+      assert.equal(redirProbe.status, 400, `Open-redirect path ${evilPath} must return 400`);
+      assert.equal(redirProbe.headers.get("location"), null, `Path ${evilPath} must never emit Location redirect header`);
+    }
+
+    // Re-login after logout for authenticated regression checks
+    const freshLogin = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "thanhdung", password: adminPass })
+    });
+    assert.equal(freshLogin.status, 200);
+    const freshCookie = (freshLogin.headers.get("set-cookie") || "").split(";")[0];
+    const freshCsrf = (await freshLogin.json()).csrfToken;
+
+    const svcZeroResp = await fetch(`${baseUrl}/api/services/kik-diem`, {
+      method: "PATCH",
+      headers: {
+        Cookie: freshCookie,
+        "X-CSRF-Token": freshCsrf,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ price: 0 })
+    });
+    assert.equal(svcZeroResp.status, 200);
+    const svcZeroJson = await svcZeroResp.json();
+    assert.equal(svcZeroJson.service.price, 0);
+    assert.equal(svcZeroJson.service.priceText, "Báo giá theo yêu cầu");
+
+    for (const badPayload of ["null", "[]", '"str"', "123"]) {
+      const badAccPatch = await fetch(`${baseUrl}/api/accounts/${jpgJson.account.id}`, {
+        method: "PATCH",
+        headers: { Cookie: freshCookie, "X-CSRF-Token": freshCsrf, "Content-Type": "application/json" },
+        body: badPayload
+      });
+      assert.equal(badAccPatch.status, 400, `PATCH /api/accounts with JSON ${badPayload} must return 400`);
+
+      const badSvcPatch = await fetch(`${baseUrl}/api/services/kik-diem`, {
+        method: "PATCH",
+        headers: { Cookie: freshCookie, "X-CSRF-Token": freshCsrf, "Content-Type": "application/json" },
+        body: badPayload
+      });
+      assert.equal(badSvcPatch.status, 400, `PATCH /api/services with JSON ${badPayload} must return 400`);
+
+      const badItemPost = await fetch(`${baseUrl}/api/items`, {
+        method: "POST",
+        headers: { Cookie: freshCookie, "X-CSRF-Token": freshCsrf, "Content-Type": "application/json" },
+        body: badPayload
+      });
+      assert.equal(badItemPost.status, 400, `POST /api/items with JSON ${badPayload} must return 400`);
+
+      const badLoginPayload = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: badPayload
+      });
+      assert.equal(badLoginPayload.status, 400, `POST /api/auth/login with JSON ${badPayload} must return 400`);
+    }
+
+    // Distributed brute-force across distinct IPs against single username must trigger 429
+    const bruteMount = path.join(tempDir, "brute-data");
+    const prevTrust = process.env.TRUST_PROXY;
+    process.env.TRUST_PROXY = "1";
+    const bruteApp = createAppServer({
+      dataDir: bruteMount,
+      uploadsDir: path.join(tempDir, "brute-uploads"),
+      dbPath: path.join(bruteMount, "shop.db"),
+      adminUser: "bruteadmin",
+      adminPass: "InitialPass#2026"
+    });
+    try {
+      await new Promise((resolve) => bruteApp.server.listen(0, "127.0.0.1", resolve));
+      const bPort = bruteApp.server.address().port;
+      let hitRateLimit = false;
+      for (let i = 1; i <= 15; i += 1) {
+        const resp = await fetch(`http://127.0.0.1:${bPort}/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Forwarded-For": `203.0.113.${i}`
+          },
+          body: JSON.stringify({ username: "bruteadmin", password: "wrong" })
+        });
+        if (resp.status === 429) {
+          hitRateLimit = true;
+          break;
+        }
+      }
+      assert(hitRateLimit, "Distributed per-username login attempts must trigger 429 rate limit");
+    } finally {
+      bruteApp.server.closeAllConnections();
+      await new Promise((resolve) => bruteApp.server.close(resolve));
+      if (prevTrust === undefined) delete process.env.TRUST_PROXY;
+      else process.env.TRUST_PROXY = prevTrust;
+    }
+
+    // Password rotation on DB restart must revoke all existing admin sessions
+    const rotDbPath = path.join(tempDir, "rot.db");
+    const store1 = initDatabase({ dbPath: rotDbPath, adminUser: "rotadmin", adminPass: "PassOne@2026" });
+    const rotAdmin = store1.verifyAdminLogin("rotadmin", "PassOne@2026");
+    assert(rotAdmin);
+    const oldSess = store1.createSession(rotAdmin.id, "test");
+    assert(store1.getSessionByToken(oldSess.rawToken));
+    store1.close();
+
+    const store2 = initDatabase({ dbPath: rotDbPath, adminUser: "rotadmin", adminPass: "PassTwo@2026" });
+    assert.equal(store2.getSessionByToken(oldSess.rawToken), null, "Rotating ADMIN_PASS must revoke pre-existing sessions");
+    assert(store2.verifyAdminLogin("rotadmin", "PassTwo@2026"));
+    store2.close();
 
     console.log("ALL MULTI-PATH, ACCOUNT UPLOAD, RAILWAY & SECURITY TESTS PASSED!");
   } finally {

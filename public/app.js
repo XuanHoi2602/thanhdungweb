@@ -3,7 +3,7 @@
 
   const VERIFIED = Object.freeze({
     facebookUrl: "https://www.facebook.com/Thanhdungg.Kem",
-    zaloUrl: "http://zalo.me/84368018920",
+    zaloUrl: "https://zalo.me/84368018920",
     zaloBoxSp1Url: "https://zalo.me/g/ryvnof825",
     fbGroupSp123Url: "https://www.facebook.com/groups/661620508010330?locale=vi_VN",
     zaloRawPhone: "0368018920",
@@ -211,6 +211,7 @@
   domObserver.observe(document.body, {
     subtree: true,
     childList: true,
+    characterData: true,
     attributes: true,
     attributeFilter: ["href", "src", "data-copy", "data-verified-role"]
   });
@@ -1309,10 +1310,17 @@
   const accLightboxDialog = document.getElementById("acc-lightbox-dialog");
   const accLightboxTitle = document.getElementById("acc-lightbox-title");
   const accLightboxSub = document.getElementById("acc-lightbox-sub");
+  const accLightboxStage = document.getElementById("acc-lightbox-stage");
   const accLightboxImg = document.getElementById("acc-lightbox-img");
   const accLightboxNote = document.getElementById("acc-lightbox-note");
   const accLightboxAddBtn = document.getElementById("acc-lightbox-add-btn");
   const accLightboxZaloLink = document.getElementById("acc-lightbox-zalo-link");
+  const accLightboxRawLink = document.getElementById("acc-lightbox-raw-link");
+  const accLightboxExpandBtn = document.getElementById("acc-lightbox-expand-btn");
+  const accZoomOutBtn = document.getElementById("acc-zoom-out-btn");
+  const accZoomInBtn = document.getElementById("acc-zoom-in-btn");
+  const accZoomBadge = document.getElementById("acc-zoom-badge");
+  const accZoomPresetBtns = [...document.querySelectorAll("[data-zoom-preset]")];
 
   const accEditDialog = document.getElementById("acc-edit-dialog");
   const accEditForm = document.getElementById("acc-edit-form");
@@ -1366,7 +1374,7 @@
 
     const zoomHint = document.createElement("span");
     zoomHint.className = "acc-zoom-hint";
-    zoomHint.textContent = "Bấm xem ảnh lớn";
+    zoomHint.textContent = "Phóng to & zoom xem kỹ";
 
     photoBtn.append(img, badge, zoomHint);
 
@@ -1691,7 +1699,213 @@
     if (accFilterStatus) accFilterStatus.addEventListener("change", fetchAndRenderAccounts);
   }
 
-  // Lightbox opening via event delegation
+  // Lightbox Zoom, Pan, Expand & Opening via event delegation
+  const ZOOM_LEVELS = ["fit", "125", "150", "200", "250", "300", "400"];
+  let currentLightboxZoom = "fit";
+  let lastWheelZoomAt = 0;
+
+  const syncStageFitAxis = () => {
+    if (!accLightboxStage || !accLightboxImg) return;
+    const stageRect = accLightboxStage.getBoundingClientRect();
+    if (stageRect.width <= 0 || stageRect.height <= 0) return;
+    const natW = accLightboxImg.naturalWidth || Number(accLightboxImg.getAttribute("width")) || 800;
+    const natH = accLightboxImg.naturalHeight || Number(accLightboxImg.getAttribute("height")) || 600;
+    const imgRatio = natW / Math.max(1, natH);
+    const stageRatio = stageRect.width / Math.max(1, stageRect.height);
+    accLightboxStage.dataset.fitAxis = imgRatio >= stageRatio ? "width" : "height";
+  };
+
+  const setLightboxZoom = (nextZoom, focalPoint = null) => {
+    if (!accLightboxStage || !accLightboxImg || !ZOOM_LEVELS.includes(nextZoom)) return;
+    syncStageFitAxis();
+
+    const stageRect = accLightboxStage.getBoundingClientRect();
+    const oldImgRect = accLightboxImg.getBoundingClientRect();
+    const cx = focalPoint ? focalPoint.clientX : stageRect.left + stageRect.width / 2;
+    const cy = focalPoint ? focalPoint.clientY : stageRect.top + stageRect.height / 2;
+    const rx =
+      oldImgRect.width > 0
+        ? Math.min(1, Math.max(0, (cx - oldImgRect.left) / oldImgRect.width))
+        : 0.5;
+    const ry =
+      oldImgRect.height > 0
+        ? Math.min(1, Math.max(0, (cy - oldImgRect.top) / oldImgRect.height))
+        : 0.5;
+
+    currentLightboxZoom = nextZoom;
+    accLightboxStage.dataset.zoom = nextZoom;
+    accLightboxStage.classList.toggle("is-pannable", nextZoom !== "fit");
+    accLightboxStage.classList.remove("is-dragging");
+
+    const zoomIdx = ZOOM_LEVELS.indexOf(nextZoom);
+    if (accZoomBadge) {
+      accZoomBadge.textContent = nextZoom === "fit" ? "100%" : `${nextZoom}%`;
+    }
+    if (accZoomOutBtn) accZoomOutBtn.disabled = zoomIdx <= 0;
+    if (accZoomInBtn) accZoomInBtn.disabled = zoomIdx >= ZOOM_LEVELS.length - 1;
+    accZoomPresetBtns.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.zoomPreset === nextZoom);
+    });
+
+    if (nextZoom === "fit") {
+      accLightboxStage.scrollLeft = 0;
+      accLightboxStage.scrollTop = 0;
+      return;
+    }
+
+    const newImgRect = accLightboxImg.getBoundingClientRect();
+    const targetClientX = newImgRect.left + rx * newImgRect.width;
+    const targetClientY = newImgRect.top + ry * newImgRect.height;
+    accLightboxStage.scrollLeft += targetClientX - cx;
+    accLightboxStage.scrollTop += targetClientY - cy;
+  };
+
+  if (accLightboxImg) {
+    accLightboxImg.addEventListener("load", () => {
+      syncStageFitAxis();
+      if (currentLightboxZoom === "fit" && accLightboxStage) {
+        accLightboxStage.scrollLeft = 0;
+        accLightboxStage.scrollTop = 0;
+      }
+    });
+  }
+
+  window.addEventListener("resize", () => {
+    if (accLightboxDialog && accLightboxDialog.open) {
+      syncStageFitAxis();
+    }
+  });
+
+  if (accZoomOutBtn) {
+    accZoomOutBtn.addEventListener("click", () => {
+      const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
+      if (idx > 0) setLightboxZoom(ZOOM_LEVELS[idx - 1]);
+    });
+  }
+
+  if (accZoomInBtn) {
+    accZoomInBtn.addEventListener("click", () => {
+      const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
+      if (idx >= 0 && idx < ZOOM_LEVELS.length - 1) setLightboxZoom(ZOOM_LEVELS[idx + 1]);
+    });
+  }
+
+  accZoomPresetBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.zoomPreset) setLightboxZoom(btn.dataset.zoomPreset);
+    });
+  });
+
+  if (accLightboxExpandBtn && accLightboxDialog) {
+    accLightboxExpandBtn.addEventListener("click", () => {
+      const expanded = accLightboxDialog.dataset.expanded === "1";
+      const next = expanded ? "0" : "1";
+      accLightboxDialog.dataset.expanded = next;
+      accLightboxExpandBtn.setAttribute("aria-pressed", String(next === "1"));
+      accLightboxExpandBtn.textContent = next === "1" ? "Thu gọn" : "Toàn khung";
+      requestAnimationFrame(syncStageFitAxis);
+    });
+  }
+
+  if (accLightboxStage) {
+    accLightboxStage.addEventListener(
+      "wheel",
+      (e) => {
+        if (!accLightboxDialog || !accLightboxDialog.open) return;
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastWheelZoomAt < 45) return;
+        lastWheelZoomAt = now;
+        const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
+        if (e.deltaY < 0 && idx < ZOOM_LEVELS.length - 1) {
+          setLightboxZoom(ZOOM_LEVELS[idx + 1], { clientX: e.clientX, clientY: e.clientY });
+        } else if (e.deltaY > 0 && idx > 0) {
+          setLightboxZoom(ZOOM_LEVELS[idx - 1], { clientX: e.clientX, clientY: e.clientY });
+        }
+      },
+      { passive: false }
+    );
+
+    let dragState = null;
+    let suppressNextStageClick = false;
+
+    accLightboxStage.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "touch" || e.button !== 0) return;
+      if (currentLightboxZoom === "fit") return;
+      dragState = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startScrollLeft: accLightboxStage.scrollLeft,
+        startScrollTop: accLightboxStage.scrollTop,
+        moved: false
+      };
+      accLightboxStage.setPointerCapture(e.pointerId);
+      accLightboxStage.classList.add("is-dragging");
+    });
+
+    accLightboxStage.addEventListener("pointermove", (e) => {
+      if (!dragState || e.pointerId !== dragState.pointerId) return;
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      if (!dragState.moved && Math.hypot(dx, dy) > 4) {
+        dragState.moved = true;
+      }
+      if (dragState.moved) {
+        accLightboxStage.scrollLeft = dragState.startScrollLeft - dx;
+        accLightboxStage.scrollTop = dragState.startScrollTop - dy;
+      }
+    });
+
+    const endDrag = (e) => {
+      if (!dragState || e.pointerId !== dragState.pointerId) return;
+      if (dragState.moved) {
+        suppressNextStageClick = true;
+        setTimeout(() => {
+          suppressNextStageClick = false;
+        }, 0);
+      }
+      if (accLightboxStage.hasPointerCapture(e.pointerId)) {
+        accLightboxStage.releasePointerCapture(e.pointerId);
+      }
+      accLightboxStage.classList.remove("is-dragging");
+      dragState = null;
+    };
+
+    accLightboxStage.addEventListener("pointerup", endDrag);
+    accLightboxStage.addEventListener("pointercancel", endDrag);
+
+    accLightboxStage.addEventListener("click", (e) => {
+      if (suppressNextStageClick) {
+        suppressNextStageClick = false;
+        return;
+      }
+      if (currentLightboxZoom === "fit") {
+        setLightboxZoom("200", { clientX: e.clientX, clientY: e.clientY });
+      } else {
+        setLightboxZoom("fit");
+      }
+    });
+  }
+
+  if (accLightboxDialog) {
+    accLightboxDialog.addEventListener("keydown", (e) => {
+      if (!accLightboxDialog.open) return;
+      if (e.key === "+" || e.key === "=") {
+        e.preventDefault();
+        const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
+        if (idx < ZOOM_LEVELS.length - 1) setLightboxZoom(ZOOM_LEVELS[idx + 1]);
+      } else if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
+        if (idx > 0) setLightboxZoom(ZOOM_LEVELS[idx - 1]);
+      } else if (e.key === "0") {
+        e.preventDefault();
+        setLightboxZoom("fit");
+      }
+    });
+  }
+
   document.addEventListener("click", async (event) => {
     const trigger = event.target.closest("[data-acc-lightbox-id]");
     if (!trigger || !accLightboxDialog) return;
@@ -1704,22 +1918,33 @@
     }
     if (!acc) return;
 
+    const resolvedSrc = safeImagePath(acc.image_path);
     currentLightboxAcc = acc;
     if (accLightboxTitle) accLightboxTitle.textContent = `#${acc.code} · ${acc.title}`;
     if (accLightboxSub) {
       accLightboxSub.textContent = `${acc.server_name} · ${acc.planet} · Giá: ${formatVND(acc.price_vnd)}`;
     }
     if (accLightboxImg) {
-      accLightboxImg.src = safeImagePath(acc.image_path);
       accLightboxImg.width = Number(acc.image_width) || 800;
       accLightboxImg.height = Number(acc.image_height) || 500;
       accLightboxImg.alt = `Ảnh tài khoản ${acc.code}`;
+      accLightboxImg.src = resolvedSrc;
     }
+    if (accLightboxRawLink) accLightboxRawLink.href = resolvedSrc;
     if (accLightboxNote) accLightboxNote.textContent = acc.note;
     if (accLightboxAddBtn) accLightboxAddBtn.disabled = acc.status === "sold";
     if (accLightboxZaloLink) accLightboxZaloLink.href = VERIFIED.zaloUrl;
 
+    accLightboxDialog.dataset.expanded = "0";
+    if (accLightboxExpandBtn) {
+      accLightboxExpandBtn.setAttribute("aria-pressed", "false");
+      accLightboxExpandBtn.textContent = "Toàn khung";
+    }
     if (!accLightboxDialog.open) accLightboxDialog.showModal();
+    requestAnimationFrame(() => {
+      syncStageFitAxis();
+      setLightboxZoom("fit");
+    });
   });
 
   if (accLightboxAddBtn) {

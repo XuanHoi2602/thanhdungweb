@@ -163,7 +163,7 @@ function createAppServer(options = {}) {
   function readSessionFromRequest(req) {
     const cookies = parseCookies(req.headers.cookie);
     const cookieName = getSessionCookieName(req);
-    const rawToken = cookies[cookieName] || cookies["__Host-td_session"] || cookies.td_session;
+    const rawToken = cookies[cookieName];
     if (!rawToken) return null;
     const session = store.getSessionByToken(rawToken);
     if (!session) return null;
@@ -179,19 +179,45 @@ function createAppServer(options = {}) {
   const server = http.createServer(async (req, res) => {
     try {
       const method = String(req.method || "GET").toUpperCase();
+      const rawReqUrl = String(req.url || "/");
+      if (!rawReqUrl.startsWith("/") || rawReqUrl.startsWith("//") || rawReqUrl.includes("\\")) {
+        sendJson(req, res, 400, { ok: false, error: "Invalid request URL" });
+        return;
+      }
+
       let parsedUrl;
+      let rawPathname;
       let pathname;
       try {
-        parsedUrl = new URL(req.url || "/", "http://127.0.0.1");
-        pathname = decodeURIComponent(parsedUrl.pathname);
+        parsedUrl = new URL(rawReqUrl, "http://127.0.0.1");
+        if (parsedUrl.origin !== "http://127.0.0.1") {
+          sendJson(req, res, 400, { ok: false, error: "Invalid request URL origin" });
+          return;
+        }
+        rawPathname = parsedUrl.pathname || "/";
+        pathname = decodeURIComponent(rawPathname);
       } catch {
         sendJson(req, res, 400, { ok: false, error: "Malformed request URL" });
         return;
       }
 
-      // Normalize trailing slashes cleanly (except root)
+      // Reject control characters, backslashes, or protocol-relative // paths cleanly
+      if (
+        /[\u0000-\u001f\u007f\\]/.test(pathname) ||
+        pathname.startsWith("//") ||
+        rawPathname.startsWith("//")
+      ) {
+        sendJson(req, res, 400, { ok: false, error: "Invalid request path" });
+        return;
+      }
+
+      // Normalize trailing slashes cleanly (except root) without permitting open redirects
       if (pathname.length > 1 && pathname.endsWith("/")) {
-        const stripped = pathname.slice(0, -1);
+        const stripped = pathname.replace(/\/+$/, "") || "/";
+        if (!/^\/(?:[^/\\].*)?$/.test(stripped)) {
+          sendJson(req, res, 400, { ok: false, error: "Invalid redirect target" });
+          return;
+        }
         const query = parsedUrl.search || "";
         setCommonHardeningHeaders(req, res);
         res.statusCode = 301;
@@ -207,7 +233,10 @@ function createAppServer(options = {}) {
       const fmCheck = checkFetchMetadataAndOrigin(req, res, { isApi });
       if (!fmCheck.ok) {
         if (["POST", "PATCH", "PUT", "DELETE"].includes(method)) {
-          store.recordAudit("BLOCKED_EXTERNAL_REQ", "anonymous", fmCheck.reason, ip);
+          const auditGate = rateLimiter.consume(`audit_blk:${ip}`, 15, 60 * 1000);
+          if (auditGate.allowed) {
+            store.recordAudit("BLOCKED_EXTERNAL_REQ", "anonymous", fmCheck.reason, ip);
+          }
         }
         sendJson(req, res, 403, { ok: false, error: "Forbidden by resource isolation policy" });
         return;
@@ -434,9 +463,26 @@ function createAppServer(options = {}) {
           sendJson(req, res, 400, { ok: false, error: "Dữ liệu JSON không hợp lệ" });
           return;
         }
+        if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+          sendJson(req, res, 400, { ok: false, error: "Dữ liệu đăng nhập không hợp lệ." });
+          return;
+        }
 
-        const username = sanitizePlainText(parsedBody && parsedBody.username, 40);
-        const password = typeof (parsedBody && parsedBody.password) === "string" ? parsedBody.password : "";
+        const username = sanitizePlainText(parsedBody.username, 40);
+        const password = typeof parsedBody.password === "string" ? parsedBody.password : "";
+
+        if (username) {
+          const userLimit = rateLimiter.consume(`login_user:${username.toLowerCase()}`, 12, 15 * 60 * 1000);
+          if (!userLimit.allowed) {
+            res.setHeader("Retry-After", String(userLimit.retryAfterSec));
+            store.recordAudit("AUTH_RATE_LIMITED", username, "Khóa tạm thời do thử đăng nhập nhiều lần", ip);
+            sendJson(req, res, 429, {
+              ok: false,
+              error: `Tài khoản đang tạm giới hạn thử đăng nhập. Vui lòng đợi ${userLimit.retryAfterSec} giây.`
+            });
+            return;
+          }
+        }
 
         const admin = store.verifyAdminLogin(username, password);
         if (!admin) {
@@ -596,6 +642,10 @@ function createAppServer(options = {}) {
           sendJson(req, res, 400, { ok: false, error: "Invalid JSON" });
           return;
         }
+        if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+          sendJson(req, res, 400, { ok: false, error: "Dữ liệu JSON phải là object." });
+          return;
+        }
 
         const updates = {};
         if (parsedBody.status !== undefined) {
@@ -710,9 +760,12 @@ function createAppServer(options = {}) {
         } else if (ct.includes("application/json")) {
           const rawBody = await readRequestBody(req, 16384);
           try {
-            rawFields = JSON.parse(rawBody.toString("utf8")) || {};
+            rawFields = JSON.parse(rawBody.toString("utf8"));
           } catch {
             return { error: "Dữ liệu JSON không hợp lệ.", statusCode: 400 };
+          }
+          if (!rawFields || typeof rawFields !== "object" || Array.isArray(rawFields)) {
+            return { error: "Dữ liệu JSON phải là object.", statusCode: 400 };
           }
         } else {
           return { error: "Content-Type không hợp lệ.", statusCode: 415 };
@@ -992,6 +1045,10 @@ function createAppServer(options = {}) {
           parsedBody = JSON.parse(rawBody.toString("utf8"));
         } catch {
           sendJson(req, res, 400, { ok: false, error: "Invalid JSON" });
+          return;
+        }
+        if (!parsedBody || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+          sendJson(req, res, 400, { ok: false, error: "Dữ liệu JSON phải là object." });
           return;
         }
 

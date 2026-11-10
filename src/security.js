@@ -1,6 +1,7 @@
 "use strict";
 
 const crypto = require("node:crypto");
+const net = require("node:net");
 const path = require("node:path");
 
 function escapeHtml(str) {
@@ -164,10 +165,19 @@ function buildClearSessionCookie(req) {
 
 function getClientIp(req) {
   if (shouldTrustProxy()) {
-    const fwd = String(req.headers["x-forwarded-for"] || "")
-      .split(",")[0]
-      .trim();
-    if (fwd) return fwd.slice(0, 64);
+    const hops = String(req.headers["x-forwarded-for"] || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (let i = hops.length - 1; i >= 0; i -= 1) {
+      if (net.isIP(hops[i])) {
+        return hops[i].slice(0, 64);
+      }
+    }
+    const realIp = String(req.headers["x-real-ip"] || "").trim();
+    if (net.isIP(realIp)) {
+      return realIp.slice(0, 64);
+    }
   }
   return String((req.socket && req.socket.remoteAddress) || "unknown").slice(0, 64);
 }
@@ -179,7 +189,7 @@ function setCommonHardeningHeaders(req, res) {
   res.setHeader("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
   res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   if (isHttpsRequest(req)) {
-    res.setHeader("Strict-Transport-Security", "max-age=300; includeSubDomains");
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
 }
 
@@ -277,8 +287,9 @@ function checkFetchMetadataAndOrigin(req, res, { isApi = false } = {}) {
 }
 
 class RateLimiter {
-  constructor() {
+  constructor(maxBuckets = 10000) {
     this.buckets = new Map();
+    this.maxBuckets = maxBuckets;
     this.lastSweep = Date.now();
   }
 
@@ -290,6 +301,14 @@ class RateLimiter {
 
     let bucket = this.buckets.get(key);
     if (!bucket || now - bucket.windowStart >= windowMs) {
+      if (!bucket && this.buckets.size >= this.maxBuckets) {
+        this.sweep(now);
+        while (this.buckets.size >= this.maxBuckets) {
+          const oldestKey = this.buckets.keys().next().value;
+          if (oldestKey === undefined) break;
+          this.buckets.delete(oldestKey);
+        }
+      }
       bucket = { windowStart: now, count: 1, windowMs };
       this.buckets.set(key, bucket);
       return { allowed: true, remaining: maxHits - 1, retryAfterSec: 0 };

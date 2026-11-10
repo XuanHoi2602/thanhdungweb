@@ -260,19 +260,22 @@ function initDatabase({
       "INSERT INTO admins (username, password_hash, created_at) VALUES (?, ?, ?)"
     ).run(normalizedAdminUser, hashPassword(initialPass), new Date().toISOString());
   } else if (typeof adminPass === "string" && adminPass.trim().length >= 8) {
-    // Allow explicit .env credential update for deploy management
+    // Allow explicit .env credential update for deploy management and revoke old sessions
     const existingAdmin = db.prepare("SELECT id, password_hash FROM admins WHERE username = ?").get(normalizedAdminUser);
     if (existingAdmin && !verifyPassword(adminPass.trim(), existingAdmin.password_hash)) {
       db.prepare("UPDATE admins SET password_hash = ? WHERE id = ?").run(
         hashPassword(adminPass.trim()),
         existingAdmin.id
       );
+      db.prepare("DELETE FROM sessions WHERE admin_id = ?").run(existingAdmin.id);
     } else if (!existingAdmin) {
       db.prepare(
         "INSERT INTO admins (username, password_hash, created_at) VALUES (?, ?, ?)"
       ).run(normalizedAdminUser, hashPassword(adminPass.trim()), new Date().toISOString());
     }
   }
+
+  const DUMMY_PASSWORD_HASH = hashPassword(crypto.randomBytes(24).toString("hex"));
 
   function recordAudit(eventType, actor, detail, ip = "system") {
     db.prepare(
@@ -284,6 +287,9 @@ function initDatabase({
       sanitizePlainText(ip, 64),
       new Date().toISOString()
     );
+    db.prepare(
+      "DELETE FROM audit_logs WHERE id <= (SELECT MAX(id) - 5000 FROM audit_logs)"
+    ).run();
   }
 
   function recordCspReport({ blockedUri, violatedDirective, documentUri, scriptSample }) {
@@ -296,6 +302,9 @@ function initDatabase({
       sanitizePlainText(scriptSample, 80),
       new Date().toISOString()
     );
+    db.prepare(
+      "DELETE FROM csp_reports WHERE id <= (SELECT MAX(id) - 2000 FROM csp_reports)"
+    ).run();
   }
 
   function verifyAdminLogin(username, password) {
@@ -304,7 +313,11 @@ function initDatabase({
       return null;
     }
     const admin = db.prepare("SELECT id, username, password_hash FROM admins WHERE username = ?").get(cleanUser);
-    if (!admin) return null;
+    if (!admin) {
+      // Constant-cost work prevents timing-based username enumeration
+      verifyPassword(password, DUMMY_PASSWORD_HASH);
+      return null;
+    }
     if (!verifyPassword(password, admin.password_hash)) return null;
     return { id: admin.id, username: admin.username };
   }
@@ -769,9 +782,16 @@ function initDatabase({
     const nextUnit = patch.unit !== undefined ? patch.unit : existing.unit;
     const nextNote = patch.note !== undefined ? patch.note : existing.note;
     const nextTag = patch.tag !== undefined ? patch.tag : existing.tag;
+    const baseSvc = defaultServicesById.get(existing.id);
+    const quoteFallback =
+      baseSvc && Number(baseSvc.price) === 0 && baseSvc.priceText
+        ? baseSvc.priceText
+        : "Báo giá theo yêu cầu";
     const nextPriceText = patch.priceText !== undefined
       ? patch.priceText
-      : (nextPrice > 0 ? formatServicePriceText(existing.id, nextPrice, nextUnit, existing.priceText) : existing.priceText);
+      : nextPrice > 0
+        ? formatServicePriceText(existing.id, nextPrice, nextUnit, quoteFallback)
+        : (patch.price !== undefined || /\d/.test(existing.priceText) ? quoteFallback : existing.priceText);
 
     db.prepare(`
       UPDATE shop_services

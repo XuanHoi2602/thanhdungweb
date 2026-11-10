@@ -327,7 +327,7 @@ function renderAccountCardMarkup(acc, { isAdmin = false } = {}) {
           class="acc-photo-img"
         >
         <span class="acc-photo-badge">${isSold ? "ĐÃ BÁN" : "SẴN HÀNG"}</span>
-        <span class="acc-zoom-hint">Bấm xem ảnh lớn</span>
+        <span class="acc-zoom-hint">Phóng to &amp; zoom xem kỹ</span>
       </button>
 
       <div class="acc-card-body">
@@ -966,7 +966,7 @@ function renderAdminAuthAndUploadSection({ session, showToggleNote = true }) {
         <div class="form-row-2">
           <div class="field-group">
             <label for="login-username">Tên đăng nhập quản trị</label>
-            <input type="text" id="login-username" name="username" autocomplete="username" maxlength="40" required value="thanhdung">
+            <input type="text" id="login-username" name="username" autocomplete="username" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="40" required placeholder="Nhập tên đăng nhập">
           </div>
 
           <div class="field-group">
@@ -1462,7 +1462,7 @@ function renderAdminConsoleView({ session, accounts, items = [], services = [], 
                 </div>
 
                 <div class="field-group">
-                  <span class="field-hint">Trạng thái hiển thị</span>
+                  <span class="field-label-text">Trạng thái hiển thị</span>
                   <label class="radio-pill admin-checkbox-pill" for="item-is-active">
                     <input type="checkbox" id="item-is-active" name="isActive" value="1" checked>
                     <span>Hiển thị công khai trên trang Mua Item</span>
@@ -2023,21 +2023,44 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
   </dialog>
 
   <!-- Account Image Lightbox Dialog -->
-  <dialog id="acc-lightbox-dialog" closedby="any" aria-labelledby="acc-lightbox-title">
-    <div class="dialog-shell">
+  <dialog id="acc-lightbox-dialog" class="lightbox-dialog" closedby="any" aria-labelledby="acc-lightbox-title">
+    <div class="dialog-shell lightbox-shell">
       <div class="dialog-head">
         <div>
           <h2 id="acc-lightbox-title">Chi tiết ảnh Tài Khoản</h2>
           <p id="acc-lightbox-sub" class="dialog-sub"></p>
         </div>
-        <form method="dialog">
-          <button type="submit" class="btn-dialog-close" aria-label="Đóng xem ảnh acc">&times;</button>
-        </form>
+        <div class="lightbox-head-actions">
+          <button type="button" id="acc-lightbox-expand-btn" class="btn btn-outline btn-sm" aria-pressed="false">Toàn khung</button>
+          <form method="dialog">
+            <button type="submit" id="acc-lightbox-close-btn" class="btn-dialog-close" aria-label="Đóng xem ảnh acc">&times;</button>
+          </form>
+        </div>
       </div>
-      <div class="lightbox-img-wrap">
-        <img id="acc-lightbox-img" src="/assets/favicon.svg" alt="Ảnh tài khoản chi tiết" width="800" height="450">
+
+      <div class="lightbox-toolbar" role="toolbar" aria-label="Điều khiển phóng to ảnh tài khoản">
+        <div class="lightbox-zoom-btns">
+          <button type="button" id="acc-zoom-out-btn" class="btn btn-outline btn-sm" aria-label="Thu nhỏ ảnh" disabled>&minus; Thu nhỏ</button>
+          <button type="button" id="acc-zoom-reset-btn" class="btn btn-outline btn-sm is-active" data-zoom-preset="fit" autofocus>Vừa khung</button>
+          <button type="button" id="acc-zoom-150-btn" class="btn btn-outline btn-sm" data-zoom-preset="150">1.5&times;</button>
+          <button type="button" id="acc-zoom-200-btn" class="btn btn-outline btn-sm" data-zoom-preset="200">2&times;</button>
+          <button type="button" id="acc-zoom-300-btn" class="btn btn-outline btn-sm" data-zoom-preset="300">3&times;</button>
+          <button type="button" id="acc-zoom-in-btn" class="btn btn-primary btn-sm" aria-label="Phóng to ảnh">+ Phóng to</button>
+        </div>
+        <div class="lightbox-meta-bar">
+          <span id="acc-zoom-badge" class="pill pill-jade mono-num" aria-live="polite">100%</span>
+          <span class="lightbox-pan-hint">Cuộn chuột / bấm ảnh để zoom · Kéo ảnh để soi từng góc</span>
+          <a id="acc-lightbox-raw-link" href="/assets/favicon.svg" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Mở ảnh gốc &nearr;</a>
+        </div>
       </div>
-      <p id="acc-lightbox-note" class="acc-note-text"></p>
+
+      <div id="acc-lightbox-stage" class="lightbox-stage" data-zoom="fit" data-fit-axis="width" tabindex="0" aria-label="Khung xem ảnh tài khoản có thể phóng to và kéo">
+        <div class="lightbox-stage-inner">
+          <img id="acc-lightbox-img" src="/assets/favicon.svg" alt="Ảnh tài khoản chi tiết" width="800" height="450" draggable="false">
+        </div>
+      </div>
+
+      <p id="acc-lightbox-note" class="acc-note-text lightbox-note"></p>
       <div class="dialog-actions">
         <button type="button" id="acc-lightbox-add-btn" class="btn btn-primary">+ Thêm Acc này vào đơn</button>
         <a id="acc-lightbox-zalo-link" href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-zalo">Hỏi mua qua Zalo</a>

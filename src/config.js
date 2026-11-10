@@ -48,7 +48,7 @@ const OFFICIAL_CONTACTS = deepFreeze({
   shortName: "THANH DUNG NRO",
   facebookUrl: "https://www.facebook.com/Thanhdungg.Kem",
   facebookHandle: "fb.com/Thanhdungg.Kem",
-  zaloUrl: "http://zalo.me/84368018920",
+  zaloUrl: "https://zalo.me/84368018920",
   zaloDisplay: "0368.018.920",
   zaloRawPhone: "0368018920",
   zaloBoxSp1Url: "https://zalo.me/g/ryvnof825",
