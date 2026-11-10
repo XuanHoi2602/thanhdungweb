@@ -634,6 +634,19 @@
   const sendZaloOrderBtn = document.getElementById("send-zalo-order-btn");
   const copyOrderBtn = document.getElementById("copy-order-btn");
   const clearOrderBtn = document.getElementById("clear-order-btn");
+  const orderSyntaxTextEl = document.getElementById("order-syntax-text");
+  const copySyntaxBtn = document.getElementById("copy-syntax-btn");
+
+  const orderConfirmDialog = document.getElementById("order-confirm-dialog");
+  const confirmPlatformNameEl = document.getElementById("confirm-platform-name");
+  const confirmSyntaxPreviewEl = document.getElementById("confirm-syntax-preview");
+  const confirmOpenChatBtn = document.getElementById("confirm-open-chat-btn");
+  const confirmRecopyBtn = document.getElementById("confirm-recopy-btn");
+  const confirmBackBtn = document.getElementById("confirm-back-btn");
+
+  let pendingChatUrl = "";
+  let pendingPlatformName = "Zalo";
+  let pendingOrderSyntax = "";
 
   const CLEAN_ITEM_NAMES_BY_ID = {
     "nap-cr": "Nạp CR",
@@ -814,6 +827,59 @@
     return `${formatNumber(item.qty)} ${item.unit} · Báo giá trực tiếp qua Zalo / FB`;
   };
 
+  const buildOrderText = () => {
+    if (orderItems.length === 0) return "";
+    const lines = [
+      " [ĐƠN ĐẶT HÀNG — SHOP THANH DUNG NRO]",
+      "Chào shop Thanh Dung, mình gửi thông tin đơn cần đặt:",
+      ""
+    ];
+    let totalVND = 0;
+    let hasQuote = false;
+
+    orderItems.forEach((item, index) => {
+      const subTotal = getOrderItemSubtotal(item);
+      if (subTotal <= 0) {
+        hasQuote = true;
+        lines.push(`${index + 1}. ${item.name} — SL: ${formatNumber(item.qty)} ${item.unit} (Chờ báo giá)`);
+        return;
+      }
+      totalVND += subTotal;
+      if (item.kind === "rate" && item.ratePerK > 0) {
+        const bonus = formatRateBonusNote(item.id, item.qty);
+        const qtyDesc = bonus
+          ? `${formatNumber(item.qty)} ${item.unit} (${bonus})`
+          : `${formatNumber(item.qty)} ${item.unit}`;
+        lines.push(`${index + 1}. ${item.name} — SL: ${qtyDesc} — ${formatVND(subTotal)}`);
+      } else {
+        lines.push(
+          `${index + 1}. ${item.name} — SL: ${formatNumber(item.qty)} ${item.unit} × ${formatVND(item.price)} = ${formatVND(subTotal)}`
+        );
+      }
+    });
+
+    lines.push("");
+    lines.push("───────────────────────────────────");
+    const totalLabel =
+      totalVND > 0
+        ? hasQuote
+          ? `${formatVND(totalVND)} + mục báo giá`
+          : formatVND(totalVND)
+        : "Chờ báo giá trực tiếp";
+    lines.push(`💰 TỔNG TẠM TÍNH: ${totalLabel}`);
+
+    const note = orderNoteEl ? orderNoteEl.value.trim() : "";
+    if (note) {
+      lines.push(`📝 Ghi chú khách: ${note}`);
+    }
+
+    lines.push(`🏦 MB Bank chính chủ: ${VERIFIED.accountNumber} (${VERIFIED.accountOwner})`);
+    lines.push("═══════════════════════════════════════");
+    lines.push("(Cú pháp được gửi từ Website)");
+
+    return lines.join("\n");
+  };
+
   const updateOrderSummaryUi = () => {
     const lineCount = orderItems.length;
     let totalVND = 0;
@@ -846,6 +912,9 @@
         lineCount === 0
           ? "Đơn tính nhanh: chưa có mặt hàng nào."
           : `Đơn tính nhanh (${lineCount} mặt hàng) — Tạm tính: ${priceSummaryText}`;
+    }
+    if (orderSyntaxTextEl) {
+      orderSyntaxTextEl.value = buildOrderText();
     }
   };
 
@@ -1202,43 +1271,49 @@
   };
 
   wireDialogBackdropFallback(orderDialog);
+  wireDialogBackdropFallback(orderConfirmDialog);
 
-  const buildOrderText = () => {
-    const lines = ["Chào shop Thanh Dung NRO, mình cần đặt:"];
-    let totalVND = 0;
-    let hasQuote = false;
+  const openConfirmWithSyntax = (platform, syntax) => {
+    copyTextSync(syntax);
+    const isFb = platform === "facebook";
+    pendingChatUrl = isFb ? VERIFIED.facebookUrl : VERIFIED.zaloUrl;
+    pendingPlatformName = isFb ? "Facebook" : "Zalo";
+    pendingOrderSyntax = syntax;
 
-    orderItems.forEach((item, index) => {
-      const subTotal = getOrderItemSubtotal(item);
-      if (subTotal <= 0) {
-        hasQuote = true;
-        lines.push(`${index + 1}. ${item.name} — ${formatNumber(item.qty)} ${item.unit} (Báo giá trực tiếp)`);
-        return;
+    if (confirmPlatformNameEl) confirmPlatformNameEl.textContent = pendingPlatformName;
+    if (confirmSyntaxPreviewEl) confirmSyntaxPreviewEl.value = pendingOrderSyntax;
+    if (confirmOpenChatBtn) {
+      confirmOpenChatBtn.textContent = `OK — Nhắn Tin Qua ${pendingPlatformName}`;
+      confirmOpenChatBtn.className = isFb ? "btn btn-facebook btn-lg" : "btn btn-zalo btn-lg";
+    }
+
+    if (orderConfirmDialog) {
+      if (!orderConfirmDialog.open) {
+        orderConfirmDialog.showModal();
       }
-      totalVND += subTotal;
-      if (item.kind === "rate" && item.ratePerK > 0) {
-        const bonus = formatRateBonusNote(item.id, item.qty);
-        const qtyDesc = bonus
-          ? `${formatNumber(item.qty)} ${item.unit} (${bonus})`
-          : `${formatNumber(item.qty)} ${item.unit}`;
-        lines.push(`${index + 1}. ${item.name} — ${qtyDesc} — ${formatVND(subTotal)}`);
-      } else {
-        lines.push(
-          `${index + 1}. ${item.name} — ${formatNumber(item.qty)} ${item.unit} × ${formatVND(item.price)} = ${formatVND(subTotal)}`
-        );
+    } else {
+      window.open(pendingChatUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  if (orderNoteEl) {
+    orderNoteEl.addEventListener("input", () => {
+      if (orderSyntaxTextEl) {
+        orderSyntaxTextEl.value = buildOrderText();
       }
     });
+  }
 
-    const note = orderNoteEl ? orderNoteEl.value.trim() : "";
-    if (note) {
-      lines.push(`Ghi chú: ${note}`);
-    }
-    if (totalVND > 0) {
-      lines.push(`Tổng tạm tính: ${hasQuote ? `${formatVND(totalVND)} + mục báo giá` : formatVND(totalVND)}`);
-    }
-
-    return lines.join("\n");
-  };
+  if (copySyntaxBtn) {
+    copySyntaxBtn.addEventListener("click", () => {
+      const text = buildOrderText();
+      if (!text) {
+        showToast("Đơn đang trống — hãy chọn sản phẩm trước khi sao chép!");
+        return;
+      }
+      copyToClipboard(text, "cú pháp tin nhắn đơn hàng");
+    });
+  }
 
   const handleSendOrder = (platform) => {
     if (orderItems.length === 0) {
@@ -1248,23 +1323,51 @@
 
     verifyAndHealDom();
     const orderText = buildOrderText();
-    const copied = copyTextSync(orderText);
+    openConfirmWithSyntax(platform, orderText);
+
     const isFb = platform === "facebook";
-    const targetUrl = isFb ? VERIFIED.facebookUrl : VERIFIED.zaloUrl;
     const channelName = isFb ? "Facebook Thanh Dung" : "Zalo Thanh Dung";
-
-    window.open(targetUrl, "_blank", "noopener,noreferrer");
-
-    const noticeMsg = copied
-      ? `Đã sao chép toàn bộ đơn hàng và mở ${channelName}! Vào khung chat chỉ cần Dán (Ctrl+V / giữ chọn Dán) rồi bấm Gửi.`
-      : `Đã mở ${channelName}. Hãy sao chép danh sách đơn ở trên và Dán vào khung chat để gửi.`;
+    const noticeMsg = `Đã sao chép cú pháp đơn hàng! Bấm OK để mở ${channelName} và Dán (Ctrl+V) gửi chủ shop.`;
 
     if (orderSendStatusEl) {
       orderSendStatusEl.textContent = noticeMsg;
       orderSendStatusEl.hidden = false;
     }
-    showToast(noticeMsg);
+    showToast("Đã sao chép cú pháp! Bấm OK để nhắn tin.");
   };
+
+  if (confirmOpenChatBtn) {
+    confirmOpenChatBtn.addEventListener("click", () => {
+      if (pendingOrderSyntax) {
+        copyTextSync(pendingOrderSyntax);
+      }
+      if (pendingChatUrl) {
+        window.open(pendingChatUrl, "_blank", "noopener,noreferrer");
+      }
+      if (orderConfirmDialog && orderConfirmDialog.open) {
+        orderConfirmDialog.close();
+      }
+      if (orderDialog && orderDialog.open) {
+        orderDialog.close();
+      }
+      showToast(`Đang mở ${pendingPlatformName}! Vào chat bạn chỉ cần Dán (Ctrl+V / giữ Dán) để gửi shop.`);
+    });
+  }
+
+  if (confirmRecopyBtn) {
+    confirmRecopyBtn.addEventListener("click", () => {
+      if (!pendingOrderSyntax) return;
+      copyToClipboard(pendingOrderSyntax, "cú pháp tin nhắn đơn hàng");
+    });
+  }
+
+  if (confirmBackBtn) {
+    confirmBackBtn.addEventListener("click", () => {
+      if (orderConfirmDialog && orderConfirmDialog.open) {
+        orderConfirmDialog.close();
+      }
+    });
+  }
 
   if (sendFbOrderBtn) sendFbOrderBtn.addEventListener("click", () => handleSendOrder("facebook"));
   if (sendZaloOrderBtn) sendZaloOrderBtn.addEventListener("click", () => handleSendOrder("zalo"));
@@ -1275,7 +1378,7 @@
         showToast("Đơn đang trống — hãy chọn sản phẩm trước khi sao chép!");
         return;
       }
-      copyToClipboard(buildOrderText(), "nội dung đơn hàng");
+      copyToClipboard(buildOrderText(), "cú pháp tin nhắn đơn hàng");
     });
   }
 
@@ -1447,7 +1550,11 @@
     checkLink.target = "_blank";
     checkLink.rel = "noopener noreferrer";
     checkLink.setAttribute("data-verified-role", "zalo-link");
-    checkLink.className = "btn btn-card-link";
+    checkLink.className = "btn btn-card-link direct-acc-link";
+    checkLink.dataset.accCode = String(acc.code || "");
+    checkLink.dataset.accServer = String(acc.server_name || "");
+    checkLink.dataset.accPlanet = String(acc.planet || "");
+    checkLink.dataset.accPrice = formatVND(acc.price_vnd);
     checkLink.textContent = "Check Acc";
 
     actions.append(orderBtn, checkLink);
@@ -1962,6 +2069,75 @@
       if (accLightboxDialog && accLightboxDialog.open) accLightboxDialog.close();
     });
   }
+
+  if (accLightboxZaloLink) {
+    accLightboxZaloLink.addEventListener("click", () => {
+      if (!currentLightboxAcc) return;
+      const acc = currentLightboxAcc;
+      const lines = [
+        "═══════════════════════════════════════",
+        " [HỎI MUA TÀI KHOẢN — SHOP THANH DUNG NRO]",
+        "═══════════════════════════════════════",
+        "Chào shop Thanh Dung, mình muốn hỏi mua tài khoản:",
+        `• Mã Acc: #${acc.code}`,
+        `• Server: ${acc.server_name}`,
+        `• Hành tinh: ${acc.planet}`,
+        `• Giá niêm yết: ${formatVND(acc.price_vnd)}`
+      ];
+      if (acc.note) {
+        lines.push(`• Ghi chú: ${acc.note}`);
+      }
+      lines.push("───────────────────────────────────────");
+      lines.push("Shop kiểm tra giúp mình tài khoản này còn để mình chốt nhé!");
+      lines.push("═══════════════════════════════════════");
+      openConfirmWithSyntax("zalo", lines.join("\n"));
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    const accBtn = e.target.closest(".direct-acc-link");
+    if (accBtn) {
+      e.preventDefault();
+      const code = accBtn.dataset.accCode || "";
+      const server = accBtn.dataset.accServer || "";
+      const planet = accBtn.dataset.accPlanet || "";
+      const price = accBtn.dataset.accPrice || "";
+      const lines = [
+        "═══════════════════════════════════════",
+        " [HỎI MUA TÀI KHOẢN — SHOP THANH DUNG NRO]",
+        "═══════════════════════════════════════",
+        "Chào shop Thanh Dung, mình muốn hỏi mua tài khoản:",
+        `• Mã Acc: #${code}`,
+        `• Server: ${server}`,
+        `• Hành tinh: ${planet}`,
+        `• Giá niêm yết: ${price}`,
+        "───────────────────────────────────────",
+        "Shop kiểm tra giúp mình tài khoản này còn không nhé!",
+        "═══════════════════════════════════════"
+      ];
+      openConfirmWithSyntax("zalo", lines.join("\n"));
+      return;
+    }
+
+    const svcBtn = e.target.closest(".direct-service-link");
+    if (svcBtn) {
+      e.preventDefault();
+      const name = svcBtn.dataset.serviceName || "";
+      const price = svcBtn.dataset.servicePrice || "";
+      const lines = [
+        "═══════════════════════════════════════",
+        " [ĐẶT DỊCH VỤ — SHOP THANH DUNG NRO]",
+        "═══════════════════════════════════════",
+        "Chào shop Thanh Dung, mình cần đặt dịch vụ:",
+        `• Dịch vụ: ${name}`,
+        `• Giá niêm yết: ${price}`,
+        "───────────────────────────────────────",
+        "Shop tư vấn và tiếp nhận đơn giúp mình nhé!",
+        "═══════════════════════════════════════"
+      ];
+      openConfirmWithSyntax("zalo", lines.join("\n"));
+    }
+  });
 
   /* Admin Auth & Account Upload/CRUD */
   const adminAuthBox = document.getElementById("admin-auth-box");

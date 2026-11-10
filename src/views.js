@@ -213,7 +213,7 @@ function renderContactsSection() {
           </li>
 
           <li class="contact-card">
-            <span class="contact-type">Nhóm Chat Zalo</span>
+            <span class="contact-type">Group Chat Zalo</span>
             <h3>Link Box Zalo SP1</h3>
             <p class="contact-handle">${escapeHtml(OFFICIAL_CONTACTS.zaloBoxSp1Display)}</p>
             <p class="contact-url">Cập nhật kèo, hàng mới, GDTG nhanh</p>
@@ -247,14 +247,14 @@ function renderProductCard(item, { showDayPicker = false } = {}) {
   if (item.anchorHref) {
     actionsMarkup = `
       <a href="${escapeHtml(item.anchorHref)}" class="btn btn-card-add">${escapeHtml(item.anchorLabel)}</a>
-      <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link">Mua ngay</a>
+      <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link direct-service-link" data-service-name="${escapeHtml(item.name)}" data-service-price="${escapeHtml(item.priceText || (item.price > 0 ? formatVndServer(item.price) : 'Liên hệ'))}">Mua ngay</a>
     `;
   } else {
     actionsMarkup = `
       <button type="button" class="btn btn-card-add" data-id="${escapeHtml(item.id)}" data-name="${escapeHtml(item.orderName)}" data-price="${Number(item.price)}" data-unit="${escapeHtml(item.unit)}">
         ${item.price > 0 ? "+ Thêm vào đơn" : "+ Ghi vào đơn"}
       </button>
-      <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link">${escapeHtml(item.ctaLabel || "Đặt Zalo")}</a>
+      <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link direct-service-link" data-service-name="${escapeHtml(item.name)}" data-service-price="${escapeHtml(item.priceText || (item.price > 0 ? formatVndServer(item.price) : 'Liên hệ'))}">${escapeHtml(item.ctaLabel || "Đặt Zalo")}</a>
     `;
   }
 
@@ -359,7 +359,7 @@ function renderAccountCardMarkup(acc, { isAdmin = false } = {}) {
           >
             ${isSold ? "Đã bán" : "+ Thêm vào đơn"}
           </button>
-          <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link">Check Acc</a>
+          <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-card-link direct-acc-link" data-acc-code="${escapeHtml(acc.code)}" data-acc-server="${escapeHtml(acc.server_name)}" data-acc-planet="${escapeHtml(acc.planet)}" data-acc-price="${escapeHtml(formatVndServer(acc.price_vnd))}">Check Acc</a>
         </div>
         ${adminBar}
       </div>
@@ -396,14 +396,6 @@ function renderHomeView({ latestAccounts, services = KICH_DIEM_SERVICES, starter
     <section id="top" class="hero-section">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <div class="hero-pills">
-            <span class="pill pill-jade">
-              <span class="dot-live" aria-hidden="true"></span>
-              Giao dịch nhanh · Done 3s
-            </span>
-            <span class="pill pill-gold">Bảo mật thông tin · Giao dịch chính chủ</span>
-          </div>
-
           <h1 class="hero-title">
             Shop Ngọc Rồng Online
             <span class="hero-accent">Thanh Dung NRO</span>
@@ -416,29 +408,29 @@ function renderHomeView({ latestAccounts, services = KICH_DIEM_SERVICES, starter
 
           <div class="hero-cta-row">
             <a href="${escapeHtml(OFFICIAL_CONTACTS.zaloUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="zalo-link" class="btn btn-primary">
-              <span>Chat Zalo: ${escapeHtml(OFFICIAL_CONTACTS.zaloDisplay)}</span>
+              <span>Liên Hệ Zalo</span>
             </a>
             <a href="${escapeHtml(OFFICIAL_CONTACTS.facebookUrl)}" target="_blank" rel="noopener noreferrer" data-verified-role="fb-link" class="btn btn-secondary">
-              <span>Inbox Facebook Thanh Dung</span>
+              <span>Liên Hệ Facebook</span>
             </a>
           </div>
 
           <dl class="hero-metrics">
             <div class="metric-card">
-              <dt>Kích điểm · CR</dt>
-              <dd class="mono-num">Done 3s</dd>
+              <dt>Kích điểm</dt>
+              <dd>Done Siêu Tốc</dd>
             </div>
             <div class="metric-card">
-              <dt>Vàng Tươi · Die</dt>
-              <dd class="mono-num">x15 / x60</dd>
+              <dt>Dịch Vụ Bán Vàng</dt>
+              <dd>Tươi: x15 <span class="metric-sep">·</span> Die: x60</dd>
             </div>
             <div class="metric-card">
-              <dt>Ngọc Kí · Vé</dt>
-              <dd class="mono-num">x11 / x10</dd>
+              <dt>Dịch Vụ Bán Ngọc</dt>
+              <dd>Kí: x11 <span class="metric-sep">·</span> Vé: x10</dd>
             </div>
             <div class="metric-card">
               <dt>GDTG Uy Tín</dt>
-              <dd class="mono-num">20/24h</dd>
+              <dd>Time: 20/24h</dd>
             </div>
           </dl>
         </div>
@@ -1997,6 +1989,17 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
         <strong id="order-total-price" class="mono-num">0 đ</strong>
       </div>
 
+      <div class="order-syntax-panel">
+        <div class="order-syntax-head">
+          <label for="order-syntax-text">
+            <strong>Cú pháp tin nhắn theo đơn đặt:</strong>
+          </label>
+          <button type="button" id="copy-syntax-btn" class="btn btn-outline btn-sm">Sao chép cú pháp</button>
+        </div>
+        <textarea id="order-syntax-text" class="order-syntax-textarea mono-num" readonly rows="5" spellcheck="false" placeholder="Cú pháp tin nhắn gửi shop sẽ tự động hiển thị tại đây khi bạn chọn sản phẩm..."></textarea>
+        <span class="order-syntax-hint">Cú pháp được tạo tự động chuẩn hóa. Khi bấm <strong>Gửi đơn vào Zalo / Facebook</strong>, hệ thống sẽ tự sao chép cú pháp này để bạn chỉ cần Dán (Ctrl+V) gửi chủ shop.</span>
+      </div>
+
       <div class="order-bank-mini">
         <div class="order-bank-text">
           <strong>MB Bank chính chủ:</strong>
@@ -2018,6 +2021,43 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
       <div class="dialog-actions dialog-util-row">
         <button type="button" id="copy-order-btn" class="btn btn-outline">Chỉ sao chép đơn</button>
         <button type="button" id="clear-order-btn" class="btn btn-outline">Xóa tất cả</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Order Syntax Copied Confirmation Dialog -->
+  <dialog id="order-confirm-dialog" class="confirm-dialog" closedby="any" aria-labelledby="order-confirm-title">
+    <div class="dialog-shell confirm-shell">
+      <div class="dialog-head confirm-head">
+        <div class="confirm-title-group">
+          <span class="confirm-badge-icon" aria-hidden="true">✓</span>
+          <div>
+            <h2 id="order-confirm-title">Đã Sao Chép Cú Pháp Đơn Hàng</h2>
+            <p class="dialog-sub">Cú pháp đã sẵn sàng trong bộ nhớ tạm.</p>
+          </div>
+        </div>
+        <form method="dialog">
+          <button type="submit" class="btn-dialog-close" aria-label="Đóng thông báo">&times;</button>
+        </form>
+      </div>
+
+      <div class="confirm-body">
+        <p class="confirm-guide">
+          Hệ thống đã tự động tạo và sao chép cú pháp theo đơn đặt của bạn. Hãy bấm <strong>OK</strong> bên dưới để mở <span id="confirm-platform-name">Zalo</span>, sau đó chỉ cần <strong>Dán (Ctrl + V / Giữ màn hình chọn Dán)</strong> vào khung chat gửi shop.
+        </p>
+
+        <div class="confirm-preview-wrap">
+          <div class="confirm-preview-head">
+            <label for="confirm-syntax-preview">Nội dung cú pháp đã sao chép:</label>
+            <button type="button" id="confirm-recopy-btn" class="btn btn-outline btn-sm">Copy lại</button>
+          </div>
+          <textarea id="confirm-syntax-preview" class="confirm-syntax-textarea mono-num" readonly rows="6" spellcheck="false" aria-label="Nội dung cú pháp đơn hàng đã sao chép"></textarea>
+        </div>
+      </div>
+
+      <div class="dialog-actions confirm-actions">
+        <button type="button" id="confirm-open-chat-btn" class="btn btn-zalo btn-lg">OK — Nhắn Tin Qua Zalo</button>
+        <button type="button" id="confirm-back-btn" class="btn btn-outline">Xem lại đơn</button>
       </div>
     </div>
   </dialog>
