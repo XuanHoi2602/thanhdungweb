@@ -411,6 +411,52 @@
 
   const computeRateCost = (qty, ratePerK) => Math.max(1, Math.round((qty / ratePerK) * 1000));
 
+  const parseGroupedInt = (rawValue) => {
+    const digits = String(rawValue ?? "").replace(/\D+/g, "");
+    if (!digits) return 0;
+    const num = Number(digits);
+    return Number.isSafeInteger(num) ? num : Number.MAX_SAFE_INTEGER;
+  };
+
+  const formatGroupedInputElement = (inputEl) => {
+    if (!inputEl) return;
+    const raw = inputEl.value;
+    const selStart = typeof inputEl.selectionStart === "number" ? inputEl.selectionStart : raw.length;
+    const digitsAfterCaret = raw.slice(selStart).replace(/\D/g, "").length;
+    const digitsOnly = raw.replace(/\D/g, "");
+    if (!digitsOnly) {
+      inputEl.value = "";
+      return;
+    }
+    const num = Number(digitsOnly);
+    const formatted = Number.isSafeInteger(num) ? formatNumber(num) : digitsOnly;
+    if (formatted === raw) return;
+
+    inputEl.value = formatted;
+    if (typeof inputEl.setSelectionRange === "function") {
+      let remaining = digitsAfterCaret;
+      let nextPos = formatted.length;
+      while (nextPos > 0 && remaining > 0) {
+        nextPos -= 1;
+        if (/\d/.test(formatted[nextPos])) {
+          remaining -= 1;
+        }
+      }
+      inputEl.setSelectionRange(nextPos, nextPos);
+    }
+  };
+
+  const formatGoldWithBillion = (goldAmount) => {
+    const formatted = `${formatNumber(goldAmount)} vàng`;
+    if (goldAmount >= 1_000_000_000) {
+      const billions = (goldAmount / 1_000_000_000).toLocaleString("vi-VN", {
+        maximumFractionDigits: 3
+      });
+      return `${formatted} (${billions} tỷ vàng)`;
+    }
+    return formatted;
+  };
+
   const formatRateBonusNote = (id, qty) => {
     if (id === "gem-ve") {
       const tickets = qty / 10;
@@ -418,8 +464,8 @@
         ? `${formatNumber(tickets)} vé`
         : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé`;
     }
-    if ((id === "gold-fresh" || id === "gold-die") && qty >= 1000) {
-      return `~${(qty / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} tỷ vàng`;
+    if ((id === "gold-fresh" || id === "gold-die") && qty >= 1_000_000_000) {
+      return `${(qty / 1_000_000_000).toLocaleString("vi-VN", { maximumFractionDigits: 3 })} tỷ vàng`;
     }
     return "";
   };
@@ -428,56 +474,40 @@
     "gold-fresh": {
       id: "gold-fresh",
       orderName: "Vàng tươi (x15)",
-      unit: "triệu vàng",
+      unit: "vàng",
       rateText: "Vàng tươi x15",
-      qtyLabel: "Số triệu vàng tươi muốn mua",
-      qtyHint: "Nhập số triệu vàng tươi cần mua (ví dụ 1500 = 1,5 tỷ vàng = 100.000 đ).",
-      unitsPerK: 15,
-      computeFromMoneyK: (k) => {
-        const millions = k * 15;
-        const billions = millions >= 1000 ? ` (~${(millions / 1000).toLocaleString("vi-VN")} tỷ)` : "";
-        return `${formatNumber(millions)} triệu vàng${billions}`;
-      },
-      computeFromQty: (qty) => {
-        const costVND = computeRateCost(qty, 15);
-        const billions = qty >= 1000 ? ` (~${(qty / 1000).toLocaleString("vi-VN")} tỷ)` : "";
-        return {
-          costVND,
-          subText: `Mua ${formatNumber(qty)} triệu vàng${billions} theo tỉ lệ Vàng tươi x15`
-        };
-      }
+      qtyLabel: "Số vàng tươi muốn mua (ví dụ 1.500.000.000)",
+      qtyHint: "Nhập số vàng tươi cần mua (ví dụ 1.500.000.000 vàng = 1,5 tỷ vàng = 100.000 đ).",
+      unitsPerK: 15_000_000,
+      computeFromMoneyVnd: (vnd) => formatGoldWithBillion(Math.round((vnd / 1000) * 15_000_000)),
+      computeFromQty: (qty) => ({
+        costVND: computeRateCost(qty, 15_000_000),
+        subText: `Mua ${formatGoldWithBillion(qty)} theo tỉ lệ Vàng tươi x15`
+      })
     },
     "gold-die": {
       id: "gold-die",
       orderName: "Vàng die (x60)",
-      unit: "triệu vàng",
+      unit: "vàng",
       rateText: "Vàng die x60",
-      qtyLabel: "Số triệu vàng die muốn mua",
-      qtyHint: "Nhập số triệu vàng die cần mua (ví dụ 6000 = 6 tỷ vàng = 100.000 đ).",
-      unitsPerK: 60,
-      computeFromMoneyK: (k) => {
-        const millions = k * 60;
-        const billions = millions >= 1000 ? ` (~${(millions / 1000).toLocaleString("vi-VN")} tỷ)` : "";
-        return `${formatNumber(millions)} triệu vàng${billions}`;
-      },
-      computeFromQty: (qty) => {
-        const costVND = computeRateCost(qty, 60);
-        const billions = qty >= 1000 ? ` (~${(qty / 1000).toLocaleString("vi-VN")} tỷ)` : "";
-        return {
-          costVND,
-          subText: `Mua ${formatNumber(qty)} triệu vàng${billions} theo tỉ lệ Vàng die x60`
-        };
-      }
+      qtyLabel: "Số vàng die muốn mua (ví dụ 6.000.000.000)",
+      qtyHint: "Nhập số vàng die cần mua (ví dụ 6.000.000.000 vàng = 6 tỷ vàng = 100.000 đ).",
+      unitsPerK: 60_000_000,
+      computeFromMoneyVnd: (vnd) => formatGoldWithBillion(Math.round((vnd / 1000) * 60_000_000)),
+      computeFromQty: (qty) => ({
+        costVND: computeRateCost(qty, 60_000_000),
+        subText: `Mua ${formatGoldWithBillion(qty)} theo tỉ lệ Vàng die x60`
+      })
     },
     "gem-ki": {
       id: "gem-ki",
       orderName: "Ngọc kí (x11)",
       unit: "ngọc",
       rateText: "Ngọc kí x11",
-      qtyLabel: "Số ngọc kí muốn mua",
-      qtyHint: "Nhập số lượng ngọc kí cần mua (ví dụ 1100 ngọc = 100.000 đ theo tỉ lệ x11).",
+      qtyLabel: "Số ngọc kí muốn mua (ví dụ 1.100)",
+      qtyHint: "Nhập số lượng ngọc kí cần mua (ví dụ 1.100 ngọc = 100.000 đ theo tỉ lệ x11).",
       unitsPerK: 11,
-      computeFromMoneyK: (k) => `${formatNumber(k * 11)} ngọc kí`,
+      computeFromMoneyVnd: (vnd) => `${formatNumber(Math.round((vnd / 1000) * 11))} ngọc kí`,
       computeFromQty: (qty) => ({
         costVND: computeRateCost(qty, 11),
         subText: `Mua ${formatNumber(qty)} ngọc theo tỉ lệ Ngọc kí x11`
@@ -489,9 +519,16 @@
       unit: "ngọc",
       rateText: "Ngọc vé x10",
       qtyLabel: "Số ngọc vé muốn mua (mỗi vé = 10 ngọc)",
-      qtyHint: "Nhập số lượng ngọc vé cần mua (ví dụ 1000 ngọc = 100 vé = 100.000 đ).",
+      qtyHint: "Nhập số lượng ngọc vé cần mua (ví dụ 1.000 ngọc = 100 vé = 100.000 đ).",
       unitsPerK: 10,
-      computeFromMoneyK: (k) => `${formatNumber(k * 10)} ngọc (${formatNumber(k)} vé)`,
+      computeFromMoneyVnd: (vnd) => {
+        const gems = Math.round((vnd / 1000) * 10);
+        const tickets = gems / 10;
+        const ticketText = Number.isInteger(tickets)
+          ? `${formatNumber(tickets)} vé`
+          : `~${tickets.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} vé`;
+        return `${formatNumber(gems)} ngọc (${ticketText})`;
+      },
       computeFromQty: (qty) => {
         const costVND = computeRateCost(qty, 10);
         const ticketNote = formatRateBonusNote("gem-ve", qty);
@@ -510,11 +547,11 @@
       name: "Vàng tươi (x15)",
       kind: "rate",
       price: 0,
-      ratePerK: 15,
-      unit: "triệu vàng",
-      step: 15
+      ratePerK: 15_000_000,
+      unit: "vàng",
+      step: 15_000_000
     },
-    qty: 1500
+    qty: 1_500_000_000
   };
 
   const getSelectedCalcMode = () => {
@@ -536,22 +573,25 @@
     const config = CALC_CONFIG[typeKey] || CALC_CONFIG["gold-fresh"];
 
     if (mode !== previousCalcMode) {
-      const currentVal = Number(calcAmountInput.value);
-      if (Number.isFinite(currentVal) && currentVal >= 1) {
-        calcAmountInput.value = String(
+      const currentVal = parseGroupedInt(calcAmountInput.value);
+      if (currentVal >= 1) {
+        const converted =
           mode === "by-qty"
-            ? Math.max(1, Math.round(currentVal * config.unitsPerK))
-            : Math.max(1, Math.round(currentVal / config.unitsPerK))
-        );
+            ? Math.max(1, Math.round((currentVal / 1000) * config.unitsPerK))
+            : Math.max(1000, Math.round((currentVal / config.unitsPerK) * 1000));
+        calcAmountInput.value = formatNumber(converted);
       } else {
-        calcAmountInput.value = mode === "by-qty" ? String(Math.max(1, Math.round(100 * config.unitsPerK))) : "100";
+        calcAmountInput.value =
+          mode === "by-qty"
+            ? formatNumber(Math.max(1, Math.round(100 * config.unitsPerK)))
+            : formatNumber(100000);
       }
       previousCalcMode = mode;
     }
 
     if (mode === "by-money") {
-      calcInputLabel.textContent = "Số tiền dự kiến mua (nghìn VNĐ, ví dụ 100 = 100.000 đ)";
-      calcInputHint.textContent = "Nhập số tiền theo đơn vị nghìn đồng (ví dụ 50 = 50.000 đ, 100 = 100.000 đ).";
+      calcInputLabel.textContent = "Số tiền dự kiến mua (VNĐ, ví dụ 50.000 hoặc 100.000)";
+      calcInputHint.textContent = "Nhập số tiền VNĐ đầy đủ (ví dụ 50.000 hoặc 100.000).";
       calcOutputLabel.textContent = "Ước tính nhận được:";
     } else {
       calcInputLabel.textContent = config.qtyLabel;
@@ -563,21 +603,23 @@
   const updateCalculator = () => {
     if (!calcForm || !calcAmountInput || !calcResultMain || !calcResultSub) return;
 
+    formatGroupedInputElement(calcAmountInput);
     syncCalcLabelsAndConversion();
 
     const mode = getSelectedCalcMode();
     const typeKey = getSelectedCalcType();
     const config = CALC_CONFIG[typeKey] || CALC_CONFIG["gold-fresh"];
-    const rawVal = Number(calcAmountInput.value);
+    const rawVal = parseGroupedInt(calcAmountInput.value);
+    const minValid = mode === "by-money" ? 1000 : 1;
 
-    if (!Number.isFinite(rawVal) || rawVal < 1) {
+    if (!rawVal || rawVal < minValid) {
       currentCalcSnapshot = null;
-      calcResultMain.textContent = mode === "by-money" ? "Nhập số tiền từ 1 trở lên" : "Nhập số lượng từ 1 trở lên";
+      calcResultMain.textContent =
+        mode === "by-money" ? "Nhập số tiền từ 1.000 đ trở lên" : "Nhập số lượng từ 1 trở lên";
       calcResultSub.textContent = `Đang chọn: ${config.rateText}`;
       return;
     }
 
-    const clamped = Math.min(1000000, Math.floor(rawVal));
     const itemDescriptor = {
       id: config.id,
       name: config.orderName,
@@ -589,20 +631,22 @@
     };
 
     if (mode === "by-money") {
-      const resultText = config.computeFromMoneyK(clamped);
+      const clampedVnd = Math.min(1_000_000_000, rawVal);
+      const resultText = config.computeFromMoneyVnd(clampedVnd);
       calcResultMain.textContent = resultText;
-      calcResultSub.textContent = `Tương ứng ${formatVND(clamped * 1000)} theo tỉ lệ ${config.rateText}`;
+      calcResultSub.textContent = `Tương ứng ${formatVND(clampedVnd)} theo tỉ lệ ${config.rateText}`;
       currentCalcSnapshot = {
         item: itemDescriptor,
-        qty: clamped * config.unitsPerK
+        qty: Math.max(1, Math.round((clampedVnd / 1000) * config.unitsPerK))
       };
     } else {
-      const calcQty = config.computeFromQty(clamped);
+      const clampedQty = Math.min(100_000_000_000, rawVal);
+      const calcQty = config.computeFromQty(clampedQty);
       calcResultMain.textContent = formatVND(calcQty.costVND);
       calcResultSub.textContent = calcQty.subText;
       currentCalcSnapshot = {
         item: itemDescriptor,
-        qty: clamped
+        qty: clampedQty
       };
     }
   };
@@ -709,6 +753,10 @@
 
     if (CALC_CONFIG[rawId]) {
       const cfg = CALC_CONFIG[rawId];
+      const scaledQty =
+        (rawId === "gold-fresh" || rawId === "gold-die") && raw.unit === "triệu vàng"
+          ? oldQty * 1_000_000
+          : oldQty;
       return {
         id: cfg.id,
         name: cfg.orderName,
@@ -717,7 +765,7 @@
         ratePerK: cfg.unitsPerK,
         unit: cfg.unit,
         step: cfg.unitsPerK,
-        qty: Math.min(10000000, oldQty)
+        qty: Math.min(100_000_000_000, scaledQty)
       };
     }
 
@@ -730,7 +778,7 @@
           ? "fixed"
           : "quote";
     const step = Math.max(1, Math.floor(Number(raw.step) || (kind === "rate" && ratePerK > 0 ? ratePerK : 1)));
-    const maxQty = kind === "rate" ? 10000000 : 99999;
+    const maxQty = kind === "rate" ? 100_000_000_000 : 99999;
 
     const resolvedName =
       CLEAN_ITEM_NAMES_BY_ID[rawId] && (!raw.name || LEGACY_DIRTY_ITEM_PATTERN.test(rawName))
@@ -764,7 +812,7 @@
         if (!normalized) return;
         const existing = merged.find((x) => x.id === normalized.id);
         if (existing) {
-          const cap = existing.kind === "rate" ? 10000000 : 99999;
+          const cap = existing.kind === "rate" ? 100_000_000_000 : 99999;
           existing.qty = Math.min(cap, existing.qty + normalized.qty);
         } else {
           merged.push(normalized);
@@ -876,7 +924,7 @@
       ctrl.className = "order-row-ctrl";
 
       const step = Math.max(1, item.step || 1);
-      const maxQty = item.kind === "rate" ? 10000000 : 99999;
+      const maxQty = item.kind === "rate" ? 100_000_000_000 : 99999;
 
       const decBtn = document.createElement("button");
       decBtn.type = "button";
@@ -977,7 +1025,7 @@
 
     const existing = orderItems.find((item) => item.id === normalized.id);
     if (existing) {
-      const cap = existing.kind === "rate" ? 10000000 : 99999;
+      const cap = existing.kind === "rate" ? 100_000_000_000 : 99999;
       existing.qty = Math.min(cap, existing.qty + normalized.qty);
       clearSendStatus();
       saveOrder();
@@ -1317,10 +1365,7 @@
   const accLightboxZaloLink = document.getElementById("acc-lightbox-zalo-link");
   const accLightboxRawLink = document.getElementById("acc-lightbox-raw-link");
   const accLightboxExpandBtn = document.getElementById("acc-lightbox-expand-btn");
-  const accZoomOutBtn = document.getElementById("acc-zoom-out-btn");
-  const accZoomInBtn = document.getElementById("acc-zoom-in-btn");
-  const accZoomBadge = document.getElementById("acc-zoom-badge");
-  const accZoomPresetBtns = [...document.querySelectorAll("[data-zoom-preset]")];
+  const accZoomResetBtn = document.getElementById("acc-zoom-reset-btn");
 
   const accEditDialog = document.getElementById("acc-edit-dialog");
   const accEditForm = document.getElementById("acc-edit-form");
@@ -1700,9 +1745,13 @@
   }
 
   // Lightbox Zoom, Pan, Expand & Opening via event delegation
-  const ZOOM_LEVELS = ["fit", "125", "150", "200", "250", "300", "400"];
+  // PC: smooth mouse-wheel cursor zoom + click-to-toggle 220% + drag pan
+  // Mobile: native two-finger pinch-to-zoom + double-tap toggle
+  const ZOOM_LEVELS = ["fit", "115", "130", "150", "175", "200", "220", "250", "300", "350", "400"];
   let currentLightboxZoom = "fit";
   let lastWheelZoomAt = 0;
+  let lastPointerType = "mouse";
+  let lastTouchTapAt = 0;
 
   const syncStageFitAxis = () => {
     if (!accLightboxStage || !accLightboxImg) return;
@@ -1737,15 +1786,10 @@
     accLightboxStage.classList.toggle("is-pannable", nextZoom !== "fit");
     accLightboxStage.classList.remove("is-dragging");
 
-    const zoomIdx = ZOOM_LEVELS.indexOf(nextZoom);
-    if (accZoomBadge) {
-      accZoomBadge.textContent = nextZoom === "fit" ? "100%" : `${nextZoom}%`;
+    if (accZoomResetBtn) {
+      accZoomResetBtn.textContent = nextZoom === "fit" ? "100%" : `${nextZoom}% ↺`;
+      accZoomResetBtn.classList.toggle("is-active", nextZoom !== "fit");
     }
-    if (accZoomOutBtn) accZoomOutBtn.disabled = zoomIdx <= 0;
-    if (accZoomInBtn) accZoomInBtn.disabled = zoomIdx >= ZOOM_LEVELS.length - 1;
-    accZoomPresetBtns.forEach((btn) => {
-      btn.classList.toggle("is-active", btn.dataset.zoomPreset === nextZoom);
-    });
 
     if (nextZoom === "fit") {
       accLightboxStage.scrollLeft = 0;
@@ -1776,25 +1820,11 @@
     }
   });
 
-  if (accZoomOutBtn) {
-    accZoomOutBtn.addEventListener("click", () => {
-      const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
-      if (idx > 0) setLightboxZoom(ZOOM_LEVELS[idx - 1]);
+  if (accZoomResetBtn) {
+    accZoomResetBtn.addEventListener("click", () => {
+      setLightboxZoom("fit");
     });
   }
-
-  if (accZoomInBtn) {
-    accZoomInBtn.addEventListener("click", () => {
-      const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
-      if (idx >= 0 && idx < ZOOM_LEVELS.length - 1) setLightboxZoom(ZOOM_LEVELS[idx + 1]);
-    });
-  }
-
-  accZoomPresetBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (btn.dataset.zoomPreset) setLightboxZoom(btn.dataset.zoomPreset);
-    });
-  });
 
   if (accLightboxExpandBtn && accLightboxDialog) {
     accLightboxExpandBtn.addEventListener("click", () => {
@@ -1814,7 +1844,7 @@
         if (!accLightboxDialog || !accLightboxDialog.open) return;
         e.preventDefault();
         const now = Date.now();
-        if (now - lastWheelZoomAt < 45) return;
+        if (now - lastWheelZoomAt < 25) return;
         lastWheelZoomAt = now;
         const idx = ZOOM_LEVELS.indexOf(currentLightboxZoom);
         if (e.deltaY < 0 && idx < ZOOM_LEVELS.length - 1) {
@@ -1830,6 +1860,7 @@
     let suppressNextStageClick = false;
 
     accLightboxStage.addEventListener("pointerdown", (e) => {
+      lastPointerType = e.pointerType || "mouse";
       if (e.pointerType === "touch" || e.button !== 0) return;
       if (currentLightboxZoom === "fit") return;
       dragState = {
@@ -1880,8 +1911,25 @@
         suppressNextStageClick = false;
         return;
       }
+      // On touch screens, let two-finger pinch-zoom handle scaling naturally without single-tap jumps;
+      // double-tap toggles 200% <-> 100% cleanly.
+      if (lastPointerType === "touch") {
+        const now = Date.now();
+        if (now - lastTouchTapAt < 320) {
+          lastTouchTapAt = 0;
+          if (currentLightboxZoom === "fit") {
+            setLightboxZoom("200", { clientX: e.clientX, clientY: e.clientY });
+          } else {
+            setLightboxZoom("fit");
+          }
+        } else {
+          lastTouchTapAt = now;
+        }
+        return;
+      }
+
       if (currentLightboxZoom === "fit") {
-        setLightboxZoom("200", { clientX: e.clientX, clientY: e.clientY });
+        setLightboxZoom("220", { clientX: e.clientX, clientY: e.clientY });
       } else {
         setLightboxZoom("fit");
       }

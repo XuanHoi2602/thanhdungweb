@@ -864,7 +864,7 @@ function renderMuaItemView({ items = ITEM_PRICE_ROWS, integrity }) {
         <div id="vang-ngoc" class="calculator-card">
           <span class="eyebrow">Quy đổi nhanh 2 chiều</span>
           <h2>Máy Tính Nhanh Vàng &amp; Ngọc</h2>
-          <p class="pretty-text">Tính nhẩm nhanh theo <strong>số tiền (nghìn đ)</strong> hoặc theo <strong>số vàng / ngọc</strong> muốn mua rồi thêm thẳng vào đơn.</p>
+          <p class="pretty-text">Tính nhẩm nhanh theo <strong>số tiền (VNĐ)</strong> hoặc theo <strong>số vàng / ngọc</strong> muốn mua rồi thêm thẳng vào đơn.</p>
 
           <form id="rate-calc-form" class="calc-form">
             <fieldset class="calc-fieldset">
@@ -872,7 +872,7 @@ function renderMuaItemView({ items = ITEM_PRICE_ROWS, integrity }) {
               <div class="mode-pills">
                 <label class="radio-pill" for="mode-by-money">
                   <input type="radio" id="mode-by-money" name="calcMode" value="by-money" checked>
-                  <span>Theo số tiền (nghìn đ)</span>
+                  <span>Theo số tiền (VNĐ)</span>
                 </label>
                 <label class="radio-pill" for="mode-by-qty">
                   <input type="radio" id="mode-by-qty" name="calcMode" value="by-qty">
@@ -908,24 +908,23 @@ function renderMuaItemView({ items = ITEM_PRICE_ROWS, integrity }) {
             </fieldset>
 
             <div class="field-group">
-              <label id="calc-input-label" for="calc-amount">Số tiền dự kiến mua (nghìn VNĐ, ví dụ 100 = 100.000 đ)</label>
+              <label id="calc-input-label" for="calc-amount">Số tiền dự kiến mua (VNĐ, ví dụ 50.000 hoặc 100.000)</label>
               <input
-                type="number"
+                type="text"
                 id="calc-amount"
                 name="calcInput"
-                min="1"
-                max="1000000"
-                step="1"
-                value="100"
+                value="100.000"
                 inputmode="numeric"
+                autocomplete="off"
+                spellcheck="false"
                 required
               >
-              <span id="calc-input-hint" class="field-hint">Nhập số tiền theo đơn vị nghìn đồng (ví dụ 50 = 50.000 đ, 100 = 100.000 đ).</span>
+              <span id="calc-input-hint" class="field-hint">Nhập số tiền VNĐ đầy đủ (ví dụ 50.000 hoặc 100.000).</span>
             </div>
 
             <div class="calc-output" aria-live="polite">
               <span id="calc-output-label" class="calc-output-label">Ước tính nhận được:</span>
-              <strong id="calc-result-main" class="mono-num">1.500 triệu vàng</strong>
+              <strong id="calc-result-main" class="mono-num">1.500.000.000 vàng (1,5 tỷ vàng)</strong>
               <span id="calc-result-sub" class="calc-output-sub">Tương ứng 100.000 đ theo tỉ lệ Vàng tươi x15</span>
             </div>
 
@@ -2031,28 +2030,16 @@ function renderPage({ route, nonce, csrfToken, session, integrity, data = {} }) 
           <p id="acc-lightbox-sub" class="dialog-sub"></p>
         </div>
         <div class="lightbox-head-actions">
+          <button type="button" id="acc-zoom-reset-btn" class="btn btn-outline btn-sm mono-num" aria-live="polite" title="Bấm để đưa ảnh về kích thước 100% (phím 0)">100%</button>
+          <a id="acc-lightbox-raw-link" href="/assets/favicon.svg" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Ảnh gốc &nearr;</a>
           <button type="button" id="acc-lightbox-expand-btn" class="btn btn-outline btn-sm" aria-pressed="false">Toàn khung</button>
           <form method="dialog">
-            <button type="submit" id="acc-lightbox-close-btn" class="btn-dialog-close" aria-label="Đóng xem ảnh acc">&times;</button>
+            <button type="submit" id="acc-lightbox-close-btn" class="btn-dialog-close" autofocus aria-label="Đóng xem ảnh acc">&times;</button>
           </form>
         </div>
       </div>
 
-      <div class="lightbox-toolbar" role="toolbar" aria-label="Điều khiển phóng to ảnh tài khoản">
-        <div class="lightbox-zoom-btns">
-          <button type="button" id="acc-zoom-out-btn" class="btn btn-outline btn-sm" aria-label="Thu nhỏ ảnh" disabled>&minus; Thu nhỏ</button>
-          <button type="button" id="acc-zoom-reset-btn" class="btn btn-outline btn-sm is-active" data-zoom-preset="fit" autofocus>Vừa khung</button>
-          <button type="button" id="acc-zoom-150-btn" class="btn btn-outline btn-sm" data-zoom-preset="150">1.5&times;</button>
-          <button type="button" id="acc-zoom-200-btn" class="btn btn-outline btn-sm" data-zoom-preset="200">2&times;</button>
-          <button type="button" id="acc-zoom-300-btn" class="btn btn-outline btn-sm" data-zoom-preset="300">3&times;</button>
-          <button type="button" id="acc-zoom-in-btn" class="btn btn-primary btn-sm" aria-label="Phóng to ảnh">+ Phóng to</button>
-        </div>
-        <div class="lightbox-meta-bar">
-          <span id="acc-zoom-badge" class="pill pill-jade mono-num" aria-live="polite">100%</span>
-          <span class="lightbox-pan-hint">Cuộn chuột / bấm ảnh để zoom · Kéo ảnh để soi từng góc</span>
-          <a id="acc-lightbox-raw-link" href="/assets/favicon.svg" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Mở ảnh gốc &nearr;</a>
-        </div>
-      </div>
+      <p id="acc-lightbox-hint" class="lightbox-gesture-hint">PC: Cuộn con lăn chuột hoặc bấm vào ảnh để phóng to, kéo thả để soi từng góc · Điện thoại: Dùng 2 ngón tay kéo ra / thu vào để phóng to.</p>
 
       <div id="acc-lightbox-stage" class="lightbox-stage" data-zoom="fit" data-fit-axis="width" tabindex="0" aria-label="Khung xem ảnh tài khoản có thể phóng to và kéo">
         <div class="lightbox-stage-inner">
