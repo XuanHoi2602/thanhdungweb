@@ -165,6 +165,9 @@ async function runTests() {
           "Mảnh Rồng thần Namếc",
           "3 mảnh",
           "15 mảnh",
+          "1.500.000.000 vàng (1,5 tỷ vàng)",
+          'value="100.000"',
+          "Theo số tiền (VNĐ)",
           "Mảnh Khỉ Oozaru",
           "125 mảnh"
         ],
@@ -173,7 +176,9 @@ async function runTests() {
           'id="calc-spl-fieldset"',
           'data-category="vang-ngoc"',
           'data-item-id="gold-fresh"',
-          'data-item-id="gem-ve"'
+          'data-item-id="gem-ve"',
+          "triệu vàng",
+          "nghìn đ"
         ]
       },
       {
@@ -186,9 +191,14 @@ async function runTests() {
           "Namếc",
           "Xayda",
           'id="acc-lightbox-stage"',
+          'id="acc-zoom-reset-btn"',
+          'id="acc-lightbox-expand-btn"'
+        ],
+        mustNotInclude: [
           'id="acc-zoom-in-btn"',
           'id="acc-zoom-out-btn"',
-          'id="acc-lightbox-expand-btn"'
+          'data-zoom-preset="200"',
+          'data-zoom-preset="300"'
         ]
       },
       {
